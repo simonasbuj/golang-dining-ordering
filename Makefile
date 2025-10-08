@@ -29,3 +29,8 @@ down-migration:
 
 sqlc-generate:
 	sqlc generate
+
+# tests
+.PHONY: test
+test:
+	go test -v ./...
