@@ -1,7 +1,8 @@
+# golang-dining-ordering
+heygreet clone - backend for ordering at the restaurant
 
 
-
-# Running API
+## Running API
 
 ### simple
 ```
@@ -27,7 +28,18 @@ air
 make run-api-with-ari
 ```
 
-# Pre-Commit
+## Dev dependencies
+`golang-migrations` used for database migrations:
+```
+go install -tags 'postgres' github.com/golang-migrate/migrate/v4/cmd/migrate@latest
+```
+
+`sqlc` used to generate models and db insert/update/delete functions using migration files:
+```
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
+```
+
+## Pre-Commit
 ### golangci-lint
 Install:
 ```
