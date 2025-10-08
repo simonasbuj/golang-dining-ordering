@@ -8,5 +8,6 @@ linters:
     - gosimple
     - unused
     - gofmt
+    - goimports
 issues:
   exclude-use-default: false
