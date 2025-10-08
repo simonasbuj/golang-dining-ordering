@@ -38,10 +38,16 @@ jobs:
       - name: Install dependencies
         run: go mod download
 
-      # 5. Run lint
+      # 5. Install golangci-lint
+      - name: Install golangci-lint
+        run: |
+          go install github.com/golangci/golangci-lint/cmd/golangci-lint@v1.64.8
+          echo "$(go env GOPATH)/bin" >> $GITHUB_PATH
+
+      # 6. Run lint
       - name: Run linter
         run: make lint
 
-      # 6. Run tests
+      # 7. Run tests
       - name: Run tests
         run: make test
