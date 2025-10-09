@@ -1,0 +1,140 @@
+openapi: 3.0.3
+info:
+  title: Dining Ordering API
+  version: 1.0.0
+  description: API for dining ordering
+
+servers:
+  - url: http://localhost:42069/api/v1
+    description: local dev server v1
+
+tags:
+  - name: Auth
+    description: Endpoints for user authentication
+
+paths:
+  /auth/signup:
+    post:
+      tags:
+        - Auth
+      summary: Register a new user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: secret123
+                name:
+                  type: string
+                  example: sim
+                lastname:
+                  type: string
+                  example: sim
+                role:
+                  type: string
+                  example: waiter
+      responses:
+        '200':
+          description: User registered successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "new user registered successfuly"
+        '400':
+          description: Bad request (missing or invalid fields)
+        '409':
+          description: Email already exists
+
+  /auth/signin:
+    post:
+      tags:
+        - Auth
+      summary: Authenticate a user
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  example: user@example.com
+                password:
+                  type: string
+                  example: secret123
+      responses:
+        '200':
+          description: Authentication successful
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "user authenticated successfully"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUgRG9lIiwiaWF0IjoxNjk2ODI4MDAwLCJleHAiOjE2OTY4MzE2MDB9.Dk5zjV7wQ8LZ1hD2vO_uF0E1B7iMC3n5zOe0rE0M2A8"
+        '400':
+          description: Bad request (missing fields)
+        '401':
+          description: Unauthorized (invalid credentials)
+  
+  /auth/refresh:
+    post:
+      tags:
+        - Auth
+      summary: Refresh an expired or expiring access token
+      description: Takes a valid refresh token and returns a new access token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - refreshToken
+              properties:
+                refreshToken:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUgRG9lIiwiaWF0IjoxNjk2ODI4MDAwLCJleHAiOjE2OTY4MzE2MDB9.Dk5zjV7wQ8LZ1hD2vO_uF0E1B7iMC3n5zOe0rE0M2A8"
+      responses:
+        '200':
+          description: New access token issued successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "token refreshed successfully"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  refresh_token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        '400':
+          description: Bad request (missing refresh token)
+        '401':
+          description: Unauthorized (expired or invalid refresh token)
