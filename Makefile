@@ -14,6 +14,10 @@ lint-fix:
 lint:
 	golangci-lint run --verbose
 
+.PHONY: test
+test:
+	go test -v ./...
+
 # database
 start-postgres:
 	docker-compose -f infra/docker/postgres-docker-compose.yml up -d
@@ -32,8 +36,3 @@ down-migrations:
 
 sqlc-generate:
 	sqlc generate
-
-# tests
-.PHONY: test
-test:
-	go test -v ./...
