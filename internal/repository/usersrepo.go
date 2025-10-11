@@ -12,6 +12,7 @@ import (
 
 type UsersRepository interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
+	GetUserByEmail(ctx context.Context, email string) (*db.User, error)
 }
 
 type userRepository struct {
@@ -44,4 +45,13 @@ func (r *userRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestD
 	}
 
 	return userRow.ID, nil
+}
+
+func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
+	user, err := r.q.GetUserByEmail(ctx, email)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
 }

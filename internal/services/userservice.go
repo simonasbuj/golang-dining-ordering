@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"fmt"
 
 	"golang-dining-ordering/internal/dto"
 	"golang-dining-ordering/internal/repository"
@@ -36,6 +37,16 @@ func (s *userService) CreateUser(ctx context.Context, req *dto.SignUpRequestDto)
 }
 
 func (s *userService) SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.SignInResponseDto, error) {
+	user, err := s.repo.GetUserByEmail(ctx, req.Email)
+	if err != nil {
+		return nil, err
+	}
+
+	ok := s.verifyPassword(req.Password, user.PasswordHash)
+	if !ok {
+		return nil, fmt.Errorf("wrong credentials")
+	}
+	
 	res := &dto.SignInResponseDto{
 		Token:        "some-fake-token",
 		RefreshToken: "some-fake-refresh-token",

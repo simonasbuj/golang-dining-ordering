@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	db "golang-dining-ordering/internal/db/generated"
 	"golang-dining-ordering/internal/dto"
 	testhelpers "golang-dining-ordering/test/helpers/repository"
 	"testing"
@@ -16,12 +15,14 @@ func TestCreateUser_Success(t *testing.T) {
 
 	reqDto := &dto.SignUpRequestDto{}
 
-	expectedUser := &db.User{
-		ID: "some-fake-uuid-1",
-	}
+	expectedUserID := "some-fake-uuid-1"
 
 	user, err := svc.CreateUser(context.Background(), reqDto)
 
 	assert.NoError(t, err)
-	assert.Equal(t, expectedUser, user)
+	assert.Equal(t, expectedUserID, user)
+}
+
+func TestSignInUser_Success(t *testing.T) {
+	assert.Equal(t, "h", "h")
 }

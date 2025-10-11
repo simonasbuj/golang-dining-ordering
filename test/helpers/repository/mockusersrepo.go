@@ -37,3 +37,11 @@ func (r *MockUsersRepository) CreateUser(ctx context.Context, req *dto.SignUpReq
 
 	return user.ID, nil
 }
+
+func (r *MockUsersRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
+	user := &db.User{
+		PasswordHash: "hashed-pw",
+	}
+
+	return user, nil
+}
