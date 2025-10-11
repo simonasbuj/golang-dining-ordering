@@ -13,7 +13,11 @@ type SignInRequestDto struct {
 	Password string `json:"password" validate:"required,min=8"`
 }
 
-type SignInResponseDto struct {
+type TokenResponseDto struct {
 	Token        string `json:"token"`
 	RefreshToken string `json:"refreshToken"`
+}
+
+type RefreshTokenRequestDto struct {
+	RefreshToken string `json:"refreshToken" validate:"required"`
 }

@@ -96,3 +96,31 @@ func (h *AuthHandler) HandleSignIn(c echo.Context) error {
 		"data":    resDto,
 	})
 }
+
+func (h *AuthHandler) HandleRefreshToken(c echo.Context) error {
+	h.logger.Info("handling refresh token")
+
+	var reqDto dto.RefreshTokenRequestDto
+	err := dto.Validate(c, &reqDto)
+	if err != nil {
+		h.logger.Error("failed to refresh token, request body validation failed", "error", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"message": "request body validation failed",
+			"error":   err.Error(),
+		})
+	}
+
+	resDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto.RefreshToken)
+	if err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "failed to refresh token",
+			"error":   err.Error(),
+		})
+	}
+
+	h.logger.Info("refreshed token successfuly")
+	return c.JSON(http.StatusOK, map[string]any{
+		"message": "signed in successfuly",
+		"data":    resDto,
+	})
+}

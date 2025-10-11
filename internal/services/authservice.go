@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"time"
 
@@ -15,18 +16,19 @@ import (
 
 type AuthService interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
-	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.SignInResponseDto, error)
+	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error)
+	RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponseDto, error)
 }
 
 type authService struct {
-	secret	string
-	repo 	repository.UsersRepository
+	secret string
+	repo   repository.UsersRepository
 }
 
 func NewAuthService(secret string, repo repository.UsersRepository) *authService {
 	return &authService{
 		secret: secret,
-		repo: 	repo,
+		repo:   repo,
 	}
 }
 
@@ -41,7 +43,7 @@ func (s *authService) CreateUser(ctx context.Context, req *dto.SignUpRequestDto)
 	return s.repo.CreateUser(ctx, req)
 }
 
-func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.SignInResponseDto, error) {
+func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error) {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, err
@@ -53,20 +55,49 @@ func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto)
 		return nil, ce.UnauthorizedError
 	}
 
-	token, err := s.generateToken(user.ID, user.Email, user.Role, 24 * 7)
+	token, err := s.generateToken(user.ID, user.Email, user.Role, 24*7)
 	if err != nil {
 		return nil, err
 	}
 
-	refreshToken, err := s.generateToken(user.ID, user.Email, user.Role, 24 * 14)
+	refreshToken, err := s.generateToken(user.ID, user.Email, user.Role, 24*14)
 	if err != nil {
 		return nil, err
 	}
 
-	res := &dto.SignInResponseDto{
+	res := &dto.TokenResponseDto{
 		Token:        token,
 		RefreshToken: refreshToken,
 	}
+	return res, nil
+}
+
+func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponseDto, error) {
+
+	claims, err := s.verifyToken(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	userID := fmt.Sprintf("%v", claims["userID"])
+	email := fmt.Sprintf("%v", claims["email"])
+	role := fmt.Sprintf("%v", claims["role"])
+
+	newToken, err := s.generateToken(userID, email, role, 24*7)
+	if err != nil {
+		return nil, err
+	}
+
+	newRefreshToken, err := s.generateToken(userID, email, role, 24*14)
+	if err != nil {
+		return nil, err
+	}
+
+	res := &dto.TokenResponseDto{
+		Token:        newToken,
+		RefreshToken: newRefreshToken,
+	}
+
 	return res, nil
 }
 
@@ -89,10 +120,10 @@ func (s *authService) generateToken(userID, email, role string, validDurationHou
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": 		userID,
-		"email": 		email,
-		"role":			role,
-		"expiresAt":	time.Now().Add(time.Hour * time.Duration(validDurationHours)),
+		"userID": userID,
+		"email":  email,
+		"role":   role,
+		"exp":    time.Now().Add(time.Hour * time.Duration(validDurationHours)).Unix(),
 	})
 
 	tokenStr, err := token.SignedString([]byte(s.secret))
@@ -101,4 +132,27 @@ func (s *authService) generateToken(userID, email, role string, validDurationHou
 	}
 
 	return tokenStr, nil
+}
+
+func (s *authService) verifyToken(tokenStr string) (jwt.MapClaims, error) {
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
+			return nil, errors.New("unexpected signing method")
+		}
+		return []byte(s.secret), nil
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, errors.New("invalid token")
+	}
+
+	claims, ok := token.Claims.(jwt.MapClaims)
+	if !ok {
+		return nil, errors.New("failed to parse claims")
+	}
+
+	return claims, nil
 }
