@@ -1,5 +1,6 @@
 MIGRATIONS_DIR := ./internal/db/sql/migrations
 
+# make sure golang dependencies likq 'sqlc' and 'migrations' are in the path
 PATH := $(PATH):$(shell go env GOPATH)/bin
 export PATH
 
@@ -23,11 +24,11 @@ run-api-with-air:
 	air
 
 # pre-commit
-lint-fix:
-	golangci-lint run --verbose --fix
-
 lint:
 	golangci-lint run --verbose
+
+lint-fix:
+	golangci-lint run --verbose --fix
 
 .PHONY: test
 test:
