@@ -103,7 +103,7 @@ paths:
                         type: string
                         example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUgRG9lIiwiaWF0IjoxNjk2ODI4MDAwLCJleHAiOjE2OTY4MzE2MDB9.Dk5zjV7wQ8LZ1hD2vO_uF0E1B7iMC3n5zOe0rE0M2A8"
         '400':
-          description: Bad request (missing fields)
+          description: Bad request (missing or incorrect request body fields)
         '401':
           description: Unauthorized (invalid credentials)
         '500':

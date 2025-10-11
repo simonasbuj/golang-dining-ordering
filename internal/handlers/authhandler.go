@@ -26,14 +26,24 @@ func NewAuthHandler(logger *slog.Logger, svc services.UserService) *AuthHandler 
 func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 	h.logger.Info("handling signup")
 
-	user, err := h.svc.CreateUser(c.Request().Context())
+	var reqDto dto.SignUpRequestDto
+	err := dto.Validate(c, &reqDto)
+	if err != nil {
+		h.logger.Error("failed to sign up user, request body validation failed", "error", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"message": "request body validation failed",
+			"error":   err.Error(),
+		})
+	}
+
+	user, err := h.svc.CreateUser(c.Request().Context(), &reqDto)
 	if err != nil {
 		h.logger.Error("failed to create new user", "error", err)
 
 		var uqConstraintErr *customerrors.UniqueConstraintError
 		if errors.As(err, &uqConstraintErr) {
 			return c.JSON(http.StatusConflict, map[string]string{
-				"message": "failed to create new user, UNIQUE",
+				"message": "user with this email already exists",
 				"error":   err.Error(),
 			})
 		}
@@ -76,6 +86,6 @@ func (h *AuthHandler) HandleSignIn(c echo.Context) error {
 	h.logger.Info("signed in succesfully")
 	return c.JSON(http.StatusOK, map[string]any{
 		"message": "signed in successfuly",
-		"data": resDto,
+		"data":    resDto,
 	})
 }

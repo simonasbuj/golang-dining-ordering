@@ -1,5 +1,20 @@
 MIGRATIONS_DIR := ./internal/db/sql/migrations
 
+PATH := $(PATH):$(shell go env GOPATH)/bin
+export PATH
+
+# Load .env and .env.example
+ifneq (,$(wildcard .env))
+    include .env
+    export $(shell sed 's/=.*//' .env)
+endif
+
+ifneq (,$(wildcard .env.example))
+    include .env.example
+    export $(shell sed 's/=.*//' .env.example)
+endif
+
+
 # run app
 run-api:
 	go run cmd/main.go
@@ -29,6 +44,7 @@ create-migration:
 	migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
 
 up-migrations:
+	echo "$(DB_URI)"
 	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URI)" up
 
 down-migrations:

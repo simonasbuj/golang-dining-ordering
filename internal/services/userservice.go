@@ -8,7 +8,7 @@ import (
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context) (*db.User, error)
+	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (*db.User, error)
 	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.SignInResponseDto, error)
 }
 
@@ -22,13 +22,13 @@ func NewUserService(repo repository.UsersRepository) *userService {
 	}
 }
 
-func (s *userService) CreateUser(ctx context.Context) (*db.User, error) {
-	return s.repo.CreateUser(ctx)
+func (s *userService) CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (*db.User, error) {
+	return s.repo.CreateUser(ctx, req)
 }
 
 func (s *userService) SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.SignInResponseDto, error) {
 	res := &dto.SignInResponseDto{
-		Token: "some-fake-token",
+		Token:        "some-fake-token",
 		RefreshToken: "some-fake-refresh-token",
 	}
 	return res, nil
