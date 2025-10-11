@@ -58,6 +58,8 @@ paths:
           description: Bad request (missing or invalid fields)
         '409':
           description: Email already exists
+        '500':
+          description: Internal server error
 
   /auth/signin:
     post:
@@ -91,13 +93,21 @@ paths:
                   message:
                     type: string
                     example: "user authenticated successfully"
-                  token:
-                    type: string
-                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUgRG9lIiwiaWF0IjoxNjk2ODI4MDAwLCJleHAiOjE2OTY4MzE2MDB9.Dk5zjV7wQ8LZ1hD2vO_uF0E1B7iMC3n5zOe0rE0M2A8"
+                  data:
+                    type: object
+                    properties:
+                      token:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUgRG9lIiwiaWF0IjoxNjk2ODI4MDAwLCJleHAiOjE2OTY4MzE2MDB9.Dk5zjV7wQ8LZ1hD2vO_uF0E1B7iMC3n5zOe0rE0M2A8"
+                      refreshToken:
+                        type: string
+                        example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkphbmUgRG9lIiwiaWF0IjoxNjk2ODI4MDAwLCJleHAiOjE2OTY4MzE2MDB9.Dk5zjV7wQ8LZ1hD2vO_uF0E1B7iMC3n5zOe0rE0M2A8"
         '400':
           description: Bad request (missing fields)
         '401':
           description: Unauthorized (invalid credentials)
+        '500':
+          description: Internal server error
   
   /auth/refresh:
     post:
@@ -138,3 +148,5 @@ paths:
           description: Bad request (missing refresh token)
         '401':
           description: Unauthorized (expired or invalid refresh token)
+        '500':
+          description: Internal server error

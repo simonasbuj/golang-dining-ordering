@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"errors"
+	"golang-dining-ordering/internal/customerrors"
+	"golang-dining-ordering/internal/dto"
 	"golang-dining-ordering/internal/services"
 	"log/slog"
 	"net/http"
@@ -26,6 +29,15 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 	user, err := h.svc.CreateUser(c.Request().Context())
 	if err != nil {
 		h.logger.Error("failed to create new user", "error", err)
+
+		var uqConstraintErr *customerrors.UniqueConstraintError
+		if errors.As(err, &uqConstraintErr) {
+			return c.JSON(http.StatusConflict, map[string]string{
+				"message": "failed to create new user, UNIQUE",
+				"error":   err.Error(),
+			})
+		}
+
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": "failed to create new user",
 			"error":   err.Error(),
@@ -34,8 +46,36 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 
 	h.logger.Info("new user created", "user", user)
 	return c.JSON(http.StatusOK, map[string]string{
-		"message": "new user created",
+		"message": "new user registered successfuly",
 		"user":    user.ID,
 	})
+}
 
+func (h *AuthHandler) HandleSignIn(c echo.Context) error {
+	h.logger.Info("handling signin")
+
+	var reqDto dto.SignInRequestDto
+	err := dto.Validate(c, &reqDto)
+	if err != nil {
+		h.logger.Error("failed to sign in user, request body validation failed", "error", err)
+		return c.JSON(http.StatusBadRequest, map[string]string{
+			"message": "request body validation failed",
+			"error":   err.Error(),
+		})
+	}
+
+	resDto, err := h.svc.SignInUser(c.Request().Context(), &reqDto)
+	if err != nil {
+		h.logger.Error("failed to sign in user", "error", err)
+		return c.JSON(http.StatusInternalServerError, map[string]string{
+			"message": "failed to sign in user",
+			"error":   err.Error(),
+		})
+	}
+
+	h.logger.Info("signed in succesfully")
+	return c.JSON(http.StatusOK, map[string]any{
+		"message": "signed in successfuly",
+		"data": resDto,
+	})
 }

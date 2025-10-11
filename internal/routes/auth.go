@@ -11,4 +11,5 @@ func AddAuthRoutes(ctx context.Context, e *echo.Echo, h *handlers.AuthHandler) {
 	auth := e.Group("/api/v1/auth")
 
 	auth.POST("/signup", h.HandleSignUp)
+	auth.POST("/signin", h.HandleSignIn)
 }
