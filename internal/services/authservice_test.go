@@ -11,7 +11,7 @@ import (
 
 func TestCreateUser_Success(t *testing.T) {
 	mockRepo := testhelpers.NewMockUserRepository()
-	svc := NewUserService(mockRepo)
+	svc := NewAuthService("test-auth-secret", mockRepo)
 
 	reqDto := &dto.SignUpRequestDto{}
 

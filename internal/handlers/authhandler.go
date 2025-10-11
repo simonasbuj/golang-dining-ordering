@@ -14,10 +14,10 @@ import (
 
 type AuthHandler struct {
 	logger *slog.Logger
-	svc    services.UserService
+	svc    services.AuthService
 }
 
-func NewAuthHandler(logger *slog.Logger, svc services.UserService) *AuthHandler {
+func NewAuthHandler(logger *slog.Logger, svc services.AuthService) *AuthHandler {
 	return &AuthHandler{
 		logger: logger,
 		svc:    svc,

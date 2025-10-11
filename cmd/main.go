@@ -22,6 +22,7 @@ func main() {
 	// env vars
 	dbUri := env.GetString("DB_URI", "postgres://postgres:postgres@localhost:5432/dining?sslmode=disable")
 	httpPort := env.GetString("HTTP_PORT", ":42069")
+	authSecret := env.GetString("AUTH_SECRET", "my-auth-secret")
 
 	// logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
@@ -44,7 +45,7 @@ func main() {
 	e := echo.New()
 
 	usersRepo := repository.NewUserRepository(queries)
-	usersService := services.NewUserService(usersRepo)
+	usersService := services.NewAuthService(authSecret, usersRepo)
 
 	authHandler := handlers.NewAuthHandler(logger, usersService)
 
