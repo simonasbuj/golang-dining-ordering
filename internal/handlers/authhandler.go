@@ -1,8 +1,9 @@
 package handlers
 
 import (
+	"database/sql"
 	"errors"
-	"golang-dining-ordering/internal/customerrors"
+	ce "golang-dining-ordering/internal/customerrors"
 	"golang-dining-ordering/internal/dto"
 	"golang-dining-ordering/internal/services"
 	"log/slog"
@@ -40,7 +41,7 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 	if err != nil {
 		h.logger.Error("failed to create new user", "error", err)
 
-		var uqConstraintErr *customerrors.UniqueConstraintError
+		var uqConstraintErr *ce.UniqueConstraintError
 		if errors.As(err, &uqConstraintErr) {
 			return c.JSON(http.StatusConflict, map[string]string{
 				"message": "user with this email already exists",
@@ -76,6 +77,13 @@ func (h *AuthHandler) HandleSignIn(c echo.Context) error {
 	resDto, err := h.svc.SignInUser(c.Request().Context(), &reqDto)
 	if err != nil {
 		h.logger.Error("failed to sign in user", "error", err)
+		if errors.Is(err, sql.ErrNoRows) || errors.Is(err, ce.UnauthorizedError) {
+			return c.JSON(http.StatusUnauthorized, map[string]string{
+				"message": "failed to sign in user",
+				"error":   "unauthorized",
+			})
+		}
+
 		return c.JSON(http.StatusInternalServerError, map[string]string{
 			"message": "failed to sign in user",
 			"error":   err.Error(),

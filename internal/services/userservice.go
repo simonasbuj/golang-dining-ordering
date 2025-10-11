@@ -2,8 +2,8 @@ package services
 
 import (
 	"context"
-	"fmt"
 
+	ce "golang-dining-ordering/internal/customerrors"
 	"golang-dining-ordering/internal/dto"
 	"golang-dining-ordering/internal/repository"
 
@@ -40,13 +40,14 @@ func (s *userService) SignInUser(ctx context.Context, req *dto.SignInRequestDto)
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, err
+
 	}
 
 	ok := s.verifyPassword(req.Password, user.PasswordHash)
 	if !ok {
-		return nil, fmt.Errorf("wrong credentials")
+		return nil, ce.UnauthorizedError
 	}
-	
+
 	res := &dto.SignInResponseDto{
 		Token:        "some-fake-token",
 		RefreshToken: "some-fake-refresh-token",
@@ -55,11 +56,11 @@ func (s *userService) SignInUser(ctx context.Context, req *dto.SignInRequestDto)
 }
 
 func (s *userService) hashPassword(password string) (string, error) {
-    hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
-    if err != nil {
-        return "", err
-    }
-    return string(hash), nil
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return "", err
+	}
+	return string(hash), nil
 }
 
 func (s *userService) verifyPassword(plainPassword, hashedPassword string) bool {
