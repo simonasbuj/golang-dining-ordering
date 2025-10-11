@@ -48,7 +48,7 @@ go install github.com/golangci/golangci-lint/cmd/golangci-lint@latest
 
 Run:
 ```
-golangci-lint run --verbose --fix
-
 make lint
+
+make lint-fix
 ```

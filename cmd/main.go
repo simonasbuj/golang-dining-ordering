@@ -27,7 +27,6 @@ func main() {
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{}))
 
 	// database
-
 	conn, err := sql.Open("postgres", dbUri)
 	if err != nil {
 		logger.Error("failed to connect to database", "error", err)
@@ -38,7 +37,6 @@ func main() {
 
 	// dependency injection
 	e := echo.New()
-	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	usersRepo := repository.NewUserRepository(queries)
 	usersService := services.NewUserService(usersRepo)
@@ -46,6 +44,10 @@ func main() {
 	authHandler := handlers.NewAuthHandler(logger, usersService)
 
 	// register reoutes
+	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
+
+	routes.AddSwaggerRoutes(e)
+
 	routes.AddAuthRoutes(context.Background(), e, authHandler)
 
 	// start server
