@@ -3,6 +3,7 @@ package testhelpers
 import (
 	"context"
 	db "golang-dining-ordering/internal/db/generated"
+	"golang-dining-ordering/internal/dto"
 	"sync"
 )
 
@@ -19,15 +20,20 @@ func NewMockUserRepository() *MockUsersRepository {
 	}
 }
 
-func (r *MockUsersRepository) CreateUser(ctx context.Context) (*db.User, error) {
+func (r *MockUsersRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
 	r.mutex.Lock()
 	defer r.mutex.Unlock()
 
 	user := &db.User{
-		ID: "some-fake-uuid-1",
+		ID:           "some-fake-uuid-1",
+		Email:        req.Email,
+		PasswordHash: req.Password,
+		Name:         req.Name,
+		Lastname:     req.Lastname,
+		Role:         req.Role,
 	}
 
 	r.users = append(r.users, user)
 
-	return user, nil
+	return user.ID, nil
 }

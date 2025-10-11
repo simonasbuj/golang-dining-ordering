@@ -21,7 +21,7 @@ INSERT INTO users (
     role
 )
 VALUES (
-    $1, $2, $3, $4, $5, COALESCE($6, 'waiter')
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING
     id,
@@ -36,24 +36,24 @@ RETURNING
 `
 
 type CreateUserParams struct {
-	ID           string      `json:"id"`
-	Email        string      `json:"email"`
-	PasswordHash string      `json:"password_hash"`
-	Name         string      `json:"name"`
-	Lastname     string      `json:"lastname"`
-	Column6      interface{} `json:"column_6"`
+	ID           string `json:"id"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"password_hash"`
+	Name         string `json:"name"`
+	Lastname     string `json:"lastname"`
+	Role         string `json:"role"`
 }
 
 type CreateUserRow struct {
-	ID           string         `json:"id"`
-	Email        string         `json:"email"`
-	PasswordHash string         `json:"password_hash"`
-	Name         string         `json:"name"`
-	Lastname     string         `json:"lastname"`
-	Role         sql.NullString `json:"role"`
-	CreatedAt    time.Time      `json:"created_at"`
-	UpdatedAt    time.Time      `json:"updated_at"`
-	DeletedAt    sql.NullTime   `json:"deleted_at"`
+	ID           string       `json:"id"`
+	Email        string       `json:"email"`
+	PasswordHash string       `json:"password_hash"`
+	Name         string       `json:"name"`
+	Lastname     string       `json:"lastname"`
+	Role         string       `json:"role"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
@@ -63,7 +63,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 		arg.PasswordHash,
 		arg.Name,
 		arg.Lastname,
-		arg.Column6,
+		arg.Role,
 	)
 	var i CreateUserRow
 	err := row.Scan(

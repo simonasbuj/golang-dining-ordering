@@ -36,7 +36,7 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 		})
 	}
 
-	user, err := h.svc.CreateUser(c.Request().Context(), &reqDto)
+	newUserID, err := h.svc.CreateUser(c.Request().Context(), &reqDto)
 	if err != nil {
 		h.logger.Error("failed to create new user", "error", err)
 
@@ -54,10 +54,9 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 		})
 	}
 
-	h.logger.Info("new user created", "user", user)
+	h.logger.Info("new user created", "userID", newUserID)
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "new user registered successfuly",
-		"user":    user.ID,
 	})
 }
 

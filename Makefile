@@ -3,15 +3,15 @@ MIGRATIONS_DIR := ./internal/db/sql/migrations
 PATH := $(PATH):$(shell go env GOPATH)/bin
 export PATH
 
-# Load .env and .env.example
-ifneq (,$(wildcard .env))
-    include .env
-    export $(shell sed 's/=.*//' .env)
-endif
-
+# Load .env.example and .env
 ifneq (,$(wildcard .env.example))
     include .env.example
     export $(shell sed 's/=.*//' .env.example)
+endif
+
+ifneq (,$(wildcard .env))
+    include .env
+    export $(shell sed 's/=.*//' .env)
 endif
 
 

@@ -29,6 +29,11 @@ func main() {
 	// database
 	conn, err := sql.Open("postgres", dbUri)
 	if err != nil {
+		logger.Error("failed to prepare database connection", "error", err)
+		return
+	}
+
+	if err := conn.Ping(); err != nil {
 		logger.Error("failed to connect to database", "error", err)
 		return
 	}

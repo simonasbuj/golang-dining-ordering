@@ -8,7 +8,7 @@ INSERT INTO users (
     role
 )
 VALUES (
-    $1, $2, $3, $4, $5, COALESCE($6, 'waiter')
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING
     id,

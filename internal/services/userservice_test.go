@@ -14,9 +14,7 @@ func TestCreateUser_Success(t *testing.T) {
 	mockRepo := testhelpers.NewMockUserRepository()
 	svc := NewUserService(mockRepo)
 
-	reqDto := &dto.SignUpRequestDto{
-
-	}
+	reqDto := &dto.SignUpRequestDto{}
 
 	expectedUser := &db.User{
 		ID: "some-fake-uuid-1",

@@ -2,13 +2,13 @@ package services
 
 import (
 	"context"
-	db "golang-dining-ordering/internal/db/generated"
+
 	"golang-dining-ordering/internal/dto"
 	"golang-dining-ordering/internal/repository"
 )
 
 type UserService interface {
-	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (*db.User, error)
+	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.SignInResponseDto, error)
 }
 
@@ -22,7 +22,7 @@ func NewUserService(repo repository.UsersRepository) *userService {
 	}
 }
 
-func (s *userService) CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (*db.User, error) {
+func (s *userService) CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
 	return s.repo.CreateUser(ctx, req)
 }
 
