@@ -25,7 +25,7 @@ func (r *MockUsersRepository) CreateUser(ctx context.Context, req *dto.SignUpReq
 	defer r.mutex.Unlock()
 
 	user := &db.User{
-		ID:           "some-fake-uuid-1",
+		ID:           "some-fake-id-1",
 		Email:        req.Email,
 		PasswordHash: req.Password,
 		Name:         req.Name,
