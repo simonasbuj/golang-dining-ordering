@@ -7,6 +7,8 @@ package db
 
 import (
 	"context"
+	"database/sql"
+	"time"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -19,7 +21,7 @@ INSERT INTO users (
     role
 )
 VALUES (
-    $1, $2, $3, $4, $5, COALESCE($6, 'waiter')
+    $1, $2, $3, $4, $5, $6
 )
 RETURNING
     id,
@@ -34,23 +36,68 @@ RETURNING
 `
 
 type CreateUserParams struct {
-	ID           string      `json:"id"`
-	Email        string      `json:"email"`
-	PasswordHash string      `json:"password_hash"`
-	Name         string      `json:"name"`
-	Lastname     string      `json:"lastname"`
-	Column6      interface{} `json:"column_6"`
+	ID           string `json:"id"`
+	Email        string `json:"email"`
+	PasswordHash string `json:"password_hash"`
+	Name         string `json:"name"`
+	Lastname     string `json:"lastname"`
+	Role         string `json:"role"`
 }
 
-func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
+type CreateUserRow struct {
+	ID           string       `json:"id"`
+	Email        string       `json:"email"`
+	PasswordHash string       `json:"password_hash"`
+	Name         string       `json:"name"`
+	Lastname     string       `json:"lastname"`
+	Role         string       `json:"role"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
+func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateUserRow, error) {
 	row := q.db.QueryRowContext(ctx, createUser,
 		arg.ID,
 		arg.Email,
 		arg.PasswordHash,
 		arg.Name,
 		arg.Lastname,
-		arg.Column6,
+		arg.Role,
 	)
+	var i CreateUserRow
+	err := row.Scan(
+		&i.ID,
+		&i.Email,
+		&i.PasswordHash,
+		&i.Name,
+		&i.Lastname,
+		&i.Role,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getUserByEmail = `-- name: GetUserByEmail :one
+SELECT
+    id,
+    email,
+    password_hash,
+    name,
+    lastname,
+    role,
+    is_active,
+    created_at,
+    updated_at,
+    deleted_at
+FROM users
+WHERE email = $1
+`
+
+func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
+	row := q.db.QueryRowContext(ctx, getUserByEmail, email)
 	var i User
 	err := row.Scan(
 		&i.ID,
@@ -59,6 +106,7 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 		&i.Name,
 		&i.Lastname,
 		&i.Role,
+		&i.IsActive,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,

@@ -1,0 +1,23 @@
+package dto
+
+type SignUpRequestDto struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+	Name     string `json:"name" validate:"required"`
+	Lastname string `json:"lastname" validate:"required"`
+	Role     string `json:"role" validate:"required,oneof=manager waiter"`
+}
+
+type SignInRequestDto struct {
+	Email    string `json:"email" validate:"required,email"`
+	Password string `json:"password" validate:"required,min=8"`
+}
+
+type TokenResponseDto struct {
+	Token        string `json:"token"`
+	RefreshToken string `json:"refreshToken"`
+}
+
+type RefreshTokenRequestDto struct {
+	RefreshToken string `json:"refreshToken" validate:"required"`
+}
