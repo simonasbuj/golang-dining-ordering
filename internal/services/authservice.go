@@ -79,9 +79,12 @@ func (s *authService) RefreshToken(ctx context.Context, refreshToken string) (*d
 		return nil, err
 	}
 
-	userID := fmt.Sprintf("%v", claims["userID"])
-	email := fmt.Sprintf("%v", claims["email"])
-	role := fmt.Sprintf("%v", claims["role"])
+	userID, userOk := claims["userID"].(string)
+	email, emailOk := claims["email"].(string)
+	role, roleOk := claims["role"].(string)
+	if !userOk || !emailOk || !roleOk {
+		return nil, fmt.Errorf("refresh token is missing required claims")
+	}
 
 	newToken, err := s.generateToken(userID, email, role, 24*7)
 	if err != nil {

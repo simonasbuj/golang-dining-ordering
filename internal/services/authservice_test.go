@@ -91,7 +91,7 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 
 func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 	testCases := []struct {
-		name   string
+		desc   string
 		userID string
 		email  string
 		Role   string
@@ -104,10 +104,133 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 	for _, tc := range testCases {
 		tokenStr, err := suite.svc.generateToken(tc.userID, tc.email, tc.Role, 1)
 
-		suite.Error(err, fmt.Sprintf("expected error when %s", tc.name))
-		suite.Empty(tokenStr, fmt.Sprintf("token should be empty when %s", tc.name))
+		suite.Error(err, fmt.Sprintf("expected error when %s", tc.desc))
+		suite.Empty(tokenStr, fmt.Sprintf("token should be empty when %s", tc.desc))
 	}
 
+}
+
+func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
+	userID := "user-123"
+	email := "user-123@email.com"
+	role := "waiter"
+
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userID": userID,
+		"email":  email,
+		"role":   role,
+		"exp":    time.Now().Add(time.Hour).Unix(),
+	})
+	tokenStr, err := token.SignedString([]byte(suite.svc.secret))
+	suite.Require().NoError(err)
+
+	claims, err := suite.svc.verifyToken(tokenStr)
+
+	suite.NoError(err)
+	suite.NotNil(claims)
+	suite.Equal(userID, claims["userID"])
+	suite.Equal(email, claims["email"])
+	suite.Equal(role, claims["role"])
+}
+
+func (suite *AuthServiceTestSuite) TestVerifyToken_InvalidSecret() {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userID": "user-123",
+		"exp":    time.Now().Add(time.Hour).Unix(),
+	})
+	tokenStr, err := token.SignedString([]byte("different-secret"))
+	suite.Require().NoError(err)
+
+	claims, err := suite.svc.verifyToken(tokenStr)
+	suite.Error(err)
+	suite.Nil(claims)
+}
+
+func (suite *AuthServiceTestSuite) TestVerifyToken_ExpiredToken() {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"userID": "user-123",
+		"exp":    time.Now().Add(-time.Hour).Unix(),
+	})
+	tokenStr, err := token.SignedString([]byte(suite.svc.secret))
+	suite.Require().NoError(err)
+
+	claims, err := suite.svc.verifyToken(tokenStr)
+	suite.Error(err)
+	suite.Nil(claims)
+}
+
+func (suite *AuthServiceTestSuite) TestVerifyToken_MalformedToken() {
+	claims, err := suite.svc.verifyToken("this-is-not-a-jwt-not-even-close")
+	suite.Error(err)
+	suite.Nil(claims)
+}
+
+// hmm using other functions from svc like generateToken and verifyToken in test to make it easier to test?
+// but this seems wrong,,, like test should only test one func.
+func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
+	userID := "user-123"
+	email := "user-123@email.com"
+	role := "waiter"
+
+	validRefreshToken, err := suite.svc.generateToken(userID, email, role, 24)
+	suite.Require().NoError(err)
+
+	res, err := suite.svc.RefreshToken(context.Background(), validRefreshToken)
+
+	suite.NoError(err)
+	suite.NotNil(res)
+	suite.NotEmpty(res.Token)
+	suite.NotEmpty(res.RefreshToken)
+
+	for _, tokenStr := range []string{res.Token, res.RefreshToken} {
+		claims, err := suite.svc.verifyToken(tokenStr)
+		suite.NoError(err)
+		suite.Equal(userID, claims["userID"])
+		suite.Equal(email, claims["email"])
+		suite.Equal(role, claims["role"])
+	}
+}
+
+// func (suite *AuthServiceTestSuite) TestRefreshToken_Success2() {
+// 	mockSvc :=
+
+// 	userID := "user-123"
+// 	email := "user-123@email.com"
+// 	role := "waiter"
+// }
+
+func (suite *AuthServiceTestSuite) TestRefreshToken_InvalidToken() {
+	invalidToken := "this-is-definitely-not-a-valid-jwt-token"
+
+	res, err := suite.svc.RefreshToken(context.Background(), invalidToken)
+
+	suite.Error(err)
+	suite.Nil(res)
+}
+
+func (suite *AuthServiceTestSuite) TestRefreshToken_TokenMissingClaims() {
+	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
+		"exp": time.Now().Add(time.Hour).Unix(),
+	})
+	tokenStr, err := token.SignedString([]byte(suite.svc.secret))
+	suite.Require().NoError(err)
+
+	res, err := suite.svc.RefreshToken(context.Background(), tokenStr)
+	suite.Error(err)
+	suite.Nil(res)
+}
+
+func (suite *AuthServiceTestSuite) TestSignInUser_Success() {
+	req := &dto.SignInRequestDto{
+		Email:    "user@email.com",
+		Password: "password123",
+	}
+
+	res, err := suite.svc.SignInUser(context.Background(), req)
+	suite.NoError(err)
+	suite.NotNil(res)
+	suite.NotEmpty(res.Token)
+	suite.NotEmpty(res.RefreshToken)
 }
 
 func TestAuthServiceTestSuite(t *testing.T) {

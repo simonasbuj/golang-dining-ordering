@@ -40,7 +40,10 @@ func (r *MockUsersRepository) CreateUser(ctx context.Context, req *dto.SignUpReq
 
 func (r *MockUsersRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
 	user := &db.User{
-		PasswordHash: "hashed-pw",
+		ID:           "user-123",
+		Email:        "user@email.com",
+		PasswordHash: "$2a$10$00.4AZj71Ls5Riz43mlXUebnpdCuBWine0/v3KtSPpmM/Cb3IyURi", //hash for password123 with cost factor = 10
+		Role:         "waiter",
 	}
 
 	return user, nil
