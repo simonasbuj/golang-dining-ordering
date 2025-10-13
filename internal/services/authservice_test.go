@@ -165,8 +165,8 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_MalformedToken() {
 	suite.Nil(claims)
 }
 
-// hmm using other functions from svc like generateToken and verifyToken in test to make it easier to test?
-// but this seems wrong,,, like test should only test one func.
+// hmm using other functions from svc like generateToken and verifyToken as helpers in test to make it easier to test?
+// but this seems wrong,,, like test should only call one func.
 func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
 	userID := "user-123"
 	email := "user-123@email.com"
@@ -190,14 +190,6 @@ func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
 		suite.Equal(role, claims["role"])
 	}
 }
-
-// func (suite *AuthServiceTestSuite) TestRefreshToken_Success2() {
-// 	mockSvc :=
-
-// 	userID := "user-123"
-// 	email := "user-123@email.com"
-// 	role := "waiter"
-// }
 
 func (suite *AuthServiceTestSuite) TestRefreshToken_InvalidToken() {
 	invalidToken := "this-is-definitely-not-a-valid-jwt-token"
