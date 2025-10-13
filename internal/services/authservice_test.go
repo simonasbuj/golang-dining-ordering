@@ -9,7 +9,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestCreateUser_Success(t *testing.T) {
+func TestSignUpUser_Success(t *testing.T) {
 	mockRepo := testhelpers.NewMockUserRepository()
 	svc := NewAuthService("test-auth-secret", mockRepo)
 
@@ -17,7 +17,7 @@ func TestCreateUser_Success(t *testing.T) {
 
 	expectedUserID := "some-fake-uuid-1"
 
-	user, err := svc.CreateUser(context.Background(), reqDto)
+	user, err := svc.SignUpUser(context.Background(), reqDto)
 
 	assert.NoError(t, err)
 	assert.Equal(t, expectedUserID, user)

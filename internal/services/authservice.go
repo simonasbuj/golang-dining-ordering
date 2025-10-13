@@ -15,7 +15,7 @@ import (
 )
 
 type AuthService interface {
-	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
+	SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponseDto, error)
 }
@@ -32,7 +32,7 @@ func NewAuthService(secret string, repo repository.UsersRepository) *authService
 	}
 }
 
-func (s *authService) CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
+func (s *authService) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
 	hashedPassword, err := s.hashPassword(req.Password)
 	if err != nil {
 		return "", err

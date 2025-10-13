@@ -37,7 +37,7 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 		})
 	}
 
-	newUserID, err := h.svc.CreateUser(c.Request().Context(), &reqDto)
+	newUserID, err := h.svc.SignUpUser(c.Request().Context(), &reqDto)
 	if err != nil {
 		h.logger.Error("failed to create new user", "error", err)
 
