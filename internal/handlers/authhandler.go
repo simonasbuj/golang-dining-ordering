@@ -41,6 +41,7 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 	if err != nil {
 		h.logger.Error("failed to create new user", "error", err)
 
+		// using custom error to figure out which http status to send back to the client
 		var uqConstraintErr *ce.UniqueConstraintError
 		if errors.As(err, &uqConstraintErr) {
 			return c.JSON(http.StatusConflict, map[string]string{
