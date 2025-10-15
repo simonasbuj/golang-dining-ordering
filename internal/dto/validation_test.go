@@ -40,6 +40,7 @@ func TestValidate_Success(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 
 	var payload TestDto
+
 	err = dto.Validate(ctx, &payload)
 	require.NoError(t, err)
 	assert.Equal(t, inputDto, &payload)
@@ -57,6 +58,7 @@ func TestValidate_InvalidJsonBindError(t *testing.T) {
 	ctx := e.NewContext(req, rec)
 
 	var payload TestDto
+
 	err := dto.Validate(ctx, &payload)
 	assert.Error(t, err)
 }
@@ -93,10 +95,12 @@ func TestValidate_ValidationError(t *testing.T) {
 		ctx := e.NewContext(req, rec)
 
 		var payload TestDto
+
 		err = dto.Validate(ctx, &payload)
 		require.Error(t, err, "validation error should happen when %s", testCase.desc)
 
 		var ve validator.ValidationErrors
+
 		ok := errors.As(err, &ve)
 		assert.True(t, ok, "error should be a validator.ValidationErrors when %s", testCase.desc)
 	}

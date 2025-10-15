@@ -3,6 +3,7 @@ package repository
 
 import (
 	"context"
+	"fmt"
 	"golang-dining-ordering/internal/dto"
 	"strings"
 
@@ -24,7 +25,7 @@ type userRepository struct {
 
 // NewUserRepository creates a new userRepository with the given database connection.
 //
-//nolint:revive
+//nolint:revive // intended unexported type return
 func NewUserRepository(q *db.Queries) *userRepository {
 	return &userRepository{
 		q: q,
@@ -47,7 +48,7 @@ func (r *userRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestD
 			}
 		}
 
-		return "", err
+		return "", fmt.Errorf("failed to insert user to db: %w", err)
 	}
 
 	return userRow.ID, nil
@@ -56,7 +57,7 @@ func (r *userRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestD
 func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
 	user, err := r.q.GetUserByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch user from db: %w", err)
 	}
 
 	return &user, nil

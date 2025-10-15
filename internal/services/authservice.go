@@ -37,7 +37,7 @@ type authService struct {
 
 // NewAuthService creates a new instance of authService.
 //
-//nolint:revive
+//nolint:revive // intended unexported type return
 func NewAuthService(cfg *AuthConfig, repo repository.UsersRepository) *authService {
 	return &authService{
 		cfg:  cfg,
@@ -53,7 +53,12 @@ func (s *authService) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto)
 
 	req.Password = hashedPassword
 
-	return s.repo.CreateUser(ctx, req)
+	userID, err := s.repo.CreateUser(ctx, req)
+	if err != nil {
+		return "", fmt.Errorf("failed to sign up user: %w", err)
+	}
+
+	return userID, nil
 }
 
 func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error) {

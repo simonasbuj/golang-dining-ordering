@@ -94,7 +94,7 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 	suite.True(parsedToken.Valid)
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
-	suite.True(ok)
+	suite.Require().True(ok)
 
 	suite.Equal(TestUserID, claims["userID"])
 	suite.Equal(TestEmail, claims["email"])

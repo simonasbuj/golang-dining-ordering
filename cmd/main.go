@@ -49,7 +49,8 @@ func main() {
 		return
 	}
 
-	if err := conn.Ping(); err != nil {
+	err = conn.PingContext(context.Background())
+	if err != nil {
 		logger.Error("failed to connect to database", "error", err)
 
 		return
