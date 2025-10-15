@@ -8,14 +8,15 @@ import (
 	"net/http"
 	"os"
 
-	"github.com/labstack/echo/v4"
-	_ "github.com/lib/pq"
 	db "golang-dining-ordering/internal/db/generated"
 	"golang-dining-ordering/internal/handlers"
 	"golang-dining-ordering/internal/repository"
 	"golang-dining-ordering/internal/routes"
 	"golang-dining-ordering/internal/services"
 	"golang-dining-ordering/pkg/utils/env"
+
+	"github.com/labstack/echo/v4"
+	_ "github.com/lib/pq"
 )
 
 const (

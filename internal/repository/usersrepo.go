@@ -5,10 +5,11 @@ import (
 	"context"
 	"strings"
 
-	"github.com/google/uuid"
 	ce "golang-dining-ordering/internal/customerrors"
 	db "golang-dining-ordering/internal/db/generated"
 	"golang-dining-ordering/internal/dto"
+
+	"github.com/google/uuid"
 )
 
 // UsersRepository defines methods for accessing and managing user data.
@@ -22,7 +23,9 @@ type userRepository struct {
 }
 
 // NewUserRepository creates a new userRepository with the given database connection.
-func NewUserRepository(q *db.Queries) *userRepository { //nolint:revive
+//
+//nolint:revive
+func NewUserRepository(q *db.Queries) *userRepository {
 	return &userRepository{
 		q: q,
 	}

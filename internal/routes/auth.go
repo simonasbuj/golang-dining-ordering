@@ -4,8 +4,9 @@ package routes
 import (
 	"context"
 
-	"github.com/labstack/echo/v4"
 	"golang-dining-ordering/internal/handlers"
+
+	"github.com/labstack/echo/v4"
 )
 
 // AddAuthRoutes registers authentication-related HTTP routes.

@@ -1,5 +1,9 @@
 run:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+  timeout: 5m
   tests: true
+
 linters:
   enable-all: true
   disable:
@@ -7,6 +11,8 @@ linters:
     - varnamelen
     - testpackage
     - depguard
+    - gofumpt
+    - gci # not compatible with goimports. Both try to change in different way
   # enable:
   #   - govet
   #   - errcheck
@@ -26,3 +32,4 @@ linters:
   #   - copyloopvar
 issues:
   exclude-use-default: false
+

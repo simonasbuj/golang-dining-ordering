@@ -8,11 +8,12 @@ import (
 	"strings"
 	"testing"
 
+	"golang-dining-ordering/internal/dto"
+
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"golang-dining-ordering/internal/dto"
 )
 
 type TestDto struct {

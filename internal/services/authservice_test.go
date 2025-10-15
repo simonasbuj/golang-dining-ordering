@@ -5,10 +5,11 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang-jwt/jwt/v4"
-	"github.com/stretchr/testify/suite"
 	"golang-dining-ordering/internal/dto"
 	testhelpers "golang-dining-ordering/test/helpers/repository"
+
+	"github.com/golang-jwt/jwt/v4"
+	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 )
 

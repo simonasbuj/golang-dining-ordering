@@ -7,10 +7,11 @@ import (
 	"log/slog"
 	"net/http"
 
-	"github.com/labstack/echo/v4"
 	ce "golang-dining-ordering/internal/customerrors"
 	"golang-dining-ordering/internal/dto"
 	"golang-dining-ordering/internal/services"
+
+	"github.com/labstack/echo/v4"
 )
 
 // AuthHandler handles authentication-related HTTP requests.
