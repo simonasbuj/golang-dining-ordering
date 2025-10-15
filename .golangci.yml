@@ -8,18 +8,13 @@ linters:
     - nolintlint
     - testpackage
     - varnamelen
-    - wrapcheck
   exclusions:
+    rules:
+    - path: internal/handlers # ignore because 'return c.JSON( is echo convention and wrapcheck hates it
+      linters:
+        - wrapcheck
+      text: ".*"
     generated: lax
-    presets:
-      - comments
-      - common-false-positives
-      - legacy
-      - std-error-handling
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
 formatters:
   enable:
     - gofmt
@@ -27,7 +22,3 @@ formatters:
     - goimports
   exclusions:
     generated: lax
-    paths:
-      - third_party$
-      - builtin$
-      - examples$
