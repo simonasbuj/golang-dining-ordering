@@ -1,15 +1,17 @@
+// Package repository provides data access implementations for interacting with databases
 package repository
 
 import (
 	"context"
-	ce "golang-dining-ordering/internal/customerrors"
-	db "golang-dining-ordering/internal/db/generated"
-	"golang-dining-ordering/internal/dto"
 	"strings"
 
 	"github.com/google/uuid"
+	ce "golang-dining-ordering/internal/customerrors"
+	db "golang-dining-ordering/internal/db/generated"
+	"golang-dining-ordering/internal/dto"
 )
 
+// UsersRepository defines methods for accessing and managing user data.
 type UsersRepository interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*db.User, error)
@@ -19,7 +21,8 @@ type userRepository struct {
 	q *db.Queries
 }
 
-func NewUserRepository(q *db.Queries) *userRepository {
+// NewUserRepository creates a new userRepository with the given database connection.
+func NewUserRepository(q *db.Queries) *userRepository { //nolint:revive
 	return &userRepository{
 		q: q,
 	}

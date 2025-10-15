@@ -1,13 +1,28 @@
 run:
   tests: true
 linters:
-  enable:
-    - govet
-    - errcheck
-    - staticcheck
-    - gosimple
-    - unused
-    - gofmt
-    - goimports
+  enable-all: true
+  disable:
+    - wrapcheck
+    - varnamelen
+    - testpackage
+    - depguard
+  # enable:
+  #   - govet
+  #   - errcheck
+  #   - staticcheck
+  #   - gosimple
+  #   - unused
+  #   - gofmt
+  #   - goimports
+  #   - ineffassign
+  #   - misspell
+  #   - unparam
+  #   - stylecheck
+  #   - gocritic
+  #   - revive
+  #   - gosec
+  #   - prealloc
+  #   - copyloopvar
 issues:
   exclude-use-default: false
