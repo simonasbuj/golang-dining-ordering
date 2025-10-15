@@ -46,17 +46,12 @@ func NewAuthService(cfg *AuthConfig, repo repository.UsersRepository) *authServi
 func (s *authService) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
 	hashedPassword, err := s.hashPassword(req.Password)
 	if err != nil {
-		return "", fmt.Errorf("failed to sign up user: %w", err)
+		return "", err
 	}
 
 	req.Password = hashedPassword
 
-	userID, err := s.repo.CreateUser(ctx, req)
-	if err != nil {
-		return "", fmt.Errorf("failed to sign up user: %w", err)
-	}
-
-	return userID, nil
+	return s.repo.CreateUser(ctx, req)
 }
 
 func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error) {

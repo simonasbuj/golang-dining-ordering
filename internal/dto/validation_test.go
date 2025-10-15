@@ -2,6 +2,7 @@ package dto_test
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -94,7 +95,9 @@ func TestValidate_ValidationError(t *testing.T) {
 		var payload TestDto
 		err = dto.Validate(ctx, &payload)
 		require.Error(t, err, "validation error should happen when %s", testCase.desc)
-		_, ok := err.(validator.ValidationErrors)
+
+		var ve validator.ValidationErrors
+		ok := errors.As(err, &ve)
 		assert.True(t, ok, "error should be a validator.ValidationErrors when %s", testCase.desc)
 	}
 }
