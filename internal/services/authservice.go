@@ -10,9 +10,9 @@ import (
 
 	ce "golang-dining-ordering/internal/customerrors"
 
-	"golang.org/x/crypto/bcrypt"
-
 	"github.com/golang-jwt/jwt/v4"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 // AuthService defines authentication-related operations for users.

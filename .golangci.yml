@@ -17,7 +17,7 @@ linters:
 formatters:
   default: all
   enable:
-    # - gci not compatible with goimports and gofumpt?
+    # - gci # not compatible with goimports and gofumpt, tries to change imports in different way.
     - gofmt
     - gofumpt
     - goimports
