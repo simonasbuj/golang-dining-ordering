@@ -32,7 +32,10 @@ func NewUserRepository(q *db.Queries) *userRepository {
 	}
 }
 
-func (r *userRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
+func (r *userRepository) CreateUser(
+	ctx context.Context,
+	req *dto.SignUpRequestDto,
+) (string, error) {
 	userRow, err := r.q.CreateUser(ctx, db.CreateUserParams{
 		ID:           uuid.New().String(),
 		Email:        req.Email,

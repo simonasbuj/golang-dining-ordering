@@ -20,7 +20,9 @@ var ErrInvalidToken = errors.New("invalid token")
 var ErrUnexpectedSigninMethod = errors.New("unexpected signing method")
 
 // ErrInvalidTokenData is returned when required values are missing to create jwt token.
-var ErrInvalidTokenData = errors.New("generating token failed because one of rquired fields are invalid")
+var ErrInvalidTokenData = errors.New(
+	"generating token failed because one of rquired fields are invalid",
+)
 
 // ErrMissingClaims is returned when jwt token is missing required claims.
 var ErrMissingClaims = errors.New("refresh token is missing required claims")

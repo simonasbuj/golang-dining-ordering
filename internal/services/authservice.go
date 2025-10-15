@@ -61,7 +61,10 @@ func (s *authService) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto)
 	return userID, nil
 }
 
-func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error) {
+func (s *authService) SignInUser(
+	ctx context.Context,
+	req *dto.SignInRequestDto,
+) (*dto.TokenResponseDto, error) {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign in user: %w", err)
@@ -77,7 +80,12 @@ func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto)
 		return nil, fmt.Errorf("failed to sign in user: %w", err)
 	}
 
-	refreshToken, err := s.generateToken(user.ID, user.Email, user.Role, s.cfg.RefreshTokenValidHours)
+	refreshToken, err := s.generateToken(
+		user.ID,
+		user.Email,
+		user.Role,
+		s.cfg.RefreshTokenValidHours,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign in user: %w", err)
 	}
@@ -90,7 +98,10 @@ func (s *authService) SignInUser(ctx context.Context, req *dto.SignInRequestDto)
 	return res, nil
 }
 
-func (s *authService) RefreshToken(_ context.Context, refreshToken string) (*dto.TokenResponseDto, error) {
+func (s *authService) RefreshToken(
+	_ context.Context,
+	refreshToken string,
+) (*dto.TokenResponseDto, error) {
 	claims, err := s.verifyToken(refreshToken)
 	if err != nil {
 		return nil, err
@@ -137,9 +148,18 @@ func (s *authService) verifyPassword(plainPassword, hashedPassword string) bool 
 	return err == nil
 }
 
-func (s *authService) generateToken(userID, email, role string, validDurationHours int) (string, error) {
+func (s *authService) generateToken(
+	userID, email, role string,
+	validDurationHours int,
+) (string, error) {
 	if userID == "" || email == "" || role == "" {
-		return "", fmt.Errorf("%w: userID=%s, email=%s, role=%s", ce.ErrInvalidTokenData, userID, email, role)
+		return "", fmt.Errorf(
+			"%w: userID=%s, email=%s, role=%s",
+			ce.ErrInvalidTokenData,
+			userID,
+			email,
+			role,
+		)
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{

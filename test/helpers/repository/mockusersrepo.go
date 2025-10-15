@@ -25,7 +25,10 @@ func NewMockUserRepository() *MockUsersRepository {
 }
 
 // CreateUser returns a mock user for testing purposes.
-func (r *MockUsersRepository) CreateUser(_ context.Context, req *dto.SignUpRequestDto) (string, error) {
+func (r *MockUsersRepository) CreateUser(
+	_ context.Context,
+	req *dto.SignUpRequestDto,
+) (string, error) {
 	r.Lock()
 	defer r.Unlock()
 

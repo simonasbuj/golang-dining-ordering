@@ -28,7 +28,10 @@ const (
 
 func main() {
 	// env vars
-	dbURI := env.GetString("DB_URI", "postgres://postgres:postgres@localhost:5432/dining?sslmode=disable")
+	dbURI := env.GetString(
+		"DB_URI",
+		"postgres://postgres:postgres@localhost:5432/dining?sslmode=disable",
+	)
 	httpPort := env.GetString("HTTP_PORT", ":42069")
 	authSecret := env.GetString("AUTH_SECRET", "my-auth-secret")
 	tokenValidHours := env.GetInt("TOKEN_VALID_HOURS", DefaultTokenValidHours)
