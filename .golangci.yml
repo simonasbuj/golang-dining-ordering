@@ -11,7 +11,7 @@ linters:
     - varnamelen
     - testpackage
     - depguard
-    - gofumpt
+    # - gofumpt
     - gci # not compatible with goimports. Both try to change in different way
   # enable:
   #   - govet

@@ -4,16 +4,16 @@ package main
 import (
 	"context"
 	"database/sql"
-	"log/slog"
-	"net/http"
-	"os"
-
-	db "golang-dining-ordering/internal/db/generated"
 	"golang-dining-ordering/internal/handlers"
 	"golang-dining-ordering/internal/repository"
 	"golang-dining-ordering/internal/routes"
 	"golang-dining-ordering/internal/services"
 	"golang-dining-ordering/pkg/utils/env"
+	"log/slog"
+	"net/http"
+	"os"
+
+	db "golang-dining-ordering/internal/db/generated"
 
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"

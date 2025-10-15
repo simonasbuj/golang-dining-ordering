@@ -2,10 +2,10 @@ package services
 
 import (
 	"context"
+	"golang-dining-ordering/internal/dto"
 	"testing"
 	"time"
 
-	"golang-dining-ordering/internal/dto"
 	testhelpers "golang-dining-ordering/test/helpers/repository"
 
 	"github.com/golang-jwt/jwt/v4"

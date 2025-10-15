@@ -3,12 +3,11 @@ package dto_test
 import (
 	"encoding/json"
 	"errors"
+	"golang-dining-ordering/internal/dto"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
-
-	"golang-dining-ordering/internal/dto"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/labstack/echo/v4"

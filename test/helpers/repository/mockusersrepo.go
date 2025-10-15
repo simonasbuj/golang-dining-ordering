@@ -3,10 +3,10 @@ package testhelpers
 
 import (
 	"context"
+	"golang-dining-ordering/internal/dto"
 	"sync"
 
 	db "golang-dining-ordering/internal/db/generated"
-	"golang-dining-ordering/internal/dto"
 )
 
 // MockUsersRepository is a mock implementation of repository.UsersRepository.

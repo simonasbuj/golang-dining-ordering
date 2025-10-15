@@ -3,7 +3,6 @@ package routes
 
 import (
 	"context"
-
 	"golang-dining-ordering/internal/handlers"
 
 	"github.com/labstack/echo/v4"

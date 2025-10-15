@@ -4,12 +4,12 @@ package handlers
 import (
 	"database/sql"
 	"errors"
+	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/internal/services"
 	"log/slog"
 	"net/http"
 
 	ce "golang-dining-ordering/internal/customerrors"
-	"golang-dining-ordering/internal/dto"
-	"golang-dining-ordering/internal/services"
 
 	"github.com/labstack/echo/v4"
 )
