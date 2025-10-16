@@ -1,3 +1,4 @@
+// Package routes defines HTTP route handlers and route registration for the application.
 package routes
 
 import (
@@ -7,7 +8,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-func AddAuthRoutes(ctx context.Context, e *echo.Echo, h *handlers.AuthHandler) {
+// AddAuthRoutes registers authentication-related HTTP routes.
+func AddAuthRoutes(_ context.Context, e *echo.Echo, h *handlers.AuthHandler) {
 	auth := e.Group("/api/v1/auth")
 
 	auth.POST("/signup", h.HandleSignUp)

@@ -1,15 +1,19 @@
+// Package repository provides data access implementations for interacting with databases
 package repository
 
 import (
 	"context"
-	ce "golang-dining-ordering/internal/customerrors"
-	db "golang-dining-ordering/internal/db/generated"
+	"fmt"
 	"golang-dining-ordering/internal/dto"
 	"strings"
+
+	ce "golang-dining-ordering/internal/customerrors"
+	db "golang-dining-ordering/internal/db/generated"
 
 	"github.com/google/uuid"
 )
 
+// UsersRepository defines methods for accessing and managing user data.
 type UsersRepository interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*db.User, error)
@@ -19,13 +23,19 @@ type userRepository struct {
 	q *db.Queries
 }
 
+// NewUserRepository creates a new userRepository with the given database connection.
+//
+//nolint:revive // intended unexported type return
 func NewUserRepository(q *db.Queries) *userRepository {
 	return &userRepository{
 		q: q,
 	}
 }
 
-func (r *userRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
+func (r *userRepository) CreateUser(
+	ctx context.Context,
+	req *dto.SignUpRequestDto,
+) (string, error) {
 	userRow, err := r.q.CreateUser(ctx, db.CreateUserParams{
 		ID:           uuid.New().String(),
 		Email:        req.Email,
@@ -41,7 +51,7 @@ func (r *userRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestD
 			}
 		}
 
-		return "", err
+		return "", fmt.Errorf("failed to insert user to db: %w", err)
 	}
 
 	return userRow.ID, nil
@@ -50,7 +60,7 @@ func (r *userRepository) CreateUser(ctx context.Context, req *dto.SignUpRequestD
 func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
 	user, err := r.q.GetUserByEmail(ctx, email)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch user from db: %w", err)
 	}
 
 	return &user, nil
