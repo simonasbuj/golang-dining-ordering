@@ -1,9 +1,9 @@
-package dto_test
+package validation_test
 
 import (
 	"encoding/json"
 	"errors"
-	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/pkg/utils/validation"
 	"net/http"
 	"net/http/httptest"
 	"strings"
@@ -41,7 +41,7 @@ func TestValidate_Success(t *testing.T) {
 
 	var payload TestDto
 
-	err = dto.Validate(ctx, &payload)
+	err = validation.ValidateDto(ctx, &payload)
 	require.NoError(t, err)
 	assert.Equal(t, inputDto, &payload)
 }
@@ -59,7 +59,7 @@ func TestValidate_InvalidJsonBindError(t *testing.T) {
 
 	var payload TestDto
 
-	err := dto.Validate(ctx, &payload)
+	err := validation.ValidateDto(ctx, &payload)
 	assert.Error(t, err)
 }
 
@@ -96,7 +96,7 @@ func TestValidate_ValidationError(t *testing.T) {
 
 		var payload TestDto
 
-		err = dto.Validate(ctx, &payload)
+		err = validation.ValidateDto(ctx, &payload)
 		require.Error(t, err, "validation error should happen when %s", testCase.desc)
 
 		var ve validator.ValidationErrors

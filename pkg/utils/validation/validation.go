@@ -1,4 +1,6 @@
-package dto
+// Package validation provides helper functions for binding and validating
+// request data transfer objects (DTOs) in Echo HTTP handlers.
+package validation
 
 import (
 	"fmt"
@@ -7,8 +9,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// Validate binds and validates the given DTO from the request context.
-func Validate(ctx echo.Context, dto interface{}) error {
+// ValidateDto binds and validates the given DTO from the request context.
+func ValidateDto(ctx echo.Context, dto interface{}) error {
 	err := ctx.Bind(dto)
 	if err != nil {
 		return fmt.Errorf("dto binding failed: %w", err)

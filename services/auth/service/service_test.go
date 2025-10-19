@@ -1,12 +1,12 @@
-package services
+package service
 
 import (
 	"context"
-	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/services/auth/dto"
 	"testing"
 	"time"
 
-	testhelpers "golang-dining-ordering/test/helpers/repository"
+	testhelpers "golang-dining-ordering/services/auth/test/helpers/repository"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/suite"
@@ -25,13 +25,13 @@ const (
 type AuthServiceTestSuite struct {
 	suite.Suite
 
-	svc      *authService
+	svc      *service
 	mockRepo *testhelpers.MockUsersRepository
 }
 
 func (suite *AuthServiceTestSuite) SetupSuite() {
 	suite.mockRepo = testhelpers.NewMockUserRepository()
-	cfg := &AuthConfig{
+	cfg := &Config{
 		Secret:                 "test-auth-secret",
 		TokenValidHours:        168,
 		RefreshTokenValidHours: 336,

@@ -1,51 +1,51 @@
-// Package services implements the core business logic of the application, such as authentication and user management.
-package services
+// Package service implements the core business logic of the application, such as authentication and user management.
+package service
 
 import (
 	"context"
 	"fmt"
-	"golang-dining-ordering/internal/dto"
-	"golang-dining-ordering/internal/repository"
+	"golang-dining-ordering/services/auth/dto"
+	"golang-dining-ordering/services/auth/repository"
 	"time"
 
-	ce "golang-dining-ordering/internal/customerrors"
+	ce "golang-dining-ordering/services/auth/customerrors"
 
 	"github.com/golang-jwt/jwt/v4"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
-// AuthService defines authentication-related operations for users.
-type AuthService interface {
+// Service defines authentication-related operations for users.
+type Service interface {
 	SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponseDto, error)
 }
 
-// AuthConfig holds configuration values for authentication, such as secret keys
+// Config holds configuration values for authentication, such as secret keys
 // and token expiration durations.
-type AuthConfig struct {
+type Config struct {
 	Secret                 string
 	TokenValidHours        int
 	RefreshTokenValidHours int
 }
 
-type authService struct {
-	cfg  *AuthConfig
+type service struct {
+	cfg  *Config
 	repo repository.UsersRepository
 }
 
 // NewAuthService creates a new instance of authService.
 //
 //nolint:revive // intended unexported type return
-func NewAuthService(cfg *AuthConfig, repo repository.UsersRepository) *authService {
-	return &authService{
+func NewAuthService(cfg *Config, repo repository.UsersRepository) *service {
+	return &service{
 		cfg:  cfg,
 		repo: repo,
 	}
 }
 
-func (s *authService) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
+func (s *service) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
 	hashedPassword, err := s.hashPassword(req.Password)
 	if err != nil {
 		return "", err
@@ -61,7 +61,7 @@ func (s *authService) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto)
 	return userID, nil
 }
 
-func (s *authService) SignInUser(
+func (s *service) SignInUser(
 	ctx context.Context,
 	req *dto.SignInRequestDto,
 ) (*dto.TokenResponseDto, error) {
@@ -98,7 +98,7 @@ func (s *authService) SignInUser(
 	return res, nil
 }
 
-func (s *authService) RefreshToken(
+func (s *service) RefreshToken(
 	_ context.Context,
 	refreshToken string,
 ) (*dto.TokenResponseDto, error) {
@@ -133,7 +133,7 @@ func (s *authService) RefreshToken(
 	return res, nil
 }
 
-func (s *authService) hashPassword(password string) (string, error) {
+func (s *service) hashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return "", fmt.Errorf("failed to generate hashed passoword: %w", err)
@@ -142,13 +142,13 @@ func (s *authService) hashPassword(password string) (string, error) {
 	return string(hash), nil
 }
 
-func (s *authService) verifyPassword(plainPassword, hashedPassword string) bool {
+func (s *service) verifyPassword(plainPassword, hashedPassword string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(hashedPassword), []byte(plainPassword))
 
 	return err == nil
 }
 
-func (s *authService) generateToken(
+func (s *service) generateToken(
 	userID, email, role string,
 	validDurationHours int,
 ) (string, error) {
@@ -177,7 +177,7 @@ func (s *authService) generateToken(
 	return tokenStr, nil
 }
 
-func (s *authService) verifyToken(tokenStr string) (jwt.MapClaims, error) {
+func (s *service) verifyToken(tokenStr string) (jwt.MapClaims, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ce.ErrUnexpectedSigninMethod

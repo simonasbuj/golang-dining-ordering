@@ -9,7 +9,7 @@ linters:
     - varnamelen # 'e' and 'c' are echo convetions for app and ctx var names, but this lint keeps complaining
   exclusions:
     rules:
-    - path: internal/handlers # ignore for wrapcheck because 'return c.JSON( is echo convention and wrapcheck hates it
+    - path: services/auth/handler # ignore for wrapcheck because 'return c.JSON( is echo convention and wrapcheck hates it
       linters:
         - wrapcheck
       text: ".*"
