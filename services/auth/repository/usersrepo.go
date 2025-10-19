@@ -7,8 +7,8 @@ import (
 	"golang-dining-ordering/services/auth/dto"
 	"strings"
 
-	db "golang-dining-ordering/services/auth/db/generated"
 	ce "golang-dining-ordering/services/auth/customerrors"
+	db "golang-dining-ordering/services/auth/db/generated"
 
 	"github.com/google/uuid"
 )
