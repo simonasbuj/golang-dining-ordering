@@ -2,7 +2,7 @@ package service
 
 import (
 	"context"
-	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/services/auth/dto"
 	"testing"
 	"time"
 

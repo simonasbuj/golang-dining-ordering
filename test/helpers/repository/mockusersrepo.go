@@ -3,7 +3,7 @@ package testhelpers
 
 import (
 	"context"
-	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/services/auth/dto"
 	"sync"
 
 	db "golang-dining-ordering/internal/db/generated"

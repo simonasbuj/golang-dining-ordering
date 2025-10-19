@@ -4,12 +4,13 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/pkg/utils/validation"
+	"golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/auth/service"
 	"log/slog"
 	"net/http"
 
-	ce "golang-dining-ordering/internal/customerrors"
+	ce "golang-dining-ordering/services/auth/customerrors"
 
 	"github.com/labstack/echo/v4"
 )
@@ -34,7 +35,7 @@ func (h *Handler) HandleSignUp(c echo.Context) error {
 
 	var reqDto dto.SignUpRequestDto
 
-	err := dto.Validate(c, &reqDto)
+	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
 		h.logger.Error("failed to sign up user, request body validation failed", "error", err)
 
@@ -76,7 +77,7 @@ func (h *Handler) HandleSignIn(c echo.Context) error {
 
 	var reqDto dto.SignInRequestDto
 
-	err := dto.Validate(c, &reqDto)
+	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
 		h.logger.Error("failed to sign in user, request body validation failed", "error", err)
 
@@ -117,7 +118,7 @@ func (h *Handler) HandleRefreshToken(c echo.Context) error {
 
 	var reqDto dto.RefreshTokenRequestDto
 
-	err := dto.Validate(c, &reqDto)
+	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
 		h.logger.Error("failed to refresh token, request body validation failed", "error", err)
 

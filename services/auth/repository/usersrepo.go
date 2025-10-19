@@ -4,11 +4,11 @@ package repository
 import (
 	"context"
 	"fmt"
-	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/services/auth/dto"
 	"strings"
 
-	ce "golang-dining-ordering/internal/customerrors"
 	db "golang-dining-ordering/internal/db/generated"
+	ce "golang-dining-ordering/services/auth/customerrors"
 
 	"github.com/google/uuid"
 )

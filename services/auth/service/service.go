@@ -4,11 +4,11 @@ package service
 import (
 	"context"
 	"fmt"
-	"golang-dining-ordering/internal/dto"
+	"golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/auth/repository"
 	"time"
 
-	ce "golang-dining-ordering/internal/customerrors"
+	ce "golang-dining-ordering/services/auth/customerrors"
 
 	"github.com/golang-jwt/jwt/v4"
 
