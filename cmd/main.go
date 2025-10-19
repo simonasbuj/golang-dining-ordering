@@ -14,7 +14,7 @@ import (
 	"net/http"
 	"os"
 
-	db "golang-dining-ordering/internal/db/generated"
+	authDB "golang-dining-ordering/services/auth/db/generated"
 
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
@@ -60,7 +60,7 @@ func main() {
 		return
 	}
 
-	queries := db.New(conn)
+	queries := authDB.New(conn)
 
 	// dependency injection
 	e := echo.New()

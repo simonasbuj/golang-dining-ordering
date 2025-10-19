@@ -6,7 +6,7 @@ import (
 	"testing"
 	"time"
 
-	testhelpers "golang-dining-ordering/test/helpers/repository"
+	testhelpers "golang-dining-ordering/services/auth/test/helpers/repository"
 
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/suite"
