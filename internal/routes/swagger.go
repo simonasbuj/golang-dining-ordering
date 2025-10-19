@@ -1,3 +1,4 @@
+// Package routes defines HTTP route handlers and route registration for the application.
 package routes
 
 import (

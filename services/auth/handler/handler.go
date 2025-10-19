@@ -1,11 +1,11 @@
-// Package handlers defines HTTP handlers for application endpoints.
-package handlers
+// Package handler defines HTTP handlers for application endpoints.
+package handler
 
 import (
 	"database/sql"
 	"errors"
 	"golang-dining-ordering/internal/dto"
-	"golang-dining-ordering/internal/services"
+	"golang-dining-ordering/services/auth/service"
 	"log/slog"
 	"net/http"
 
@@ -14,22 +14,22 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-// AuthHandler handles authentication-related HTTP requests.
-type AuthHandler struct {
+// Handler handles authentication-related HTTP requests.
+type Handler struct {
 	logger *slog.Logger
-	svc    services.AuthService
+	svc    service.Service
 }
 
 // NewAuthHandler creates a new AuthHandler for handling authentication requests.
-func NewAuthHandler(logger *slog.Logger, svc services.AuthService) *AuthHandler {
-	return &AuthHandler{
+func NewAuthHandler(logger *slog.Logger, svc service.Service) *Handler {
+	return &Handler{
 		logger: logger,
 		svc:    svc,
 	}
 }
 
 // HandleSignUp handles requests to sign up user.
-func (h *AuthHandler) HandleSignUp(c echo.Context) error {
+func (h *Handler) HandleSignUp(c echo.Context) error {
 	h.logger.Info("handling signup")
 
 	var reqDto dto.SignUpRequestDto
@@ -71,7 +71,7 @@ func (h *AuthHandler) HandleSignUp(c echo.Context) error {
 }
 
 // HandleSignIn handles requests to sign in user.
-func (h *AuthHandler) HandleSignIn(c echo.Context) error {
+func (h *Handler) HandleSignIn(c echo.Context) error {
 	h.logger.Info("handling signin")
 
 	var reqDto dto.SignInRequestDto
@@ -112,7 +112,7 @@ func (h *AuthHandler) HandleSignIn(c echo.Context) error {
 }
 
 // HandleRefreshToken handles requests to refresh an authentication token.
-func (h *AuthHandler) HandleRefreshToken(c echo.Context) error {
+func (h *Handler) HandleRefreshToken(c echo.Context) error {
 	h.logger.Info("handling refresh token")
 
 	var reqDto dto.RefreshTokenRequestDto

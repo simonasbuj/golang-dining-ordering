@@ -4,11 +4,12 @@ package main
 import (
 	"context"
 	"database/sql"
-	"golang-dining-ordering/internal/handlers"
-	"golang-dining-ordering/internal/repository"
 	"golang-dining-ordering/internal/routes"
-	"golang-dining-ordering/internal/services"
 	"golang-dining-ordering/pkg/utils/env"
+	authHandler "golang-dining-ordering/services/auth/handler"
+	authRepo "golang-dining-ordering/services/auth/repository"
+	authRoutes "golang-dining-ordering/services/auth/routes"
+	authService "golang-dining-ordering/services/auth/service"
 	"log/slog"
 	"net/http"
 	"os"
@@ -64,22 +65,22 @@ func main() {
 	// dependency injection
 	e := echo.New()
 
-	usersRepo := repository.NewUserRepository(queries)
-	authConfig := &services.AuthConfig{
+	usersRepo := authRepo.NewUserRepository(queries)
+	authConfig := &authService.Config{
 		Secret:                 authSecret,
 		TokenValidHours:        tokenValidHours,
 		RefreshTokenValidHours: refreshTokenValidHours,
 	}
-	authService := services.NewAuthService(authConfig, usersRepo)
+	authService := authService.NewAuthService(authConfig, usersRepo)
 
-	authHandler := handlers.NewAuthHandler(logger, authService)
+	authHandler := authHandler.NewAuthHandler(logger, authService)
 
 	// register reoutes
 	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	routes.AddSwaggerRoutes(e)
 
-	routes.AddAuthRoutes(context.Background(), e, authHandler)
+	authRoutes.AddRoutes(context.Background(), e, authHandler)
 
 	// start server
 	logger.Info("starting server on port " + httpPort)

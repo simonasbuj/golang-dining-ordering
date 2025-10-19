@@ -1,4 +1,4 @@
-package services
+package service
 
 import (
 	"context"
@@ -25,13 +25,13 @@ const (
 type AuthServiceTestSuite struct {
 	suite.Suite
 
-	svc      *authService
+	svc      *service
 	mockRepo *testhelpers.MockUsersRepository
 }
 
 func (suite *AuthServiceTestSuite) SetupSuite() {
 	suite.mockRepo = testhelpers.NewMockUserRepository()
-	cfg := &AuthConfig{
+	cfg := &Config{
 		Secret:                 "test-auth-secret",
 		TokenValidHours:        168,
 		RefreshTokenValidHours: 336,
