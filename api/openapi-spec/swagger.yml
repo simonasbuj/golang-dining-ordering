@@ -16,6 +16,8 @@ tags:
     description: Endpoints for restaurant tables management
   - name: Management - Menus
     description: Endpoints for restaurant menu management
+  - name: Management - Waiters
+    description: Endpoints for restaurant waiters management
 
 components:
   securitySchemes:
@@ -1103,5 +1105,245 @@ paths:
           description: Forbidden (user is not the restaurant owner)
         '404':
           description: Not found (restaurant, category, or item does not exist)
+        '500':
+          description: Internal server error
+
+  /waiters:
+    get:
+      tags:
+        - Management - Waiters
+      summary: Find waiter by email
+      description: Retrieves waiters filtered by email. The waiter may not be assigned to any restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: email
+          in: query
+          required: true
+          schema:
+            type: string
+            format: email
+          description: Email of the waiter to search
+          example: "waiter@example.com"
+      responses:
+        '200':
+          description: Waiter(s) found successfully
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                      example: "user_123"
+                    email:
+                      type: string
+                      example: "waiter@example.com"
+                    name:
+                      type: string
+                      example: "Sim"
+                    lastname:
+                      type: string
+                      example: "Sim"
+                    role:
+                      type: string
+                      example: "waiter"
+                    created_at:
+                      type: string
+                      format: date-time
+                      example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (missing or invalid email)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '404':
+          description: Waiter not found
+        '500':
+          description: Internal server error
+
+  /restaurants/{id}/waiters:
+    post:
+      tags:
+        - Management - Waiters
+      summary: Assign a waiter to a restaurant
+      description: Adds a waiter to the restaurant’s staff. Only restaurant owners can perform this action.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - waiter_id
+              properties:
+                waiter_id:
+                  type: string
+                  description: Unique identifier of the waiter
+                  example: "user_123"
+      responses:
+        '200':
+          description: Waiter assigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  waiter:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "user_123"
+                      email:
+                        type: string
+                        example: "waiter@example.com"
+                      name:
+                        type: string
+                        example: "Sim"
+                      lastname:
+                        type: string
+                        example: "Sim"
+                  assigned_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (missing or invalid waiter_id)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant or waiter does not exist)
+        '409':
+          description: Conflict (waiter already assigned)
+        '500':
+          description: Internal server error
+
+    get:
+      tags:
+        - Management - Waiters
+      summary: List all waiters assigned to a restaurant
+      description: Retrieves a list of all waiters assigned to a restaurant, including user details.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      responses:
+        '200':
+          description: List of assigned waiters
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  waiters:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "user_123"
+                        email:
+                          type: string
+                          example: "waiter@example.com"
+                        name:
+                          type: string
+                          example: "Sim"
+                        lastname:
+                          type: string
+                          example: "Sim"
+                  assigned_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant does not exist)
+        '500':
+          description: Internal server error
+  /restaurants/{id}/waiters/{waiter_id}:
+    delete:
+      tags:
+        - Management - Waiters
+      summary: Unassign a waiter from a restaurant
+      description: Removes a waiter from the restaurant’s staff. Only restaurant owners can perform this action.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+        - name: waiter_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the waiter
+          example: "user_123"
+      responses:
+        '200':
+          description: Waiter unassigned successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  waiter:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                        example: "user_123"
+                      email:
+                        type: string
+                        example: "waiter@example.com"
+                      name:
+                        type: string
+                        example: "Sim"
+                      lastname:
+                        type: string
+                        example: "Sim"
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant or waiter not assigned)
         '500':
           description: Internal server error
