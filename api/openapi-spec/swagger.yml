@@ -5,12 +5,25 @@ info:
   description: API for dining ordering
 
 servers:
-  - url: http://localhost:42069/api/v1
-    description: local dev server v1
+  - url: api/v1
 
 tags:
   - name: Auth
     description: Endpoints for user authentication
+  - name: Management - Restaurants
+    description: Endpoints for restaurant management
+  - name: Management - Tables
+    description: Endpoints for restaurant tables management
+  - name: Management - Menus
+    description: Endpoints for restaurant menu management
+
+components:
+  securitySchemes:
+    BearerJWT:
+      name: "Bearer JWT"
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
 
 paths:
   /auth/signup:
@@ -148,5 +161,947 @@ paths:
           description: Bad request (missing refresh token)
         '401':
           description: Unauthorized (expired or invalid refresh token)
+        '500':
+          description: Internal server error
+
+  # Management paths
+  /restaurants:
+    post:
+      tags:
+        - Management - Restaurants
+      summary: Register a new restaurant
+      description: |
+        Creates a new restaurant entry in the system.
+        The restaurant owner is determined from the JWT token provided in the Authorization header.
+      security:
+        - BearerJWT: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - address
+              properties:
+                name:
+                  type: string
+                  example: "Insiga"
+                address:
+                  type: string
+                  example: "Švenčionių g. 36"
+      responses:
+        '201':
+          description: Restaurant created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "rest_001"
+                  name:
+                    type: string
+                    example: "Insiga"
+                  address:
+                    type: string
+                    example: "Švenčionių g. 36"
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (missing or invalid fields)
+        '401':
+          description: Unauthorized (missing or invalid JWT token)
+        '409':
+          description: Conflict (restaurant with same name already exists)
+        '500':
+          description: Internal server error
+
+    get:
+      tags:
+        - Management - Restaurants
+      summary: Get all restaurants
+      description: |
+        Retrieves a paginated list of restaurants.
+        Pagination is handled via `page` and `limit` query parameters.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: page
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+          description: "Page number (default: 1)"
+          example: 1
+        - name: limit
+          in: query
+          required: false
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+          description: "Number of restaurants per page (default: 10)"
+          example: 10
+      responses:
+        '200':
+          description: List of restaurants
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  page:
+                    type: integer
+                    example: 1
+                  limit:
+                    type: integer
+                    example: 10
+                  total:
+                    type: integer
+                    example: 42
+                  restaurants:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "rest_001"
+                        name:
+                          type: string
+                          example: "Insiga"
+                        address:
+                          type: string
+                          example: "Švenčionių g. 36"
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: "2025-10-22T12:00:00Z"
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '500':
+          description: Internal server error
+
+  /restaurants/{id}:
+    patch:
+      tags:
+        - Management - Restaurants
+      summary: Update restaurant information
+      description: |
+        Updates restaurant information.
+        The owner is determined from the JWT token.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - address
+              properties:
+                name:
+                  type: string
+                  example: "Insiga Updated"
+                address:
+                  type: string
+                  example: "Švenčionių g. 36 Updated"
+      responses:
+        '200':
+          description: Restaurant updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "rest_001"
+                  name:
+                    type: string
+                    example: "Insiga Updated"
+                  address:
+                    type: string
+                    example: "Švenčionių g. 36 Updated"
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (invalid input)
+        '401':
+          description: Unauthorized (invalid JWT)
+        '403':
+          description: Forbidden (user is not owner)
+        '404':
+          description: Not found (restaurant does not exist)
+        '500':
+          description: Internal server error
+
+  /restaurants/{id}/tables:
+    post:
+      tags:
+        - Management - Tables
+      summary: Add a table to a restaurant
+      description: |
+        Adds a new table to a specific restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+                - capacity
+              properties:
+                name:
+                  type: string
+                  example: "Table A1"
+                capacity:
+                  type: integer
+                  minimum: 1
+                  example: 4
+      responses:
+        '201':
+          description: Table added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "table_001"
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  name:
+                    type: string
+                    example: "Table A1"
+                  capacity:
+                    type: integer
+                    example: 4
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (missing or invalid fields)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant does not exist)
+        '500':
+          description: Internal server error
+
+    get:
+      tags:
+        - Management - Tables
+      summary: Get all tables for a restaurant
+      description: Retrieves all tables for a specific restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+        - name: is_active
+          in: query
+          required: false
+          schema:
+            type: boolean
+          description: Filter tables by active status
+          example: true
+      responses:
+        '200':
+          description: List of tables
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 12
+                  tables:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "table_001"
+                        restaurant_id:
+                          type: string
+                          example: "rest_001"
+                        name:
+                          type: string
+                          example: "Table A1"
+                        capacity:
+                          type: integer
+                          example: 4
+                        is_active:
+                          type: boolean
+                          example: true
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: "10-22T12:00:00Z"
+                        updated_at:
+                          type: string
+                          format: date-time
+                          example: "10-22T12:00:00Z"
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '404':
+          description: Not found (restaurant does not exist)
+        '500':
+          description: Internal server error
+
+  /restaurants/{id}/tables/{table_id}:
+    patch:
+      tags:
+        - Management - Tables
+      summary: Update table information
+      description: Updates the name, capacity, or active status of a table in a restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+        - name: table_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the table
+          example: "table_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  example: "Table A1 Updated"
+                capacity:
+                  type: integer
+                  minimum: 1
+                  example: 6
+                is_active:
+                  type: boolean
+                  example: false
+      responses:
+        '200':
+          description: Table updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "table_001"
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  name:
+                    type: string
+                    example: "Table A1 Updated"
+                  capacity:
+                    type: integer
+                    example: 6
+                  is_active:
+                    type: boolean
+                    example: false
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "10-22T12:00:00Z"
+        '400':
+          description: Bad request (invalid input)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant or table does not exist)
+        '500':
+          description: Internal server error
+
+  /restaurants/{id}/menu/categories:
+    post:
+      tags:
+        - Management - Menus
+      summary: Create a new menu category
+      description: Adds a new category to the menu of a specific restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - name
+              properties:
+                name:
+                  type: string
+                  example: "Appetizers"
+                description:
+                  type: string
+                  example: "Light dishes to start your meal"
+      responses:
+        '201':
+          description: Menu category created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "cat_001"
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  name:
+                    type: string
+                    example: "Appetizers"
+                  description:
+                    type: string
+                    example: "Light dishes to start your meal"
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (missing or invalid fields)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant does not exist)
+        '500':
+          description: Internal server error
+
+    get:
+      tags:
+        - Management - Menus
+      summary: Get all menu categories for a restaurant
+      description: Retrieves all menu categories for a specific restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      responses:
+        '200':
+          description: List of menu categories
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total:
+                    type: integer
+                    example: 3
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "cat_001"
+                        restaurant_id:
+                          type: string
+                          example: "rest_001"
+                        name:
+                          type: string
+                          example: "Appetizers"
+                        description:
+                          type: string
+                          example: "Light dishes to start your meal"
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: "10-22T12:00:00Z"
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '404':
+          description: Not found (restaurant does not exist)
+        '500':
+          description: Internal server error
+
+  /restaurants/{id}/menu/categories/{category_id}:
+    patch:
+      tags:
+        - Management - Menus
+      summary: Update a menu category
+      description: Updates the name and description of a menu category for a restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+        - name: category_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the category
+          example: "cat_001"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Updated name of the category
+                  example: "Appetizers Updated"
+                description:
+                  type: string
+                  description: Updated description of the category
+                  example: "Light dishes to start your meal, refreshed"
+      responses:
+        '200':
+          description: Menu category updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "cat_001"
+                  name:
+                    type: string
+                    example: "Appetizers Updated"
+                  description:
+                    type: string
+                    example: "Light dishes to start your meal, refreshed"
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (invalid fields)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant or category does not exist)
+        '500':
+          description: Internal server error
+
+  /restaurants/{id}/menu/items:
+    post:
+      tags:
+        - Management - Menus
+      summary: Create a new menu item
+      description: Adds a new item to a restaurant menu. Supports image upload via form-data.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              required:
+                - category_id
+                - name
+                - description
+                - price
+                - image
+              properties:
+                category_id:
+                  type: string
+                  description: The category this item belongs to
+                  example: "cat_001"
+                name:
+                  type: string
+                  description: Name of the menu item
+                  example: "Cheeseburger"
+                description:
+                  type: string
+                  description: Description of the menu item
+                  example: "Tasty Big Mac"
+                price:
+                  type: number
+                  format: float
+                  description: Price of the menu item
+                  example: 12.50
+                image:
+                  type: string
+                  format: binary
+                  description: Image file of the menu item
+      responses:
+        '201':
+          description: Menu item created successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "item_001"
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  category_id:
+                    type: string
+                    example: "cat_001"
+                  name:
+                    type: string
+                    example: "Cheeseburger"
+                  description:
+                    type: string
+                    example: "Tasty Big Mac"
+                  price:
+                    type: number
+                    format: float
+                    example: 12.50
+                  image_path:
+                    type: string
+                    example: "/uploads/images/item_001.png"
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (missing or invalid fields)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant or category does not exist)
+        '500':
+          description: Internal server error
+
+    get:
+      tags:
+        - Management - Menus
+      summary: Get all menu items for a restaurant grouped by category
+      description: Retrieves all menu categories for a restaurant, and for each category, lists its menu items.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+      responses:
+        '200':
+          description: List of menu categories with items
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  total_categories:
+                    type: integer
+                    example: 3
+                  categories:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        id:
+                          type: string
+                          example: "cat_001"
+                        name:
+                          type: string
+                          example: "Appetizers"
+                        description:
+                          type: string
+                          example: "Light dishes to start your meal"
+                        created_at:
+                          type: string
+                          format: date-time
+                          example: "2025-10-22T12:00:00Z"
+                        items:
+                          type: array
+                          items:
+                            type: object
+                            properties:
+                              id:
+                                type: string
+                                example: "item_001"
+                              name:
+                                type: string
+                                example: "Cheeseburger Deluxe"
+                              description:
+                                type: string
+                                example: "Tasty Big Mac"
+                              price:
+                                type: number
+                                format: float
+                                example: 13.50
+                              image_path:
+                                type: string
+                                example: "/uploads/images/item_001.png"
+                              is_available:
+                                type: boolean
+                                example: true
+                              created_at:
+                                type: string
+                                format: date-time
+                                example: "2025-10-22T12:00:00Z"
+                              updated_at:
+                                type: string
+                                format: date-time
+                                example: "2025-10-22T12:00:00Z"
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '404':
+          description: Not found (restaurant does not exist)
+        '500':
+          description: Internal server error
+          
+  /restaurants/{id}/menu/items/{item_id}:
+    get:
+      tags:
+        - Management - Menus
+      summary: Get a single menu item
+      description: Retrieves details of a specific menu item for a restaurant.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the menu item
+          example: "item_001"
+      responses:
+        '200':
+          description: Menu item details
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "item_001"
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  category_id:
+                    type: string
+                    example: "cat_001"
+                  name:
+                    type: string
+                    example: "Cheeseburger Deluxe"
+                  description:
+                    type: string
+                    example: "Tasty Big Mac"
+                  price:
+                    type: number
+                    format: float
+                    example: 13.50
+                  image_path:
+                    type: string
+                    example: "/uploads/images/item_001.png"
+                  is_available:
+                    type: boolean
+                    example: true
+                  created_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '404':
+          description: Not found (restaurant or item does not exist)
+        '500':
+          description: Internal server error
+
+    patch:
+      tags:
+        - Management - Menus
+      summary: Update a menu item
+      description: Updates details of a menu item. Supports optional image upload via form-data.
+      security:
+        - BearerJWT: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the restaurant
+          example: "rest_001"
+        - name: item_id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Unique identifier of the menu item
+          example: "item_001"
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                  description: Name of the menu item
+                  example: "Cheeseburger Deluxe"
+                description:
+                  type: string
+                  description: Description of the menu item
+                  example: "Tasty Big Mac Deluxe"
+                price:
+                  type: number
+                  format: float
+                  description: Price of the menu item
+                  example: 13.50
+                image:
+                  type: string
+                  format: binary
+                  description: Optional new image file of the menu item
+                is_available:
+                  type: boolean
+                  description: Whether the item is available
+                  example: true
+      responses:
+        '200':
+          description: Menu item updated successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  id:
+                    type: string
+                    example: "item_001"
+                  restaurant_id:
+                    type: string
+                    example: "rest_001"
+                  category_id:
+                    type: string
+                    example: "cat_001"
+                  name:
+                    type: string
+                    example: "Cheeseburger Deluxe"
+                  description:
+                    type: string
+                    example: "Tasty Big Mac Deluxe"
+                  price:
+                    type: number
+                    format: float
+                    example: 13.50
+                  image_path:
+                    type: string
+                    example: "/uploads/images/item_001.png"
+                  is_available:
+                    type: boolean
+                    example: true
+                  updated_at:
+                    type: string
+                    format: date-time
+                    example: "2025-10-22T12:00:00Z"
+        '400':
+          description: Bad request (invalid fields)
+        '401':
+          description: Unauthorized (missing or invalid JWT)
+        '403':
+          description: Forbidden (user is not the restaurant owner)
+        '404':
+          description: Not found (restaurant, category, or item does not exist)
         '500':
           description: Internal server error
