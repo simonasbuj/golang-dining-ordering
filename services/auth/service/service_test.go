@@ -85,7 +85,7 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 	suite.Require().NoError(err)
 	suite.NotEmpty(tokenStr)
 
-	parsedToken, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
+	parsedToken, err := jwt.Parse(tokenStr, func(token *jwt.Token) (any, error) {
 		suite.Equal(jwt.SigningMethodHS256, token.Method)
 
 		return []byte(suite.svc.cfg.Secret), nil

@@ -178,7 +178,7 @@ func (s *service) generateToken(
 }
 
 func (s *service) verifyToken(tokenStr string) (jwt.MapClaims, error) {
-	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (interface{}, error) {
+	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ce.ErrUnexpectedSigninMethod
 		}

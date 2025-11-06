@@ -1,0 +1,35 @@
+services:
+  postgres:
+    image: postgres:17
+    container_name: postgres-dining
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+    ports:
+       - "${POSTGRES_PORT}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+
+  dine-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    depends_on:
+      - postgres
+    restart: always
+    deploy:
+      mode: replicated
+      replicas: 1
+    environment:
+      DINE_DB_URI: ${DINE_DB_URI}
+      DINE_HTTP_ADDRESS: ${DINE_HTTP_ADDRESS}
+      DINE_AUTH_SECRET: ${DINE_AUTH_SECRET}
+      DINE_TOKEN_VALID_HOURS: ${DINE_TOKEN_VALID_HOURS}
+      DINE_REFRESH_TOKEN_VALID_HOURS: ${DINE_REFRESH_TOKEN_VALID_HOURS}
+    ports:
+       - "${DINE_HTTP_PORT}:${DINE_HTTP_PORT}"
+
+volumes:
+  pgdata:

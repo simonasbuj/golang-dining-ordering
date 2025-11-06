@@ -4,18 +4,20 @@ package main
 import (
 	"context"
 	"database/sql"
+	"golang-dining-ordering/config"
 	"golang-dining-ordering/internal/routes"
-	"golang-dining-ordering/pkg/utils/env"
 	authHandler "golang-dining-ordering/services/auth/handler"
 	authRepo "golang-dining-ordering/services/auth/repository"
 	authRoutes "golang-dining-ordering/services/auth/routes"
 	authService "golang-dining-ordering/services/auth/service"
+	"log"
 	"log/slog"
 	"net/http"
 	"os"
 
 	authDB "golang-dining-ordering/services/auth/db/generated"
 
+	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
 )
@@ -28,25 +30,20 @@ const (
 )
 
 func main() {
-	// env vars
-	dbURI := env.GetString(
-		"DB_URI",
-		"postgres://postgres:postgres@localhost:5432/dining?sslmode=disable",
-	)
-	httpPort := env.GetString("HTTP_PORT", ":42069")
-	authSecret := env.GetString("AUTH_SECRET", "my-auth-secret")
-	tokenValidHours := env.GetInt("TOKEN_VALID_HOURS", DefaultTokenValidHours)
-	refreshTokenValidHours := env.GetInt("REFRESH_TOKEN_VALID_HOURS", DefaultRefreshTokenValidHours)
+	var cfg config.AppConfig
 
-	// logger
+	err := cleanenv.ReadEnv(&cfg)
+	if err != nil {
+		log.Panic("failed to load config: %w", err)
+	}
+
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource:   false,
 		Level:       slog.LevelDebug,
 		ReplaceAttr: nil,
 	}))
 
-	// database
-	conn, err := sql.Open("postgres", dbURI)
+	conn, err := sql.Open("postgres", cfg.DineDBURI)
 	if err != nil {
 		logger.Error("failed to prepare database connection", "error", err)
 
@@ -62,30 +59,27 @@ func main() {
 
 	queries := authDB.New(conn)
 
-	// dependency injection
 	e := echo.New()
 
 	usersRepo := authRepo.NewUserRepository(queries)
 	authConfig := &authService.Config{
-		Secret:                 authSecret,
-		TokenValidHours:        tokenValidHours,
-		RefreshTokenValidHours: refreshTokenValidHours,
+		Secret:                 cfg.DineAuthSecret,
+		TokenValidHours:        cfg.DineTokenValidHours,
+		RefreshTokenValidHours: cfg.DineRefreshTokenValidHours,
 	}
 	authService := authService.NewAuthService(authConfig, usersRepo)
 
 	authHandler := authHandler.NewAuthHandler(logger, authService)
 
-	// register reoutes
 	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	routes.AddSwaggerRoutes(e)
 
 	authRoutes.AddRoutes(context.Background(), e, authHandler)
 
-	// start server
-	logger.Info("starting server on port " + httpPort)
+	logger.Info("starting server on address " + cfg.DineHTTPAddress)
 
-	err = e.Start(httpPort)
+	err = e.Start(cfg.DineHTTPAddress)
 	if err != nil {
 		logger.Error("server stopped", "error", err)
 	}
