@@ -32,9 +32,9 @@ type AuthServiceTestSuite struct {
 func (suite *AuthServiceTestSuite) SetupSuite() {
 	suite.mockRepo = testhelpers.NewMockUserRepository()
 	cfg := &Config{
-		Secret:                 "test-auth-secret",
-		TokenValidHours:        168,
-		RefreshTokenValidHours: 336,
+		Secret:                   "test-auth-secret",
+		TokenValidSeconds:        604800,
+		RefreshTokenValidSeconds: 1209600,
 	}
 	suite.svc = NewAuthService(cfg, suite.mockRepo)
 }
