@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
       POSTGRES_DB: ${POSTGRES_DB}
     ports:
-      - "5432:5432"
+       - "${POSTGRES_PORT}:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
 
@@ -28,6 +28,8 @@ services:
       DINE_AUTH_SECRET: ${DINE_AUTH_SECRET}
       DINE_TOKEN_VALID_HOURS: ${DINE_TOKEN_VALID_HOURS}
       DINE_REFRESH_TOKEN_VALID_HOURS: ${DINE_REFRESH_TOKEN_VALID_HOURS}
+    ports:
+       - "${DINE_HTTP_PORT}:${DINE_HTTP_PORT}"
 
 volumes:
   pgdata:
