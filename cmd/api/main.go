@@ -36,7 +36,7 @@ func main() {
 	if err != nil {
 		log.Panic("failed to load config: %w", err)
 	}
-	
+
 	// logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource:   false,
