@@ -37,14 +37,12 @@ func main() {
 		log.Panic("failed to load config: %w", err)
 	}
 
-	// logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{
 		AddSource:   false,
 		Level:       slog.LevelDebug,
 		ReplaceAttr: nil,
 	}))
 
-	// database
 	conn, err := sql.Open("postgres", cfg.DineDBURI)
 	if err != nil {
 		logger.Error("failed to prepare database connection", "error", err)
@@ -61,7 +59,6 @@ func main() {
 
 	queries := authDB.New(conn)
 
-	// dependency injection
 	e := echo.New()
 
 	usersRepo := authRepo.NewUserRepository(queries)
@@ -74,14 +71,12 @@ func main() {
 
 	authHandler := authHandler.NewAuthHandler(logger, authService)
 
-	// register reoutes
 	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	routes.AddSwaggerRoutes(e)
 
 	authRoutes.AddRoutes(context.Background(), e, authHandler)
 
-	// start server
 	logger.Info("starting server on address " + cfg.DineHTTPAddress)
 
 	err = e.Start(cfg.DineHTTPAddress)
