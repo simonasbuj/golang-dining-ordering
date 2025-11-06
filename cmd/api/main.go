@@ -30,13 +30,16 @@ const (
 func main() {
 	// env vars
 	dbURI := env.GetString(
-		"DB_URI",
+		"DINE_DB_URI",
 		"postgres://postgres:postgres@localhost:5432/dining?sslmode=disable",
 	)
-	httpPort := env.GetString("HTTP_PORT", ":42069")
-	authSecret := env.GetString("AUTH_SECRET", "my-auth-secret")
-	tokenValidHours := env.GetInt("TOKEN_VALID_HOURS", DefaultTokenValidHours)
-	refreshTokenValidHours := env.GetInt("REFRESH_TOKEN_VALID_HOURS", DefaultRefreshTokenValidHours)
+	httpPort := env.GetString("DINE_HTTP_ADDRESS", "127.0.0.1:42069")
+	authSecret := env.GetString("DINE_AUTH_SECRET", "my-auth-secret")
+	tokenValidHours := env.GetInt("DINE_TOKEN_VALID_HOURS", DefaultTokenValidHours)
+	refreshTokenValidHours := env.GetInt(
+		"DINE_REFRESH_TOKEN_VALID_HOURS",
+		DefaultRefreshTokenValidHours,
+	)
 
 	// logger
 	logger := slog.New(slog.NewJSONHandler(os.Stdout, &slog.HandlerOptions{

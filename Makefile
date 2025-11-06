@@ -18,10 +18,13 @@ endif
 
 # run app
 run-api:
-	go run cmd/main.go
+	go run ./cmd/api
 
 run-api-with-air:
 	air
+
+run-all:
+	docker compose up -d --build	
 
 # pre-commit
 lint:

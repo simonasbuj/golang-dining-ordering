@@ -10,7 +10,7 @@ import (
 )
 
 // ValidateDto binds and validates the given DTO from the request context.
-func ValidateDto(ctx echo.Context, dto interface{}) error {
+func ValidateDto(ctx echo.Context, dto any) error {
 	err := ctx.Bind(dto)
 	if err != nil {
 		return fmt.Errorf("dto binding failed: %w", err)
