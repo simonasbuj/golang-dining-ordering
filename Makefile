@@ -1,4 +1,4 @@
-MIGRATIONS_DIR := ./internal/db/sql/migrations
+MIGRATIONS_DIR := ./services/auth/db/sql/migrations
 
 # make sure golang dependencies likq 'sqlc' and 'migrations' are in the path
 PATH := $(PATH):$(shell go env GOPATH)/bin
@@ -48,11 +48,11 @@ create-migration:
 	migrate create -ext sql -dir $(MIGRATIONS_DIR) -seq $(name)
 
 up-migrations:
-	echo "$(DB_URI)"
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URI)" up
+	echo "$(DINE_DB_URI)"
+	migrate -path $(MIGRATIONS_DIR) -database "$(DINE_DB_URI)" up
 
 down-migrations:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DB_URI)" down 1
+	migrate -path $(MIGRATIONS_DIR) -database "$(DINE_DB_URI)" down 1
 
 sqlc-generate:
 	sqlc generate
