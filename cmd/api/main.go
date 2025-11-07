@@ -6,6 +6,7 @@ import (
 	"database/sql"
 	"golang-dining-ordering/config"
 	"golang-dining-ordering/internal/routes"
+	"golang-dining-ordering/pkg/middleware"
 	authHandler "golang-dining-ordering/services/auth/handler"
 	authRepo "golang-dining-ordering/services/auth/repository"
 	authRoutes "golang-dining-ordering/services/auth/routes"
@@ -20,13 +21,6 @@ import (
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
 	_ "github.com/lib/pq"
-)
-
-const (
-	// DefaultTokenValidHours is the default duration (in hours) that an access token is valid.
-	DefaultTokenValidHours = 168
-	// DefaultRefreshTokenValidHours is the default duration (in hours) that a refresh token is valid.
-	DefaultRefreshTokenValidHours = 336
 )
 
 func main() {
@@ -60,6 +54,7 @@ func main() {
 	queries := authDB.New(conn)
 
 	e := echo.New()
+	e.Use(middleware.RequestLogger(logger))
 
 	usersRepo := authRepo.NewUserRepository(queries)
 	authConfig := &authService.Config{

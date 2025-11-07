@@ -13,26 +13,26 @@ import (
 	"github.com/google/uuid"
 )
 
-// UsersRepository defines methods for accessing and managing user data.
-type UsersRepository interface {
+// Repository defines methods for accessing and managing user data.
+type Repository interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*db.User, error)
 }
 
-type userRepository struct {
+type repository struct {
 	q *db.Queries
 }
 
 // NewUserRepository creates a new userRepository with the given database connection.
 //
 //nolint:revive // intended unexported type return
-func NewUserRepository(q *db.Queries) *userRepository {
-	return &userRepository{
+func NewUserRepository(q *db.Queries) *repository {
+	return &repository{
 		q: q,
 	}
 }
 
-func (r *userRepository) CreateUser(
+func (r *repository) CreateUser(
 	ctx context.Context,
 	req *dto.SignUpRequestDto,
 ) (string, error) {
@@ -57,7 +57,7 @@ func (r *userRepository) CreateUser(
 	return userRow.ID, nil
 }
 
-func (r *userRepository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
 	user, err := r.q.GetUserByEmail(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user from db: %w", err)
