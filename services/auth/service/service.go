@@ -120,7 +120,12 @@ func (s *service) RefreshToken(
 		return nil, err
 	}
 
-	newRefreshToken, err := s.generateToken(userID, email, int(role), s.cfg.RefreshTokenValidSeconds)
+	newRefreshToken, err := s.generateToken(
+		userID,
+		email,
+		int(role),
+		s.cfg.RefreshTokenValidSeconds,
+	)
 	if err != nil {
 		return nil, err
 	}

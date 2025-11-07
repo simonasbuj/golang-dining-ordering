@@ -7,7 +7,7 @@ type SignUpRequestDto struct {
 	Password string `json:"password" validate:"required,min=8"`
 	Name     string `json:"name"     validate:"required"`
 	Lastname string `json:"lastname" validate:"required"`
-	Role     int 	`json:"role"     validate:"required,oneof=1 2 3"`
+	Role     int    `json:"role"     validate:"required,oneof=1 2 3"`
 }
 
 // SignInRequestDto represents the payload sent when signing in.

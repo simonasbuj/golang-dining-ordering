@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 	db "golang-dining-ordering/services/auth/db/generated"
 	"golang-dining-ordering/services/auth/dto"
 	"sync"
@@ -72,6 +73,14 @@ func (r *mockUsersRepository) GetUserByEmail(_ context.Context, email string) (*
 	return user, nil
 }
 
+func getIntClaim(claims jwt.MapClaims, key string) int {
+	val, ok := claims[key].(float64)
+	if !ok {
+		panic(fmt.Sprintf("claim %s is not a number", key))
+	}
+
+	return int(val)
+}
 
 type AuthServiceTestSuite struct {
 	suite.Suite
@@ -196,7 +205,7 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
 	suite.NotNil(claims)
 	suite.Equal(TestUserID, claims["userID"])
 	suite.Equal(TestEmail, claims["email"])
-	suite.Equal(TestRole, int(claims["role"].(float64)))
+	suite.Equal(TestRole, getIntClaim(claims, "role"))
 }
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_InvalidSecret() {
@@ -249,7 +258,7 @@ func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
 		suite.Require().NoError(err)
 		suite.Equal(TestUserID, claims["userID"])
 		suite.Equal(TestEmail, claims["email"])
-		suite.Equal(TestRole, int(claims["role"].(float64)))
+		suite.Equal(TestRole, getIntClaim(claims, "role"))
 	}
 }
 
