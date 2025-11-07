@@ -3,7 +3,7 @@ package validation_test
 import (
 	"encoding/json"
 	"errors"
-	"golang-dining-ordering/pkg/utils/validation"
+	"golang-dining-ordering/pkg/validation"
 	"net/http"
 	"net/http/httptest"
 	"strings"

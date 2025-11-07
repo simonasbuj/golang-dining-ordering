@@ -4,7 +4,8 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"golang-dining-ordering/pkg/utils/validation"
+	"fmt"
+	"golang-dining-ordering/pkg/validation"
 	"golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/auth/service"
 	"log/slog"
@@ -31,40 +32,21 @@ func NewAuthHandler(logger *slog.Logger, svc service.Service) *Handler {
 
 // HandleSignUp handles requests to sign up user.
 func (h *Handler) HandleSignUp(c echo.Context) error {
-	h.logger.Info("handling signup")
-
 	var reqDto dto.SignUpRequestDto
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		h.logger.Error("failed to sign up user, request body validation failed", "error", err)
+		jsonError(c, http.StatusBadRequest, "request body validation failed", err.Error())
 
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"message": "request body validation failed",
-			"error":   err.Error(),
-		})
+		return fmt.Errorf("request body validation failed: %w", err)
 	}
 
-	newUserID, err := h.svc.SignUpUser(c.Request().Context(), &reqDto)
+	_, err = h.svc.SignUpUser(c.Request().Context(), &reqDto)
 	if err != nil {
-		h.logger.Error("failed to create new user", "error", err)
+		jsonError(c, http.StatusBadRequest, "failed to register user", "invalid request")
 
-		// using custom error to figure out which http status to send back to the client
-		var uqConstraintErr *ce.UniqueConstraintError
-		if errors.As(err, &uqConstraintErr) {
-			return c.JSON(http.StatusConflict, map[string]string{
-				"message": "user with this email already exists",
-				"error":   err.Error(),
-			})
-		}
-
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"message": "failed to create new user",
-			"error":   "hi",
-		})
+		return fmt.Errorf("failed to create new user: %w", err)
 	}
-
-	h.logger.Info("new user created", "userID", newUserID)
 
 	return c.JSON(http.StatusOK, map[string]string{
 		"message": "new user registered successfully",
@@ -73,73 +55,48 @@ func (h *Handler) HandleSignUp(c echo.Context) error {
 
 // HandleSignIn handles requests to sign in user.
 func (h *Handler) HandleSignIn(c echo.Context) error {
-	h.logger.Info("handling signin")
-
 	var reqDto dto.SignInRequestDto
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		h.logger.Error("failed to sign in user, request body validation failed", "error", err)
+		jsonError(c, http.StatusBadRequest, "request body validation failed", err.Error())
 
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"message": "request body validation failed",
-			"error":   err.Error(),
-		})
+		return fmt.Errorf("request body validation failed: %w", err)
 	}
 
 	resDto, err := h.svc.SignInUser(c.Request().Context(), &reqDto)
 	if err != nil {
-		h.logger.Error("failed to sign in user", "error", err)
-
 		if errors.Is(err, sql.ErrNoRows) || errors.Is(err, ce.ErrUnauthorized) {
-			return c.JSON(http.StatusUnauthorized, map[string]string{
-				"message": "failed to sign in user",
-				"error":   "unauthorized",
-			})
+			jsonError(c, http.StatusUnauthorized, "failed to sign in user", "unauthorized")
+
+			return fmt.Errorf("failed to sign in user: %w", err)
 		}
 
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"message": "failed to sign in user",
-			"error":   err.Error(),
-		})
+		jsonError(c, http.StatusInternalServerError, "failed to sign in user", err.Error())
+
+		return fmt.Errorf("failed to sign in user: %w", err)
 	}
 
-	h.logger.Info("signed in successfully")
-
-	return c.JSON(http.StatusOK, map[string]any{
-		"message": "signed in successfully",
-		"data":    resDto,
-	})
+	return jsonSuccess(c, http.StatusOK, "signed in successfully", resDto)
 }
 
 // HandleRefreshToken handles requests to refresh an authentication token.
 func (h *Handler) HandleRefreshToken(c echo.Context) error {
-	h.logger.Info("handling refresh token")
-
 	var reqDto dto.RefreshTokenRequestDto
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		h.logger.Error("failed to refresh token, request body validation failed", "error", err)
+		jsonError(c, http.StatusBadRequest, "request body validation failed", err.Error())
 
-		return c.JSON(http.StatusBadRequest, map[string]string{
-			"message": "request body validation failed",
-			"error":   err.Error(),
-		})
+		return fmt.Errorf("request body validation failed: %w", err)
 	}
 
 	resDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto.RefreshToken)
 	if err != nil {
-		return c.JSON(http.StatusInternalServerError, map[string]string{
-			"message": "failed to refresh token",
-			"error":   err.Error(),
-		})
+		jsonError(c, http.StatusInternalServerError, "failed to refresh token", "processing error")
+
+		return fmt.Errorf("failed to refresh token: %w", err)
 	}
 
-	h.logger.Info("refreshed token successfully")
-
-	return c.JSON(http.StatusOK, map[string]any{
-		"message": "signed in successfully",
-		"data":    resDto,
-	})
+	return jsonSuccess(c, http.StatusOK, "signed in successfully", resDto)
 }
