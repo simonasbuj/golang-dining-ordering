@@ -29,7 +29,7 @@ func RequestLogger(logger *slog.Logger) echo.MiddlewareFunc {
 			duration := time.Since(start)
 
 			if err != nil {
-				c.Error(err) // propagate to Echo error handler
+				c.Error(err)
 				logger.Error("error while handling request",
 					"method", req.Method,
 					"path", req.URL.Path,
