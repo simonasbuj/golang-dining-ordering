@@ -109,18 +109,18 @@ func (s *service) RefreshToken(
 
 	userID, userOk := claims["userID"].(string)
 	email, emailOk := claims["email"].(string)
-	role, roleOk := claims["role"].(string)
+	role, roleOk := claims["role"].(float64)
 
 	if !userOk || !emailOk || !roleOk {
 		return nil, ce.ErrMissingClaims
 	}
 
-	newToken, err := s.generateToken(userID, email, role, s.cfg.TokenValidSeconds)
+	newToken, err := s.generateToken(userID, email, int(role), s.cfg.TokenValidSeconds)
 	if err != nil {
 		return nil, err
 	}
 
-	newRefreshToken, err := s.generateToken(userID, email, role, s.cfg.RefreshTokenValidSeconds)
+	newRefreshToken, err := s.generateToken(userID, email, int(role), s.cfg.RefreshTokenValidSeconds)
 	if err != nil {
 		return nil, err
 	}
@@ -149,12 +149,12 @@ func (s *service) verifyPassword(plainPassword, hashedPassword string) bool {
 }
 
 func (s *service) generateToken(
-	userID, email, role string,
-	validDurationSeconds int,
+	userID, email string,
+	role, validDurationSeconds int,
 ) (string, error) {
-	if userID == "" || email == "" || role == "" {
+	if userID == "" || email == "" || role == 0 {
 		return "", fmt.Errorf(
-			"%w: userID=%s, email=%s, role=%s",
+			"%w: userID=%s, email=%s, role=%d",
 			ce.ErrInvalidTokenData,
 			userID,
 			email,

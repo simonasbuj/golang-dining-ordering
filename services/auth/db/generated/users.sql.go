@@ -41,7 +41,7 @@ type CreateUserParams struct {
 	PasswordHash string `json:"password_hash"`
 	Name         string `json:"name"`
 	Lastname     string `json:"lastname"`
-	Role         string `json:"role"`
+	Role         int    `json:"role"`
 }
 
 type CreateUserRow struct {
@@ -50,7 +50,7 @@ type CreateUserRow struct {
 	PasswordHash string       `json:"password_hash"`
 	Name         string       `json:"name"`
 	Lastname     string       `json:"lastname"`
-	Role         string       `json:"role"`
+	Role         int          `json:"role"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
