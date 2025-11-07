@@ -32,13 +32,13 @@ type Config struct {
 
 type service struct {
 	cfg  *Config
-	repo repository.UsersRepository
+	repo repository.Repository
 }
 
 // NewAuthService creates a new instance of authService.
 //
 //nolint:revive // intended unexported type return
-func NewAuthService(cfg *Config, repo repository.UsersRepository) *service {
+func NewAuthService(cfg *Config, repo repository.Repository) *service {
 	return &service{
 		cfg:  cfg,
 		repo: repo,
