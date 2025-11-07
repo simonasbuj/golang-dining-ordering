@@ -25,9 +25,9 @@ type Service interface {
 // Config holds configuration values for authentication, such as secret keys
 // and token expiration durations.
 type Config struct {
-	Secret                 string
-	TokenValidHours        int
-	RefreshTokenValidHours int
+	Secret                   string
+	TokenValidSeconds        int
+	RefreshTokenValidSeconds int
 }
 
 type service struct {
@@ -75,7 +75,7 @@ func (s *service) SignInUser(
 		return nil, ce.ErrUnauthorized
 	}
 
-	token, err := s.generateToken(user.ID, user.Email, user.Role, s.cfg.TokenValidHours)
+	token, err := s.generateToken(user.ID, user.Email, user.Role, s.cfg.TokenValidSeconds)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign in user: %w", err)
 	}
@@ -84,7 +84,7 @@ func (s *service) SignInUser(
 		user.ID,
 		user.Email,
 		user.Role,
-		s.cfg.RefreshTokenValidHours,
+		s.cfg.RefreshTokenValidSeconds,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to sign in user: %w", err)
@@ -109,18 +109,23 @@ func (s *service) RefreshToken(
 
 	userID, userOk := claims["userID"].(string)
 	email, emailOk := claims["email"].(string)
-	role, roleOk := claims["role"].(string)
+	role, roleOk := claims["role"].(float64)
 
 	if !userOk || !emailOk || !roleOk {
 		return nil, ce.ErrMissingClaims
 	}
 
-	newToken, err := s.generateToken(userID, email, role, s.cfg.TokenValidHours)
+	newToken, err := s.generateToken(userID, email, int(role), s.cfg.TokenValidSeconds)
 	if err != nil {
 		return nil, err
 	}
 
-	newRefreshToken, err := s.generateToken(userID, email, role, s.cfg.RefreshTokenValidHours)
+	newRefreshToken, err := s.generateToken(
+		userID,
+		email,
+		int(role),
+		s.cfg.RefreshTokenValidSeconds,
+	)
 	if err != nil {
 		return nil, err
 	}
@@ -149,12 +154,12 @@ func (s *service) verifyPassword(plainPassword, hashedPassword string) bool {
 }
 
 func (s *service) generateToken(
-	userID, email, role string,
-	validDurationHours int,
+	userID, email string,
+	role, validDurationSeconds int,
 ) (string, error) {
-	if userID == "" || email == "" || role == "" {
+	if userID == "" || email == "" || role == 0 {
 		return "", fmt.Errorf(
-			"%w: userID=%s, email=%s, role=%s",
+			"%w: userID=%s, email=%s, role=%d",
 			ce.ErrInvalidTokenData,
 			userID,
 			email,
@@ -166,7 +171,7 @@ func (s *service) generateToken(
 		"userID": userID,
 		"email":  email,
 		"role":   role,
-		"exp":    time.Now().Add(time.Hour * time.Duration(validDurationHours)).Unix(),
+		"exp":    time.Now().Add(time.Second * time.Duration(validDurationSeconds)).Unix(),
 	})
 
 	tokenStr, err := token.SignedString([]byte(s.cfg.Secret))

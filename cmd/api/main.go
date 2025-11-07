@@ -63,9 +63,9 @@ func main() {
 
 	usersRepo := authRepo.NewUserRepository(queries)
 	authConfig := &authService.Config{
-		Secret:                 cfg.DineAuthSecret,
-		TokenValidHours:        cfg.DineTokenValidHours,
-		RefreshTokenValidHours: cfg.DineRefreshTokenValidHours,
+		Secret:                   cfg.DineAuthSecret,
+		TokenValidSeconds:        cfg.DineTokenValidSeconds,
+		RefreshTokenValidSeconds: cfg.DineRefreshTokenValidSeconds,
 	}
 	authService := authService.NewAuthService(authConfig, usersRepo)
 
