@@ -4,7 +4,6 @@ package handler
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"golang-dining-ordering/pkg/validation"
 	"golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/auth/service"
@@ -36,21 +35,15 @@ func (h *Handler) HandleSignUp(c echo.Context) error {
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		jsonError(c, http.StatusBadRequest, "request body validation failed", err.Error())
-
-		return fmt.Errorf("request body validation failed: %w", err)
+		return jsonError(c, err.Error(), err)
 	}
 
 	_, err = h.svc.SignUpUser(c.Request().Context(), &reqDto)
 	if err != nil {
-		jsonError(c, http.StatusBadRequest, "failed to register user", "invalid request")
-
-		return fmt.Errorf("failed to create new user: %w", err)
+		return jsonError(c, "failed to register user", err)
 	}
 
-	return c.JSON(http.StatusOK, map[string]string{
-		"message": "new user registered successfully",
-	})
+	return jsonSuccess(c, "new user registered successfully", nil, http.StatusCreated)
 }
 
 // HandleSignIn handles requests to sign in user.
@@ -59,25 +52,19 @@ func (h *Handler) HandleSignIn(c echo.Context) error {
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		jsonError(c, http.StatusBadRequest, "request body validation failed", err.Error())
-
-		return fmt.Errorf("request body validation failed: %w", err)
+		return jsonError(c, err.Error(), err)
 	}
 
 	resDto, err := h.svc.SignInUser(c.Request().Context(), &reqDto)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) || errors.Is(err, ce.ErrUnauthorized) {
-			jsonError(c, http.StatusUnauthorized, "failed to sign in user", "unauthorized")
-
-			return fmt.Errorf("failed to sign in user: %w", err)
+			return jsonError(c, "unauthorized", err, http.StatusUnauthorized)
 		}
 
-		jsonError(c, http.StatusInternalServerError, "failed to sign in user", err.Error())
-
-		return fmt.Errorf("failed to sign in user: %w", err)
+		return jsonError(c, "server error", err, http.StatusInternalServerError)
 	}
 
-	return jsonSuccess(c, http.StatusOK, "signed in successfully", resDto)
+	return jsonSuccess(c, "signed in successfully", resDto)
 }
 
 // HandleRefreshToken handles requests to refresh an authentication token.
@@ -86,20 +73,17 @@ func (h *Handler) HandleRefreshToken(c echo.Context) error {
 
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
-		jsonError(c, http.StatusBadRequest, "request body validation failed", err.Error())
-
-		return fmt.Errorf("request body validation failed: %w", err)
+		return jsonError(c, err.Error(), err)
 	}
 
 	resDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto.RefreshToken)
 	if err != nil {
 		if errors.Is(err, ce.ErrMissingClaims) {
-			
+			return jsonError(c, "missing claims", err)
 		}
-		jsonError(c, http.StatusInternalServerError, "failed to refresh token", "processing error")
 
-		return fmt.Errorf("failed to refresh token: %w", err)
+		return jsonError(c, "failed to refresh token", err, http.StatusInternalServerError)
 	}
 
-	return jsonSuccess(c, http.StatusOK, "signed in successfully", resDto)
+	return jsonSuccess(c, "signed in successfully", resDto)
 }
