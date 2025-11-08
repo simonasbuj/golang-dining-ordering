@@ -56,7 +56,7 @@ func main() {
 	e := echo.New()
 	e.Use(middleware.RequestLogger(logger))
 
-	usersRepo := authRepo.NewUserRepository(queries)
+	usersRepo := authRepo.NewRepository(queries)
 	authConfig := &authService.Config{
 		Secret:                   cfg.DineAuthSecret,
 		TokenValidSeconds:        cfg.DineTokenValidSeconds,

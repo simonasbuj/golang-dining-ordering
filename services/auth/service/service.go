@@ -67,7 +67,7 @@ func (s *service) SignInUser(
 ) (*dto.TokenResponseDto, error) {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign in user: %w", err)
+		return nil, fmt.Errorf("failed to get user from db: %w", err)
 	}
 
 	ok := s.verifyPassword(req.Password, user.PasswordHash)
@@ -77,7 +77,7 @@ func (s *service) SignInUser(
 
 	token, err := s.generateToken(user.ID, user.Email, user.Role, s.cfg.TokenValidSeconds)
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign in user: %w", err)
+		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
 
 	refreshToken, err := s.generateToken(
@@ -87,7 +87,7 @@ func (s *service) SignInUser(
 		s.cfg.RefreshTokenValidSeconds,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to sign in user: %w", err)
+		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
 	}
 
 	res := &dto.TokenResponseDto{
