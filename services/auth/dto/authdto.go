@@ -26,3 +26,17 @@ type TokenResponseDto struct {
 type RefreshTokenRequestDto struct {
 	RefreshToken string `json:"refreshToken" validate:"required"`
 }
+
+// LogoutRequestDto represents the payload required to logout user by making their tokens invalid in database.
+type LogoutRequestDto struct {
+	Token string `json:"token" validate:"required"`
+}
+
+// TokenClaimsDto represents the claims stored in a JWT for a user.
+type TokenClaimsDto struct {
+	UserID       string `json:"userId"`
+	Email        string `json:"email"`
+	TokenType    string `json:"tokenType"`
+	TokenVersion int64  `json:"tokenVersion"`
+	Role         int    `json:"role"`
+}

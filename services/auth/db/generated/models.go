@@ -13,6 +13,7 @@ type User struct {
 	ID           string       `json:"id"`
 	Email        string       `json:"email"`
 	PasswordHash string       `json:"password_hash"`
+	TokenVersion int64        `json:"token_version"`
 	Name         string       `json:"name"`
 	Lastname     string       `json:"lastname"`
 	Role         int          `json:"role"`

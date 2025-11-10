@@ -1,7 +1,8 @@
 CREATE TABLE IF NOT EXISTS users (
     id VARCHAR(40) PRIMARY KEY,
     email VARCHAR(255) UNIQUE NOT NULL,
-    password_hash TEXT NOT NULL,
+    password_hash VARCHAR(60) NOT NULL,
+    token_version BIGINT DEFAULT 0 NOT NULL,
     name VARCHAR(100) NOT NULL,
     lastname VARCHAR(100) NOT NULL,
     role INT DEFAULT 2 NOT NULL,

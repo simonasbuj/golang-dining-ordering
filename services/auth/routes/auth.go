@@ -15,4 +15,6 @@ func AddRoutes(_ context.Context, e *echo.Echo, h *handler.Handler) {
 	auth.POST("/signup", h.HandleSignUp)
 	auth.POST("/signin", h.HandleSignIn)
 	auth.POST("/refresh", h.HandleRefreshToken)
+	auth.POST("/logout", h.HandleLogout)
+	auth.POST("/authorize", h.HandleAuthorize)
 }

@@ -2,7 +2,6 @@ package service
 
 import (
 	"context"
-	"fmt"
 	db "golang-dining-ordering/services/auth/db/generated"
 	"golang-dining-ordering/services/auth/dto"
 	"sync"
@@ -15,12 +14,13 @@ import (
 )
 
 const (
-	TestUserID   = "user-123"
-	TestEmail    = "user-123@email.com"
-	TestPassword = "password123"
-	TestName     = "sim"
-	TestLastname = "sim"
-	TestRole     = 2
+	TestUserID             = "user-123"
+	TestEmail              = "user-123@email.com"
+	TestPassword           = "password123"
+	TestName               = "sim"
+	TestLastname           = "sim"
+	TestRole               = 2
+	TestTokenVersion int64 = 2
 )
 
 // MockUsersRepository is a mock implementation of repository.UsersRepository.
@@ -73,13 +73,20 @@ func (r *mockUsersRepository) GetUserByEmail(_ context.Context, email string) (*
 	return user, nil
 }
 
-func getIntClaim(claims jwt.MapClaims, key string) int {
-	val, ok := claims[key].(float64)
-	if !ok {
-		panic(fmt.Sprintf("claim %s is not a number", key))
-	}
+// IncrementTokenVersionForUser returns a mocked increased token version.
+func (r *mockUsersRepository) IncrementTokenVersionForUser(
+	_ context.Context,
+	_ string,
+) (int64, error) {
+	return TestTokenVersion, nil
+}
 
-	return int(val)
+// GetTokenVersionByUserID returns a mocked token version.
+func (r *mockUsersRepository) GetTokenVersionByUserID(
+	_ context.Context,
+	_ string,
+) (int64, error) {
+	return TestTokenVersion, nil
 }
 
 type AuthServiceTestSuite struct {
@@ -140,7 +147,14 @@ func (suite *AuthServiceTestSuite) TestHashPassword() {
 }
 
 func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
-	tokenStr, err := suite.svc.generateToken(TestUserID, TestEmail, TestRole, 1)
+	tokenStr, err := suite.svc.generateToken(generateTokenParams{
+		UserID:               TestUserID,
+		Email:                TestEmail,
+		TokenType:            tokenTypeAccess,
+		TokenVersion:         TestTokenVersion,
+		Role:                 TestRole,
+		ValidDurationSeconds: 1,
+	})
 
 	suite.Require().NoError(err)
 	suite.NotEmpty(tokenStr)
@@ -158,7 +172,11 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 
 	suite.Equal(TestUserID, claims["userID"])
 	suite.Equal(TestEmail, claims["email"])
-	// suite.Equal(TestRole, claims["role"])
+	suite.Equal(
+		TestRole,
+		int(claims["role"].(float64)), //nolint:forcetypeassert
+	)
+	suite.Equal(TestTokenVersion, int64(claims["tokenVersion"].(float64))) //nolint:forcetypeassert
 
 	expFloat, ok := claims["exp"].(float64)
 	suite.True(ok, "exp claim should be a float64")
@@ -171,19 +189,28 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 
 func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 	testCases := []struct {
-		desc   string
-		userID string
-		email  string
-		role   int
+		desc         string
+		userID       string
+		email        string
+		role         int
+		tokenVersion int64
 	}{
-		{"missing userID", "", TestEmail, TestRole},
-		{"missing email", TestUserID, "", TestRole},
-		{"missing role", TestUserID, TestEmail, 0},
+		{"missing userID", "", TestEmail, TestRole, TestTokenVersion},
+		{"missing email", TestUserID, "", TestRole, TestTokenVersion},
+		{"missing role", TestUserID, TestEmail, 0, TestTokenVersion},
+		{"missing tokenVersion", TestUserID, TestEmail, 0, 0},
 	}
 
 	for _, tc := range testCases {
 		suite.T().Run(tc.desc, func(_ *testing.T) {
-			tokenStr, err := suite.svc.generateToken(tc.userID, tc.email, tc.role, 1)
+			tokenStr, err := suite.svc.generateToken(generateTokenParams{
+				UserID:               tc.userID,
+				Email:                tc.email,
+				TokenType:            tokenTypeAccess,
+				TokenVersion:         tc.tokenVersion,
+				Role:                 tc.role,
+				ValidDurationSeconds: 1,
+			})
 
 			suite.Require().Error(err, "expected error when %s", tc.desc)
 			suite.Require().Empty(tokenStr, "token should be empty when %s", tc.desc)
@@ -193,21 +220,24 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": TestUserID,
-		"email":  TestEmail,
-		"role":   TestRole,
-		"exp":    time.Now().Add(time.Hour).Unix(),
+		"userID":       TestUserID,
+		"email":        TestEmail,
+		"tokenVersion": TestTokenVersion,
+		"tokenType":    tokenTypeAccess,
+		"role":         TestRole,
+		"exp":          time.Now().Add(time.Hour).Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr, tokenTypeAccess)
 
 	suite.Require().NoError(err)
 	suite.NotNil(claims)
-	suite.Equal(TestUserID, claims["userID"])
-	suite.Equal(TestEmail, claims["email"])
-	suite.Equal(TestRole, getIntClaim(claims, "role"))
+	suite.Equal(TestUserID, claims.UserID)
+	suite.Equal(TestEmail, claims.Email)
+	suite.Equal(TestRole, claims.Role)
+	suite.Equal(TestTokenVersion, claims.TokenVersion)
 }
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_InvalidSecret() {
@@ -218,7 +248,7 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_InvalidSecret() {
 	tokenStr, err := token.SignedString([]byte("different-secret"))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr, tokenTypeAccess)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
@@ -231,13 +261,17 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_ExpiredToken() {
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr, tokenTypeAccess)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_MalformedToken() {
-	claims, err := suite.svc.verifyToken("this-is-not-a-jwt-not-even-close")
+	claims, err := suite.svc.verifyToken(
+		context.Background(),
+		"this-is-not-a-jwt-not-even-close",
+		tokenTypeAccess,
+	)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
@@ -245,7 +279,14 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_MalformedToken() {
 // hmm using other functions from svc like generateToken and verifyToken as helpers in test to make it easier to test?
 // but this seems wrong,,, like test should only call one func.
 func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
-	validRefreshToken, err := suite.svc.generateToken(TestUserID, TestEmail, TestRole, 24)
+	validRefreshToken, err := suite.svc.generateToken(generateTokenParams{
+		UserID:               TestUserID,
+		Email:                TestEmail,
+		TokenType:            tokenTypeRefresh,
+		TokenVersion:         TestTokenVersion,
+		Role:                 TestRole,
+		ValidDurationSeconds: 24,
+	})
 	suite.Require().NoError(err)
 
 	res, err := suite.svc.RefreshToken(context.Background(), validRefreshToken)
@@ -255,12 +296,22 @@ func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
 	suite.NotEmpty(res.Token)
 	suite.NotEmpty(res.RefreshToken)
 
-	for _, tokenStr := range []string{res.Token, res.RefreshToken} {
-		claims, err := suite.svc.verifyToken(tokenStr)
-		suite.Require().NoError(err)
-		suite.Equal(TestUserID, claims["userID"])
-		suite.Equal(TestEmail, claims["email"])
-		suite.Equal(TestRole, getIntClaim(claims, "role"))
+	tokens := []struct {
+		tokenType string
+		value     string
+	}{
+		{tokenTypeAccess, res.Token},
+		{tokenTypeRefresh, res.RefreshToken},
+	}
+
+	for _, tk := range tokens {
+		suite.T().Run(tk.tokenType, func(_ *testing.T) {
+			claims, err := suite.svc.verifyToken(context.Background(), tk.value, tk.tokenType)
+			suite.Require().NoError(err)
+			suite.Equal(TestUserID, claims.UserID)
+			suite.Equal(TestEmail, claims.Email)
+			suite.Equal(TestRole, claims.Role)
+		})
 	}
 }
 

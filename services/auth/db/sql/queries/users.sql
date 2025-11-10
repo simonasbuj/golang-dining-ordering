@@ -26,6 +26,7 @@ SELECT
     id,
     email,
     password_hash,
+    token_version,
     name,
     lastname,
     role,
@@ -35,3 +36,14 @@ SELECT
     deleted_at
 FROM users
 WHERE email = $1;
+
+-- name: IncrementTokenVersion :one
+UPDATE users
+SET token_version = token_version + 1
+WHERE id = $1
+RETURNING token_version;
+
+-- name: GetTokenVersionByUserID :one
+SELECT token_version
+FROM users
+WHERE id = $1;
