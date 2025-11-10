@@ -11,6 +11,8 @@ import (
 	authRepo "golang-dining-ordering/services/auth/repository"
 	authRoutes "golang-dining-ordering/services/auth/routes"
 	authService "golang-dining-ordering/services/auth/service"
+	managementHandlers "golang-dining-ordering/services/management/handlers"
+	managementRoutes "golang-dining-ordering/services/management/routes"
 	"log"
 	"log/slog"
 	"net/http"
@@ -37,7 +39,7 @@ func main() {
 		ReplaceAttr: nil,
 	}))
 
-	conn, err := sql.Open("postgres", cfg.DineDBURI)
+	conn, err := sql.Open("postgres", cfg.DineAuthDBURI)
 	if err != nil {
 		logger.Error("failed to prepare database connection", "error", err)
 
@@ -65,12 +67,14 @@ func main() {
 	authService := authService.NewAuthService(authConfig, usersRepo)
 
 	authHandler := authHandler.NewAuthHandler(logger, authService)
+	restHandler := managementHandlers.NewRestaurantsHandler
 
 	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	routes.AddSwaggerRoutes(e)
 
 	authRoutes.AddRoutes(context.Background(), e, authHandler)
+	managementRoutes.AddRrestaurantRoutes(context.Background(), e, restHandler())
 
 	logger.Info("starting server on address " + cfg.DineHTTPAddress)
 
