@@ -78,8 +78,8 @@ func (h *Handler) HandleRefreshToken(c echo.Context) error {
 
 	resDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto.RefreshToken)
 	if err != nil {
-		if errors.Is(err, ce.ErrMissingClaims) {
-			return jsonError(c, "missing claims", err)
+		if errors.Is(err, ce.ErrMissingClaims) || errors.Is(err, ce.ErrInvalidTokenData) {
+			return jsonError(c, "invalid token data", err)
 		}
 
 		return jsonError(c, "failed to refresh token", err, http.StatusInternalServerError)
