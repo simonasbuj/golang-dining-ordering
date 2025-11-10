@@ -80,11 +80,25 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const getTokenVersionByUserID = `-- name: GetTokenVersionByUserID :one
+SELECT token_version
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetTokenVersionByUserID(ctx context.Context, id string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTokenVersionByUserID, id)
+	var token_version int64
+	err := row.Scan(&token_version)
+	return token_version, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
     id,
     email,
     password_hash,
+    token_version,
     name,
     lastname,
     role,
@@ -103,6 +117,7 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.ID,
 		&i.Email,
 		&i.PasswordHash,
+		&i.TokenVersion,
 		&i.Name,
 		&i.Lastname,
 		&i.Role,
@@ -112,4 +127,18 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error
 		&i.DeletedAt,
 	)
 	return i, err
+}
+
+const incrementTokenVersion = `-- name: IncrementTokenVersion :one
+UPDATE users
+SET token_version = token_version + 1
+WHERE id = $1
+RETURNING token_version
+`
+
+func (q *Queries) IncrementTokenVersion(ctx context.Context, id string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, incrementTokenVersion, id)
+	var token_version int64
+	err := row.Scan(&token_version)
+	return token_version, err
 }

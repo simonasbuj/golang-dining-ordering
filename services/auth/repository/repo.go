@@ -17,6 +17,8 @@ import (
 type Repository interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	GetUserByEmail(ctx context.Context, email string) (*db.User, error)
+	IncrementTokenVersionForUser(ctx context.Context, userID string) (int64, error)
+	GetTokenVersionByUserID(ctx context.Context, userID string) (int64, error)
 }
 
 type repository struct {
@@ -64,4 +66,25 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*db.User
 	}
 
 	return &user, nil
+}
+
+func (r *repository) IncrementTokenVersionForUser(
+	ctx context.Context,
+	userID string,
+) (int64, error) {
+	newTokenVersion, err := r.q.IncrementTokenVersion(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to increment token version: %w", err)
+	}
+
+	return newTokenVersion, nil
+}
+
+func (r *repository) GetTokenVersionByUserID(ctx context.Context, userID string) (int64, error) {
+	tokenVersion, err := r.q.GetTokenVersionByUserID(ctx, userID)
+	if err != nil {
+		return 0, fmt.Errorf("failed to retrieve token version: %w", err)
+	}
+
+	return tokenVersion, nil
 }
