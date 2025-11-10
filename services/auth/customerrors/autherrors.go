@@ -13,6 +13,9 @@ var ErrUnauthorized = errors.New("unauthorized")
 // ErrParseClaims is returned when parsing jwt token claims fails.
 var ErrParseClaims = errors.New("failed to parse claims")
 
+// ErrParseToken is returned when parsing jwt token fails.
+var ErrParseToken = errors.New("failed to parse JWT token")
+
 // ErrInvalidToken is returned when jwt token is not valid.
 var ErrInvalidToken = errors.New("invalid token")
 

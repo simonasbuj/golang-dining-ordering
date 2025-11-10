@@ -3,6 +3,7 @@ package service
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/auth/repository"
@@ -20,6 +21,7 @@ type Service interface {
 	SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
 	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponseDto, error)
+	LogoutUser(ctx context.Context, token string) error
 }
 
 // Config holds configuration values for authentication, such as secret keys
@@ -75,7 +77,18 @@ func (s *service) SignInUser(
 		return nil, ce.ErrUnauthorized
 	}
 
-	token, err := s.generateToken(user.ID, user.Email, user.Role, s.cfg.TokenValidSeconds)
+	newTokenVersion, err := s.repo.IncrementTokenVersionForUser(ctx, user.ID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to incerement token version: %w", err)
+	}
+
+	token, err := s.generateToken(
+		user.ID,
+		user.Email,
+		newTokenVersion,
+		user.Role,
+		s.cfg.TokenValidSeconds,
+	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to generate token: %w", err)
 	}
@@ -83,6 +96,7 @@ func (s *service) SignInUser(
 	refreshToken, err := s.generateToken(
 		user.ID,
 		user.Email,
+		newTokenVersion,
 		user.Role,
 		s.cfg.RefreshTokenValidSeconds,
 	)
@@ -99,31 +113,39 @@ func (s *service) SignInUser(
 }
 
 func (s *service) RefreshToken(
-	_ context.Context,
+	ctx context.Context,
 	refreshToken string,
 ) (*dto.TokenResponseDto, error) {
-	claims, err := s.verifyToken(refreshToken)
+	claimsDto, err := s.verifyToken(refreshToken)
 	if err != nil {
 		return nil, err
 	}
 
-	userID, userOk := claims["userID"].(string)
-	email, emailOk := claims["email"].(string)
-	role, roleOk := claims["role"].(float64)
-
-	if !userOk || !emailOk || !roleOk {
+	if claimsDto.UserID == "" || claimsDto.Email == "" || claimsDto.Role == 0 {
 		return nil, ce.ErrMissingClaims
 	}
 
-	newToken, err := s.generateToken(userID, email, int(role), s.cfg.TokenValidSeconds)
+	newTokenVersion, err := s.repo.IncrementTokenVersionForUser(ctx, claimsDto.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to increment token version: %w", err)
+	}
+
+	newToken, err := s.generateToken(
+		claimsDto.UserID,
+		claimsDto.Email,
+		newTokenVersion,
+		claimsDto.Role,
+		s.cfg.TokenValidSeconds,
+	)
 	if err != nil {
 		return nil, err
 	}
 
 	newRefreshToken, err := s.generateToken(
-		userID,
-		email,
-		int(role),
+		claimsDto.UserID,
+		claimsDto.Email,
+		newTokenVersion,
+		claimsDto.Role,
 		s.cfg.RefreshTokenValidSeconds,
 	)
 	if err != nil {
@@ -136,6 +158,20 @@ func (s *service) RefreshToken(
 	}
 
 	return res, nil
+}
+
+func (s *service) LogoutUser(ctx context.Context, tokenStr string) error {
+	claims, err := s.verifyToken(tokenStr)
+	if err != nil {
+		return fmt.Errorf("failed to verify token: %w", err)
+	}
+
+	_, err = s.repo.IncrementTokenVersionForUser(ctx, claims.UserID)
+	if err != nil {
+		return fmt.Errorf("failed to increment token version: %w", err)
+	}
+
+	return nil
 }
 
 func (s *service) hashPassword(password string) (string, error) {
@@ -155,6 +191,7 @@ func (s *service) verifyPassword(plainPassword, hashedPassword string) bool {
 
 func (s *service) generateToken(
 	userID, email string,
+	tokenVersion int64,
 	role, validDurationSeconds int,
 ) (string, error) {
 	if userID == "" || email == "" || role == 0 {
@@ -168,10 +205,11 @@ func (s *service) generateToken(
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID": userID,
-		"email":  email,
-		"role":   role,
-		"exp":    time.Now().Add(time.Second * time.Duration(validDurationSeconds)).Unix(),
+		"userID":       userID,
+		"email":        email,
+		"role":         role,
+		"tokenVersion": tokenVersion,
+		"exp":          time.Now().Add(time.Second * time.Duration(validDurationSeconds)).Unix(),
 	})
 
 	tokenStr, err := token.SignedString([]byte(s.cfg.Secret))
@@ -182,7 +220,7 @@ func (s *service) generateToken(
 	return tokenStr, nil
 }
 
-func (s *service) verifyToken(tokenStr string) (jwt.MapClaims, error) {
+func (s *service) verifyToken(tokenStr string) (*dto.TokenClaimsDto, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ce.ErrUnexpectedSigninMethod
@@ -191,7 +229,7 @@ func (s *service) verifyToken(tokenStr string) (jwt.MapClaims, error) {
 		return []byte(s.cfg.Secret), nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to parse JWT token: %w", err)
+		return nil, ce.ErrParseToken
 	}
 
 	if !token.Valid {
@@ -203,5 +241,26 @@ func (s *service) verifyToken(tokenStr string) (jwt.MapClaims, error) {
 		return nil, ce.ErrParseClaims
 	}
 
-	return claims, nil
+	claimsDto, err := s.mapClaimsToDTO(claims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal claims into dto: %w", err)
+	}
+
+	return claimsDto, nil
+}
+
+func (s *service) mapClaimsToDTO(claims jwt.MapClaims) (*dto.TokenClaimsDto, error) {
+	data, err := json.Marshal(claims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal claims: %w", err)
+	}
+
+	var dto dto.TokenClaimsDto
+
+	err = json.Unmarshal(data, &dto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
+	}
+
+	return &dto, nil
 }

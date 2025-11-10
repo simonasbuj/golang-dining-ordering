@@ -166,6 +166,39 @@ paths:
         '500':
           description: Internal server error
 
+  /auth/logout:
+    post:
+      tags:
+        - Auth
+      summary: Log out the current user
+      description: Invalidates the current user's access or refresh token.
+      requestBody:
+        required: false
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                token:
+                  type: string
+                  example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+              description: Token is used to determine which user is logging out
+      responses:
+        '200':
+          description: Logged out successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "logged out successfully"
+        '401':
+          description: Unauthorized (invalid or expired token)
+        '500':
+          description: Internal server error
+
   # Management paths
   /restaurants:
     post:
