@@ -174,7 +174,7 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 		desc   string
 		userID string
 		email  string
-		Role   int
+		role   int
 	}{
 		{"missing userID", "", TestEmail, TestRole},
 		{"missing email", TestUserID, "", TestRole},
@@ -182,10 +182,12 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 	}
 
 	for _, tc := range testCases {
-		tokenStr, err := suite.svc.generateToken(tc.userID, tc.email, tc.Role, 1)
+		suite.T().Run(tc.desc, func(_ *testing.T) {
+			tokenStr, err := suite.svc.generateToken(tc.userID, tc.email, tc.role, 1)
 
-		suite.Require().Error(err, "expected error when %s", tc.desc)
-		suite.Require().Empty(tokenStr, "token should be empty when %s", tc.desc)
+			suite.Require().Error(err, "expected error when %s", tc.desc)
+			suite.Require().Empty(tokenStr, "token should be empty when %s", tc.desc)
+		})
 	}
 }
 

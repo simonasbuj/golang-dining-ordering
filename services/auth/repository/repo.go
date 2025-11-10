@@ -23,10 +23,10 @@ type repository struct {
 	q *db.Queries
 }
 
-// NewUserRepository creates a new userRepository with the given database connection.
+// NewRepository creates a new userRepository with the given database connection.
 //
 //nolint:revive // intended unexported type return
-func NewUserRepository(q *db.Queries) *repository {
+func NewRepository(q *db.Queries) *repository {
 	return &repository{
 		q: q,
 	}
