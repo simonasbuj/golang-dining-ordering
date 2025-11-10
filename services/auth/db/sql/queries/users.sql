@@ -42,3 +42,8 @@ UPDATE users
 SET token_version = token_version + 1
 WHERE id = $1
 RETURNING token_version;
+
+-- name: GetTokenVersionByUserID :one
+SELECT token_version
+FROM users
+WHERE id = $1;

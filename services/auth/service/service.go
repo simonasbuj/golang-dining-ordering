@@ -116,7 +116,7 @@ func (s *service) RefreshToken(
 	ctx context.Context,
 	refreshToken string,
 ) (*dto.TokenResponseDto, error) {
-	claimsDto, err := s.verifyToken(refreshToken)
+	claimsDto, err := s.verifyToken(ctx, refreshToken)
 	if err != nil {
 		return nil, err
 	}
@@ -161,7 +161,7 @@ func (s *service) RefreshToken(
 }
 
 func (s *service) LogoutUser(ctx context.Context, tokenStr string) error {
-	claims, err := s.verifyToken(tokenStr)
+	claims, err := s.verifyToken(ctx, tokenStr)
 	if err != nil {
 		return fmt.Errorf("failed to verify token: %w", err)
 	}
@@ -220,7 +220,7 @@ func (s *service) generateToken(
 	return tokenStr, nil
 }
 
-func (s *service) verifyToken(tokenStr string) (*dto.TokenClaimsDto, error) {
+func (s *service) verifyToken(ctx context.Context, tokenStr string) (*dto.TokenClaimsDto, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ce.ErrUnexpectedSigninMethod
@@ -244,6 +244,15 @@ func (s *service) verifyToken(tokenStr string) (*dto.TokenClaimsDto, error) {
 	claimsDto, err := s.mapClaimsToDTO(claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims into dto: %w", err)
+	}
+
+	dbTokenVersion, err := s.repo.GetTokenVersionByUserID(ctx, claimsDto.UserID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user's token version from db: %w", err)
+	}
+
+	if dbTokenVersion != claimsDto.TokenVersion {
+		return nil, ce.ErrInvalidTokenVersion
 	}
 
 	return claimsDto, nil

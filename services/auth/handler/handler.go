@@ -79,7 +79,7 @@ func (h *Handler) HandleRefreshToken(c echo.Context) error {
 	resDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto.RefreshToken)
 	if err != nil {
 		if errors.Is(err, ce.ErrMissingClaims) || errors.Is(err, ce.ErrInvalidTokenData) ||
-			errors.Is(err, ce.ErrParseToken) {
+			errors.Is(err, ce.ErrParseToken) || errors.Is(err, ce.ErrInvalidTokenVersion) {
 			return jsonError(c, "invalid token data", err)
 		}
 
@@ -101,7 +101,7 @@ func (h *Handler) HandleLogout(c echo.Context) error {
 	err = h.svc.LogoutUser(c.Request().Context(), reqDto.Token)
 	if err != nil {
 		if errors.Is(err, ce.ErrMissingClaims) || errors.Is(err, ce.ErrInvalidTokenData) ||
-			errors.Is(err, ce.ErrParseToken) {
+			errors.Is(err, ce.ErrParseToken) || errors.Is(err, ce.ErrInvalidTokenVersion) {
 			return jsonError(c, "invalid token data", err)
 		}
 

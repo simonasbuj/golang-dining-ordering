@@ -80,6 +80,19 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
+const getTokenVersionByUserID = `-- name: GetTokenVersionByUserID :one
+SELECT token_version
+FROM users
+WHERE id = $1
+`
+
+func (q *Queries) GetTokenVersionByUserID(ctx context.Context, id string) (int64, error) {
+	row := q.db.QueryRowContext(ctx, getTokenVersionByUserID, id)
+	var token_version int64
+	err := row.Scan(&token_version)
+	return token_version, err
+}
+
 const getUserByEmail = `-- name: GetUserByEmail :one
 SELECT
     id,

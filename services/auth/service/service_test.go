@@ -81,6 +81,14 @@ func (r *mockUsersRepository) IncrementTokenVersionForUser(
 	return TestTokenVersion, nil
 }
 
+// GetTokenVersionByUserID returns a mocked token version.
+func (r *mockUsersRepository) GetTokenVersionByUserID(
+	_ context.Context,
+	_ string,
+) (int64, error) {
+	return TestTokenVersion, nil
+}
+
 type AuthServiceTestSuite struct {
 	suite.Suite
 
@@ -213,7 +221,7 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr)
 
 	suite.Require().NoError(err)
 	suite.NotNil(claims)
@@ -231,7 +239,7 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_InvalidSecret() {
 	tokenStr, err := token.SignedString([]byte("different-secret"))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
@@ -244,13 +252,13 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_ExpiredToken() {
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_MalformedToken() {
-	claims, err := suite.svc.verifyToken("this-is-not-a-jwt-not-even-close")
+	claims, err := suite.svc.verifyToken(context.Background(), "this-is-not-a-jwt-not-even-close")
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
@@ -284,7 +292,7 @@ func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
 
 	for _, tk := range tokens {
 		suite.T().Run(tk.name, func(_ *testing.T) {
-			claims, err := suite.svc.verifyToken(tk.value)
+			claims, err := suite.svc.verifyToken(context.Background(), tk.value)
 			suite.Require().NoError(err)
 			suite.Equal(TestUserID, claims.UserID)
 			suite.Equal(TestEmail, claims.Email)
