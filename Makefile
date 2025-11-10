@@ -53,7 +53,7 @@ up-migrations:
 	migrate -path $(MIGRATIONS_DIR) -database "$($(DINE_DB_URI_NAME))" up
 
 down-migrations:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DINE_DB_URI)" down 1
+	migrate -path $(MIGRATIONS_DIR) -database "$($(DINE_DB_URI_NAME))" down 1
 
 sqlc-generate:
 	sqlc generate
