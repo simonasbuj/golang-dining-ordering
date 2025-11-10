@@ -32,3 +32,9 @@ var ErrMissingClaims = errors.New("refresh token is missing required claims")
 
 // ErrInvalidTokenVersion is returned when jwt token's claim 'tokenVersion' doesnt match the one in db.
 var ErrInvalidTokenVersion = errors.New("invalid token version")
+
+// ErrInvalidTokenType is returned when jwt token's claim 'tokenType' doesnt match the required one.
+var ErrInvalidTokenType = errors.New("invalid token type")
+
+// ErrMissingToken is returned when JWT token is missing from request header.
+var ErrMissingToken = errors.New("token missing in header")

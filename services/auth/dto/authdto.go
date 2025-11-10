@@ -36,6 +36,7 @@ type LogoutRequestDto struct {
 type TokenClaimsDto struct {
 	UserID       string `json:"userId"`
 	Email        string `json:"email"`
+	TokenType    string `json:"tokenType"`
 	TokenVersion int64  `json:"tokenVersion"`
 	Role         int    `json:"role"`
 }

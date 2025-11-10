@@ -9,6 +9,7 @@ import (
 	"golang-dining-ordering/services/auth/service"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	ce "golang-dining-ordering/services/auth/customerrors"
 
@@ -79,7 +80,10 @@ func (h *Handler) HandleRefreshToken(c echo.Context) error {
 	resDto, err := h.svc.RefreshToken(c.Request().Context(), reqDto.RefreshToken)
 	if err != nil {
 		if errors.Is(err, ce.ErrMissingClaims) || errors.Is(err, ce.ErrInvalidTokenData) ||
-			errors.Is(err, ce.ErrParseToken) || errors.Is(err, ce.ErrInvalidTokenVersion) {
+			errors.Is(
+				err,
+				ce.ErrParseToken,
+			) || errors.Is(err, ce.ErrInvalidTokenVersion) || errors.Is(err, ce.ErrInvalidTokenType) {
 			return jsonError(c, "invalid token data", err)
 		}
 
@@ -101,7 +105,10 @@ func (h *Handler) HandleLogout(c echo.Context) error {
 	err = h.svc.LogoutUser(c.Request().Context(), reqDto.Token)
 	if err != nil {
 		if errors.Is(err, ce.ErrMissingClaims) || errors.Is(err, ce.ErrInvalidTokenData) ||
-			errors.Is(err, ce.ErrParseToken) || errors.Is(err, ce.ErrInvalidTokenVersion) {
+			errors.Is(
+				err,
+				ce.ErrParseToken,
+			) || errors.Is(err, ce.ErrInvalidTokenVersion) || errors.Is(err, ce.ErrInvalidTokenType) {
 			return jsonError(c, "invalid token data", err)
 		}
 
@@ -109,4 +116,30 @@ func (h *Handler) HandleLogout(c echo.Context) error {
 	}
 
 	return jsonSuccess(c, "logged out successfully", nil)
+}
+
+// HandleAuthorize validates the token from the request.
+func (h *Handler) HandleAuthorize(c echo.Context) error {
+	tokenStr := c.Request().Header.Get("Authorization")
+	if tokenStr == "" {
+		return jsonError(
+			c,
+			"missing token",
+			ce.ErrMissingToken,
+			http.StatusUnauthorized,
+		)
+	}
+
+	trimmedToken := strings.TrimPrefix(tokenStr, "Bearer ")
+
+	resDto, err := h.svc.Authorize(c.Request().Context(), trimmedToken)
+	if errors.Is(err, ce.ErrMissingClaims) || errors.Is(err, ce.ErrInvalidTokenData) ||
+		errors.Is(
+			err,
+			ce.ErrParseToken,
+		) || errors.Is(err, ce.ErrInvalidTokenVersion) || errors.Is(err, ce.ErrInvalidTokenType) {
+		return jsonError(c, "invalid token data", err)
+	}
+
+	return jsonSuccess(c, "authorized", resDto)
 }

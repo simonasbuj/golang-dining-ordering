@@ -147,7 +147,14 @@ func (suite *AuthServiceTestSuite) TestHashPassword() {
 }
 
 func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
-	tokenStr, err := suite.svc.generateToken(TestUserID, TestEmail, TestTokenVersion, TestRole, 1)
+	tokenStr, err := suite.svc.generateToken(generateTokenParams{
+		UserID:               TestUserID,
+		Email:                TestEmail,
+		TokenType:            tokenTypeAccess,
+		TokenVersion:         TestTokenVersion,
+		Role:                 TestRole,
+		ValidDurationSeconds: 1,
+	})
 
 	suite.Require().NoError(err)
 	suite.NotEmpty(tokenStr)
@@ -196,13 +203,14 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 
 	for _, tc := range testCases {
 		suite.T().Run(tc.desc, func(_ *testing.T) {
-			tokenStr, err := suite.svc.generateToken(
-				tc.userID,
-				tc.email,
-				tc.tokenVersion,
-				tc.role,
-				1,
-			)
+			tokenStr, err := suite.svc.generateToken(generateTokenParams{
+				UserID:               tc.userID,
+				Email:                tc.email,
+				TokenType:            tokenTypeAccess,
+				TokenVersion:         tc.tokenVersion,
+				Role:                 tc.role,
+				ValidDurationSeconds: 1,
+			})
 
 			suite.Require().Error(err, "expected error when %s", tc.desc)
 			suite.Require().Empty(tokenStr, "token should be empty when %s", tc.desc)
@@ -215,13 +223,14 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
 		"userID":       TestUserID,
 		"email":        TestEmail,
 		"tokenVersion": TestTokenVersion,
+		"tokenType":    tokenTypeAccess,
 		"role":         TestRole,
 		"exp":          time.Now().Add(time.Hour).Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(context.Background(), tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr, tokenTypeAccess)
 
 	suite.Require().NoError(err)
 	suite.NotNil(claims)
@@ -239,7 +248,7 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_InvalidSecret() {
 	tokenStr, err := token.SignedString([]byte("different-secret"))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(context.Background(), tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr, tokenTypeAccess)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
@@ -252,13 +261,17 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_ExpiredToken() {
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)
 
-	claims, err := suite.svc.verifyToken(context.Background(), tokenStr)
+	claims, err := suite.svc.verifyToken(context.Background(), tokenStr, tokenTypeAccess)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_MalformedToken() {
-	claims, err := suite.svc.verifyToken(context.Background(), "this-is-not-a-jwt-not-even-close")
+	claims, err := suite.svc.verifyToken(
+		context.Background(),
+		"this-is-not-a-jwt-not-even-close",
+		tokenTypeAccess,
+	)
 	suite.Require().Error(err)
 	suite.Nil(claims)
 }
@@ -266,13 +279,14 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_MalformedToken() {
 // hmm using other functions from svc like generateToken and verifyToken as helpers in test to make it easier to test?
 // but this seems wrong,,, like test should only call one func.
 func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
-	validRefreshToken, err := suite.svc.generateToken(
-		TestUserID,
-		TestEmail,
-		TestTokenVersion,
-		TestRole,
-		24,
-	)
+	validRefreshToken, err := suite.svc.generateToken(generateTokenParams{
+		UserID:               TestUserID,
+		Email:                TestEmail,
+		TokenType:            tokenTypeRefresh,
+		TokenVersion:         TestTokenVersion,
+		Role:                 TestRole,
+		ValidDurationSeconds: 24,
+	})
 	suite.Require().NoError(err)
 
 	res, err := suite.svc.RefreshToken(context.Background(), validRefreshToken)
@@ -283,16 +297,16 @@ func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
 	suite.NotEmpty(res.RefreshToken)
 
 	tokens := []struct {
-		name  string
-		value string
+		tokenType string
+		value     string
 	}{
-		{"access token", res.Token},
-		{"refresh token", res.RefreshToken},
+		{tokenTypeAccess, res.Token},
+		{tokenTypeRefresh, res.RefreshToken},
 	}
 
 	for _, tk := range tokens {
-		suite.T().Run(tk.name, func(_ *testing.T) {
-			claims, err := suite.svc.verifyToken(context.Background(), tk.value)
+		suite.T().Run(tk.tokenType, func(_ *testing.T) {
+			claims, err := suite.svc.verifyToken(context.Background(), tk.value, tk.tokenType)
 			suite.Require().NoError(err)
 			suite.Equal(TestUserID, claims.UserID)
 			suite.Equal(TestEmail, claims.Email)
