@@ -12,13 +12,16 @@ import (
 	authRoutes "golang-dining-ordering/services/auth/routes"
 	authService "golang-dining-ordering/services/auth/service"
 	managementHandlers "golang-dining-ordering/services/management/handlers"
+	managementRepos "golang-dining-ordering/services/management/repository"
 	managementRoutes "golang-dining-ordering/services/management/routes"
+	managementServices "golang-dining-ordering/services/management/services"
 	"log"
 	"log/slog"
 	"net/http"
 	"os"
 
 	authDB "golang-dining-ordering/services/auth/db/generated"
+	managementDB "golang-dining-ordering/services/management/db/generated"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
@@ -39,42 +42,15 @@ func main() {
 		ReplaceAttr: nil,
 	}))
 
-	conn, err := sql.Open("postgres", cfg.DineAuthDBURI)
-	if err != nil {
-		logger.Error("failed to prepare database connection", "error", err)
-
-		return
-	}
-
-	err = conn.PingContext(context.Background())
-	if err != nil {
-		logger.Error("failed to connect to database", "error", err)
-
-		return
-	}
-
-	queries := authDB.New(conn)
-
 	e := echo.New()
 	e.Use(middleware.RequestLogger(logger))
-
-	usersRepo := authRepo.NewRepository(queries)
-	authConfig := &authService.Config{
-		Secret:                   cfg.DineAuthSecret,
-		TokenValidSeconds:        cfg.DineTokenValidSeconds,
-		RefreshTokenValidSeconds: cfg.DineRefreshTokenValidSeconds,
-	}
-	authService := authService.NewAuthService(authConfig, usersRepo)
-
-	authHandler := authHandler.NewAuthHandler(logger, authService)
-	restHandler := managementHandlers.NewRestaurantsHandler
 
 	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	routes.AddSwaggerRoutes(e)
 
-	authRoutes.AddRoutes(context.Background(), e, authHandler)
-	managementRoutes.AddRrestaurantRoutes(context.Background(), e, restHandler())
+	setupAuth(e, &cfg, logger)
+	setupManagement(e, &cfg, logger)
 
 	logger.Info("starting server on address " + cfg.DineHTTPAddress)
 
@@ -82,4 +58,45 @@ func main() {
 	if err != nil {
 		logger.Error("server stopped", "error", err)
 	}
+}
+
+func setupAuth(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
+	authConn, err := sql.Open("postgres", cfg.DineAuthDBURI)
+	if err != nil {
+		logger.Error("failed to prepare database connection", "error", err)
+
+		return
+	}
+
+	err = authConn.PingContext(context.Background())
+	if err != nil {
+		logger.Error("failed to connect to auth database", "error", err)
+
+		return
+	}
+
+	authQueries := authDB.New(authConn)
+
+	usersRepo := authRepo.NewRepository(authQueries)
+	authConfig := &authService.Config{
+		Secret:                   cfg.DineAuthSecret,
+		TokenValidSeconds:        cfg.DineTokenValidSeconds,
+		RefreshTokenValidSeconds: cfg.DineRefreshTokenValidSeconds,
+	}
+	authService := authService.NewAuthService(authConfig, usersRepo)
+	authHandler := authHandler.NewAuthHandler(logger, authService)
+
+	authRoutes.AddRoutes(context.Background(), e, authHandler)
+}
+
+func setupManagement(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
+	managementConn, _ := sql.Open("postgres", cfg.DineManagementDBURI)
+
+	managementQueries := managementDB.New(managementConn)
+
+	restRepo := managementRepos.NewRestaurantRepository(managementQueries)
+	restService := managementServices.NewRestaurantService(restRepo)
+	restHandler := managementHandlers.NewRestaurantsHandler(restService)
+
+	managementRoutes.AddRrestaurantRoutes(context.Background(), e, restHandler)
 }

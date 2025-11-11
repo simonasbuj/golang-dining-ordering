@@ -13,6 +13,14 @@ linters:
       linters:
         - wrapcheck
       text: ".*"
+    - path: services/management/handler
+      linters:
+        - wrapcheck
+      text: ".*"
+    - path: pkg/responses
+      linters:
+        - wrapcheck
+      text: ".*"
     generated: lax
   settings:
     tagliatelle:
