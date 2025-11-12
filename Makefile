@@ -1,4 +1,5 @@
 MIGRATIONS_DIR := ./services/auth/db/sql/migrations
+DINE_DB_URI := potsgres-uri
 
 # make sure golang dependencies likq 'sqlc' and 'migrations' are in the path
 PATH := $(PATH):$(shell go env GOPATH)/bin
@@ -49,10 +50,10 @@ create-migration:
 
 up-migrations:
 	echo "$(DINE_DB_URI)"
-	migrate -path $(MIGRATIONS_DIR) -database "$(DINE_DB_URI)" up
+	migrate -path $(MIGRATIONS_DIR) -database "$($(DINE_DB_URI_NAME))" up
 
 down-migrations:
-	migrate -path $(MIGRATIONS_DIR) -database "$(DINE_DB_URI)" down 1
+	migrate -path $(MIGRATIONS_DIR) -database "$($(DINE_DB_URI_NAME))" down 1
 
 sqlc-generate:
 	sqlc generate

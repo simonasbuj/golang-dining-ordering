@@ -11,3 +11,15 @@ sql:
         overrides:
           - go_type: "int"
             db_type: "pg_catalog.int4"
+  
+  - schema: "services/management/db/sql/migrations"
+    queries: "services/management/db/sql/queries"
+    engine: "postgresql"
+    gen:
+      go:
+        emit_json_tags: true
+        package: "db"
+        out: "services/management/db/generated"
+        overrides:
+          - go_type: "int"
+            db_type: "pg_catalog.int4"
