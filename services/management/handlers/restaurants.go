@@ -36,7 +36,7 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 		return responses.JSONError(c, err.Error(), err)
 	}
 
-	user, err := h.getUserFromContext(c)
+	user, err := getUserFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -101,13 +101,4 @@ func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
 	}
 
 	return responses.JSONSuccess(c, "restaurant fetched", resDto)
-}
-
-func (h *RestaurantsHandler) getUserFromContext(c echo.Context) (*dto.TokenClaimsDto, error) {
-	user, ok := c.Get("authUser").(*dto.TokenClaimsDto)
-	if !ok || user.UserID == "" {
-		return nil, responses.JSONError(c, "unauthorized", errMissingUser)
-	}
-
-	return user, nil
 }
