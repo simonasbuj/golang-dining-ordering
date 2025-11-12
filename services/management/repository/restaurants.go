@@ -7,6 +7,7 @@ import (
 	"fmt"
 	db "golang-dining-ordering/services/management/db/generated"
 	"golang-dining-ordering/services/management/dto"
+	"math"
 
 	"github.com/google/uuid"
 )
@@ -17,6 +18,11 @@ type RestaurantRepository interface {
 		ctx context.Context,
 		reqDto *dto.CreateRestaurantDto,
 	) (*dto.CreateRestaurantDto, error)
+	GetRestaurants(
+		ctx context.Context,
+		reqDto *dto.GetRestaurantsReqDto,
+	) (*dto.GetRestaurantsRespDto, error)
+	GetRestaurantByID(ctx context.Context, id string) (*dto.RestaurantItemDto, error)
 }
 
 // restaurantRepository implements RestaurantRepository using sqlc-generated queries.
@@ -80,4 +86,61 @@ func (r *restaurantRepository) CreateRestaurant(
 		Name:    res.Name,
 		Address: res.Address,
 	}, nil
+}
+
+func (r *restaurantRepository) GetRestaurants(
+	ctx context.Context,
+	reqDto *dto.GetRestaurantsReqDto,
+) (*dto.GetRestaurantsRespDto, error) {
+	offset := max(min((reqDto.Page-1)*reqDto.Limit, math.MaxInt32), 0)
+
+	rows, err := r.q.GetRestaurants(ctx, db.GetRestaurantsParams{
+		Limit:  int32(reqDto.Limit), //nolint:gosec
+		Offset: int32(offset),       //nolint:gosec
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch restaurants with %+v: %w", reqDto, err)
+	}
+
+	respDto := &dto.GetRestaurantsRespDto{
+		Page:        reqDto.Page,
+		Limit:       reqDto.Limit,
+		Total:       len(rows),
+		Restaurants: mapGetRestaurantsRows(rows),
+	}
+
+	return respDto, nil
+}
+
+func (r *restaurantRepository) GetRestaurantByID(
+	ctx context.Context,
+	id string,
+) (*dto.RestaurantItemDto, error) {
+	row, err := r.q.GetRestaurantByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch restaurant with id '%s' : %w", id, err)
+	}
+
+	resDto := &dto.RestaurantItemDto{
+		ID:        row.ID,
+		Name:      row.Name,
+		Address:   row.Address,
+		CreatedAt: row.CreatedAt,
+	}
+
+	return resDto, nil
+}
+
+func mapGetRestaurantsRows(rows []db.GetRestaurantsRow) []dto.RestaurantItemDto {
+	result := make([]dto.RestaurantItemDto, len(rows))
+	for i, r := range rows {
+		result[i] = dto.RestaurantItemDto{
+			ID:        r.ID,
+			Name:      r.Name,
+			Address:   r.Address,
+			CreatedAt: r.CreatedAt,
+		}
+	}
+
+	return result
 }

@@ -8,6 +8,7 @@ import (
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/services"
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 )
@@ -35,7 +36,7 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 		return responses.JSONError(c, err.Error(), err)
 	}
 
-	user, err := h.getUserID(c)
+	user, err := getUserFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -55,11 +56,49 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 	return responses.JSONSuccess(c, "new restaurant created", resDto)
 }
 
-func (h *RestaurantsHandler) getUserID(c echo.Context) (*dto.TokenClaimsDto, error) {
-	user, ok := c.Get("authUser").(*dto.TokenClaimsDto)
-	if !ok || user.UserID == "" {
-		return nil, responses.JSONError(c, "unauthorized", errMissingUser)
+// HandleGetRestaurants handles fetching a paginated list of restaurants.
+func (h *RestaurantsHandler) HandleGetRestaurants(c echo.Context) error {
+	limitStr := c.QueryParam("limit")
+	pageStr := c.QueryParam("page")
+
+	limit := 10
+	page := 1
+
+	if limitStr != "" {
+		l, err := strconv.Atoi(limitStr)
+		if err == nil && l > 0 {
+			limit = l
+		}
 	}
 
-	return user, nil
+	if pageStr != "" {
+		p, err := strconv.Atoi(pageStr)
+		if err == nil && p > 0 {
+			page = p
+		}
+	}
+
+	reqDto := &dto.GetRestaurantsReqDto{
+		Page:  page,
+		Limit: limit,
+	}
+
+	resDto, err := h.svc.GetRestaurants(c.Request().Context(), reqDto)
+	if err != nil {
+		return responses.JSONError(c, "failed to fetch restaurants", err)
+	}
+
+	return responses.JSONSuccess(c, "restaurants fetched", resDto)
+}
+
+// HandleGetRestaurantByID handles fetching a single restaurant by its ID.
+func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
+	id := c.Param("id")
+
+	resDto, err := h.svc.GetRestaurantByID(c.Request().Context(), id)
+	if err != nil {
+		return responses.JSONError(c, "failed to fetch restaurant", err)
+	}
+
+	return responses.JSONSuccess(c, "restaurant fetched", resDto)
 }

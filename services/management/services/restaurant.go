@@ -3,10 +3,13 @@ package services
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/repository"
 )
+
+var errIDNotProvided = errors.New("restaurant id not provided")
 
 // RestaurantService defines business logic methods for restaurants.
 type RestaurantService interface {
@@ -14,6 +17,11 @@ type RestaurantService interface {
 		ctx context.Context,
 		reqDto *dto.CreateRestaurantDto,
 	) (*dto.CreateRestaurantDto, error)
+	GetRestaurants(
+		ctx context.Context,
+		reqDto *dto.GetRestaurantsReqDto,
+	) (*dto.GetRestaurantsRespDto, error)
+	GetRestaurantByID(ctx context.Context, id string) (*dto.RestaurantItemDto, error)
 }
 
 // restaurantService implements RestaurantService.
@@ -38,6 +46,34 @@ func (s *restaurantService) CreateRestaurant(
 	resDto, err := s.repo.CreateRestaurant(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create restaurant: %w", err)
+	}
+
+	return resDto, nil
+}
+
+func (s *restaurantService) GetRestaurants(
+	ctx context.Context,
+	reqDto *dto.GetRestaurantsReqDto,
+) (*dto.GetRestaurantsRespDto, error) {
+	resDto, err := s.repo.GetRestaurants(ctx, reqDto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch restaurants: %w", err)
+	}
+
+	return resDto, nil
+}
+
+func (s *restaurantService) GetRestaurantByID(
+	ctx context.Context,
+	id string,
+) (*dto.RestaurantItemDto, error) {
+	if id == "" {
+		return nil, errIDNotProvided
+	}
+
+	resDto, err := s.repo.GetRestaurantByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch restaurant: %w", err)
 	}
 
 	return resDto, nil

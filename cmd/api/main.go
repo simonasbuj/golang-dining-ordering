@@ -11,10 +11,10 @@ import (
 	authRepo "golang-dining-ordering/services/auth/repository"
 	authRoutes "golang-dining-ordering/services/auth/routes"
 	authService "golang-dining-ordering/services/auth/service"
-	managementHandlers "golang-dining-ordering/services/management/handlers"
-	managementRepos "golang-dining-ordering/services/management/repository"
-	managementRoutes "golang-dining-ordering/services/management/routes"
-	managementServices "golang-dining-ordering/services/management/services"
+	mngHandlers "golang-dining-ordering/services/management/handlers"
+	mngRepos "golang-dining-ordering/services/management/repository"
+	mngRoutes "golang-dining-ordering/services/management/routes"
+	mngServices "golang-dining-ordering/services/management/services"
 	"log"
 	"log/slog"
 	"net/http"
@@ -90,13 +90,21 @@ func setupAuth(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 }
 
 func setupManagement(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
-	managementConn, _ := sql.Open("postgres", cfg.DineManagementDBURI)
+	db, _ := sql.Open("postgres", cfg.DineManagementDBURI)
 
-	managementQueries := managementDB.New(managementConn)
+	queries := managementDB.New(db)
 
-	restRepo := managementRepos.NewRestaurantRepository(managementConn, managementQueries)
-	restService := managementServices.NewRestaurantService(restRepo)
-	restHandler := managementHandlers.NewRestaurantsHandler(restService)
+	restRepo := mngRepos.NewRestaurantRepository(db, queries)
+	restService := mngServices.NewRestaurantService(restRepo)
+	restHandler := mngHandlers.NewRestaurantsHandler(restService)
 
-	managementRoutes.AddRrestaurantRoutes(context.Background(), e, restHandler)
+	menuRepo := mngRepos.NewMenuRepository(db, queries)
+	menuSvc := mngServices.NewMenuService(menuRepo)
+	menuHandler := mngHandlers.NewMenuHandler(menuSvc)
+
+	mngRoutes.AddRrestaurantRoutes(e, restHandler,
+		cfg.DineAuthorizeEndpoint,
+	)
+
+	mngRoutes.AddMenuRoutes(e, menuHandler, cfg.DineAuthorizeEndpoint)
 }

@@ -7,7 +7,91 @@ package db
 
 import (
 	"context"
+	"time"
 )
+
+const getRestaurantByID = `-- name: GetRestaurantByID :one
+SELECT
+    id,
+    name,
+    address,
+    created_at
+FROM management.restaurants
+WHERE id = $1
+`
+
+type GetRestaurantByIDRow struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Address   string    `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Get a single restaurant by its ID
+func (q *Queries) GetRestaurantByID(ctx context.Context, id string) (GetRestaurantByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getRestaurantByID, id)
+	var i GetRestaurantByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
+const getRestaurants = `-- name: GetRestaurants :many
+SELECT
+    id,
+    name,
+    address,
+    created_at
+FROM management.restaurants
+ORDER BY created_at DESC
+LIMIT $1
+OFFSET $2
+`
+
+type GetRestaurantsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+type GetRestaurantsRow struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Address   string    `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Get paginated list of restaurants
+func (q *Queries) GetRestaurants(ctx context.Context, arg GetRestaurantsParams) ([]GetRestaurantsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getRestaurants, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetRestaurantsRow
+	for rows.Next() {
+		var i GetRestaurantsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Address,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const insertRestaurant = `-- name: InsertRestaurant :one
 INSERT INTO management.restaurants (id, name, address)
