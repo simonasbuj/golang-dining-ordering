@@ -14,6 +14,10 @@ type RestaurantService interface {
 		ctx context.Context,
 		reqDto *dto.CreateRestaurantDto,
 	) (*dto.CreateRestaurantDto, error)
+	GetRestaurants(
+		ctx context.Context,
+		reqDto *dto.GetRestaurantsReqDto,
+	) (*dto.GetRestaurantsRespDto, error)
 }
 
 // restaurantService implements RestaurantService.
@@ -38,6 +42,18 @@ func (s *restaurantService) CreateRestaurant(
 	resDto, err := s.repo.CreateRestaurant(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create restaurant: %w", err)
+	}
+
+	return resDto, nil
+}
+
+func (s *restaurantService) GetRestaurants(
+	ctx context.Context,
+	reqDto *dto.GetRestaurantsReqDto,
+) (*dto.GetRestaurantsRespDto, error) {
+	resDto, err := s.repo.GetRestaurants(ctx, reqDto)
+	if err != nil {
+		return nil, fmt.Errorf("failed to fetch restaurants: %w", err)
 	}
 
 	return resDto, nil

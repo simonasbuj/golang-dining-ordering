@@ -16,4 +16,5 @@ func AddRrestaurantRoutes(_ context.Context, e *echo.Echo, h *handler.Restaurant
 	api.Use(middleware.AuthMiddleware("http://localhost:42069/api/v1/auth/authorize"))
 
 	api.POST("/restaurants", h.HandleCreateRestaurant)
+	api.GET("/restaurants", h.HandleGetRestaurants)
 }
