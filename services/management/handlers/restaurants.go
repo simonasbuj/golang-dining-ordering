@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"errors"
 	"golang-dining-ordering/pkg/responses"
 	"golang-dining-ordering/pkg/validation"
 	"golang-dining-ordering/services/management/dto"
@@ -32,6 +33,12 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 		return responses.JSONError(c, err.Error(), err)
 	}
 
+	user, err := h.getUserID(c)
+	if err != nil {
+		return err
+	}
+	reqDto.UserID = user.UserID
+
 	resDto, err := h.svc.CreateRestaurant(c.Request().Context(), &reqDto)
 	if err != nil {
 		return responses.JSONError(
@@ -43,4 +50,13 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 	}
 
 	return responses.JSONSuccess(c, "new restaurant created", resDto)
+}
+
+func (h *RestaurantsHandler) getUserID(c echo.Context) (*dto.TokenClaimsDto, error) {
+	user, ok := c.Get("authUser").(*dto.TokenClaimsDto)
+	if !ok || user.UserID == "" {
+		return nil, responses.JSONError(c, "unauthorized", errors.New("missing user ID in context"))
+	}
+
+	return user, nil
 }

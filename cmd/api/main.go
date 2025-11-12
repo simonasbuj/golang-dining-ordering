@@ -94,7 +94,7 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
 
 	managementQueries := managementDB.New(managementConn)
 
-	restRepo := managementRepos.NewRestaurantRepository(managementQueries)
+	restRepo := managementRepos.NewRestaurantRepository(managementConn, managementQueries)
 	restService := managementServices.NewRestaurantService(restRepo)
 	restHandler := managementHandlers.NewRestaurantsHandler(restService)
 
