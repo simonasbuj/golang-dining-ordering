@@ -13,6 +13,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var errUnauthorized = errors.New("response from auth-service: unauthorized")
+
 // AuthResponse is response body from auth-service.
 type AuthResponse struct {
 	Data dto.TokenClaimsDto `json:"data"`
@@ -22,8 +24,6 @@ type AuthResponse struct {
 func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			fmt.Println("MIDDLEWARE HIT")
-
 			token := c.Request().Header.Get("Authorization")
 			if token == "" {
 				return c.JSON(http.StatusUnauthorized, map[string]string{
@@ -31,7 +31,8 @@ func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
 				})
 			}
 
-			req, err := http.NewRequest(
+			req, err := http.NewRequestWithContext(
+				c.Request().Context(),
 				http.MethodPost,
 				authServiceURL,
 				nil,
@@ -52,7 +53,7 @@ func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
 					map[string]string{"error": "failed to reach auth service"},
 				)
 			}
-			defer resp.Body.Close()
+			defer resp.Body.Close() //nolint:errcheck
 
 			if resp.StatusCode != http.StatusOK {
 				body, _ := io.ReadAll(resp.Body)
@@ -61,7 +62,7 @@ func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
 				c.Response().WriteHeader(resp.StatusCode)
 				_, _ = c.Response().Write(body)
 
-				return errors.New("response from auth-service: unauthorized")
+				return errUnauthorized
 			}
 
 			err = parseAndStoreAuthResponse(c, resp)
@@ -81,7 +82,7 @@ func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
 
 // parseAndStoreAuthResponse parses the auth service response and stores the claims in context.
 func parseAndStoreAuthResponse(c echo.Context, resp *http.Response) error {
-	defer resp.Body.Close()
+	defer resp.Body.Close() //nolint:errcheck
 
 	// Read body
 	body, err := io.ReadAll(resp.Body)
@@ -91,8 +92,10 @@ func parseAndStoreAuthResponse(c echo.Context, resp *http.Response) error {
 
 	// Decode JSON into struct
 	var authResp AuthResponse
-	if err := json.Unmarshal(body, &authResp); err != nil {
-		return fmt.Errorf("failed to decode auth response: %w", err)
+
+	err = json.Unmarshal(body, &authResp)
+	if err != nil {
+		return fmt.Errorf("failed to unmarshal auth response: %w", err)
 	}
 
 	// Store in context

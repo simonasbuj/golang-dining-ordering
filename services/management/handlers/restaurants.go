@@ -12,6 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var errMissingUser = errors.New("missing user in context")
+
 // RestaurantsHandler handles restaurant-related HTTP requests.
 type RestaurantsHandler struct {
 	svc services.RestaurantService
@@ -37,6 +39,7 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 	if err != nil {
 		return err
 	}
+
 	reqDto.UserID = user.UserID
 
 	resDto, err := h.svc.CreateRestaurant(c.Request().Context(), &reqDto)
@@ -55,7 +58,7 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 func (h *RestaurantsHandler) getUserID(c echo.Context) (*dto.TokenClaimsDto, error) {
 	user, ok := c.Get("authUser").(*dto.TokenClaimsDto)
 	if !ok || user.UserID == "" {
-		return nil, responses.JSONError(c, "unauthorized", errors.New("missing user ID in context"))
+		return nil, responses.JSONError(c, "unauthorized", errMissingUser)
 	}
 
 	return user, nil
