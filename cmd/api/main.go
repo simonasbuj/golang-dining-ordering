@@ -99,7 +99,7 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
 	restHandler := mngHandlers.NewRestaurantsHandler(restService)
 
 	menuRepo := mngRepos.NewMenuRepository(db, queries)
-	menuSvc := mngServices.NewMenuService(menuRepo)
+	menuSvc := mngServices.NewMenuService(menuRepo, restRepo)
 	menuHandler := mngHandlers.NewMenuHandler(menuSvc)
 
 	mngRoutes.AddRrestaurantRoutes(e, restHandler,

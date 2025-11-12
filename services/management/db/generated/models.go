@@ -9,6 +9,37 @@ import (
 	"time"
 )
 
+type ManagementCategory struct {
+	ID          string         `json:"id"`
+	MenuID      string         `json:"menu_id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   sql.NullTime   `json:"deleted_at"`
+}
+
+type ManagementItem struct {
+	ID          string         `json:"id"`
+	CategoryID  string         `json:"category_id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	Price       string         `json:"price"`
+	IsAvailable bool           `json:"is_available"`
+	ImagePath   sql.NullString `json:"image_path"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   sql.NullTime   `json:"deleted_at"`
+}
+
+type ManagementMenu struct {
+	ID           string       `json:"id"`
+	RestaurantID string       `json:"restaurant_id"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
 type ManagementRestaurant struct {
 	ID        string       `json:"id"`
 	Name      string       `json:"name"`

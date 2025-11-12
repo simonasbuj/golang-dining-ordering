@@ -3,9 +3,11 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	db "golang-dining-ordering/services/management/db/generated"
 	"golang-dining-ordering/services/management/dto"
-	"time"
+
+	"github.com/google/uuid"
 )
 
 // MenuRepository defines methods for accessing and managing restaurant data.
@@ -33,16 +35,26 @@ func NewMenuRepository(db *sql.DB, q *db.Queries) *menuRepository {
 }
 
 func (r *menuRepository) AddMenuCategory(
-	_ context.Context,
-	_ *dto.MenuCategoryDto,
+	ctx context.Context,
+	reqDto *dto.MenuCategoryDto,
 ) (*dto.MenuCategoryDto, error) {
+	row, err := r.q.InsertMenuCategory(ctx, db.InsertMenuCategoryParams{
+		ID:          uuid.New().String(),
+		MenuID:      reqDto.RestaurantID,
+		Name:        reqDto.Name,
+		Description: sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to insert new category: %w", err)
+	}
+
 	return &dto.MenuCategoryDto{
-		ID:           "hi",
+		ID:           row.ID,
 		RestaurantID: "hi",
-		Name:         "hi",
-		Description:  "hi",
-		CreatedAt:    time.Now(),
-		UpdatedAt:    time.Now(),
+		Name:         row.Name,
+		Description:  row.Description.String,
+		CreatedAt:    row.CreatedAt,
+		UpdatedAt:    row.UpdatedAt,
 		DeletedAt:    nil,
 	}, nil
 }

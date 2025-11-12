@@ -6,8 +6,8 @@ import "time"
 type MenuCategoryDto struct {
 	ID           string     `json:"id"`
 	RestaurantID string     `json:"restaurantId"`
-	Name         string     `json:"name"`
-	Description  string     `json:"description"`
+	Name         string     `json:"name"         validate:"required"`
+	Description  string     `json:"description"  validate:"required"`
 	CreatedAt    time.Time  `json:"createdAt"`
 	UpdatedAt    time.Time  `json:"updatedAt"`
 	DeletedAt    *time.Time `json:"deletedAt"`
