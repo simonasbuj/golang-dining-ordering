@@ -10,6 +10,36 @@ import (
 	"time"
 )
 
+const getRestaurantByID = `-- name: GetRestaurantByID :one
+SELECT
+    id,
+    name,
+    address,
+    created_at
+FROM management.restaurants
+WHERE id = $1
+`
+
+type GetRestaurantByIDRow struct {
+	ID        string    `json:"id"`
+	Name      string    `json:"name"`
+	Address   string    `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+// Get a single restaurant by its ID
+func (q *Queries) GetRestaurantByID(ctx context.Context, id string) (GetRestaurantByIDRow, error) {
+	row := q.db.QueryRowContext(ctx, getRestaurantByID, id)
+	var i GetRestaurantByIDRow
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.CreatedAt,
+	)
+	return i, err
+}
+
 const getRestaurants = `-- name: GetRestaurants :many
 SELECT
     id,

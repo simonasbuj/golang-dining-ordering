@@ -19,3 +19,13 @@ FROM management.restaurants
 ORDER BY created_at DESC
 LIMIT $1
 OFFSET $2;
+
+-- name: GetRestaurantByID :one
+-- Get a single restaurant by its ID
+SELECT
+    id,
+    name,
+    address,
+    created_at
+FROM management.restaurants
+WHERE id = $1;

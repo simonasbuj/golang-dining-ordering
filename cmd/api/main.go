@@ -98,5 +98,10 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
 	restService := managementServices.NewRestaurantService(restRepo)
 	restHandler := managementHandlers.NewRestaurantsHandler(restService)
 
-	managementRoutes.AddRrestaurantRoutes(context.Background(), e, restHandler)
+	managementRoutes.AddRrestaurantRoutes(
+		context.Background(),
+		e,
+		restHandler,
+		cfg.DineAuthorizeEndpoint,
+	)
 }

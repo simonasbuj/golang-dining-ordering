@@ -10,11 +10,15 @@ import (
 )
 
 // AddRrestaurantRoutes registers authentication-related HTTP routes.
-func AddRrestaurantRoutes(_ context.Context, e *echo.Echo, h *handler.RestaurantsHandler) {
+func AddRrestaurantRoutes(
+	_ context.Context,
+	e *echo.Echo,
+	h *handler.RestaurantsHandler,
+	authEndpoint string,
+) {
 	api := e.Group("/api/v1")
 
-	api.Use(middleware.AuthMiddleware("http://localhost:42069/api/v1/auth/authorize"))
-
-	api.POST("/restaurants", h.HandleCreateRestaurant)
+	api.POST("/restaurants", h.HandleCreateRestaurant, middleware.AuthMiddleware(authEndpoint))
 	api.GET("/restaurants", h.HandleGetRestaurants)
+	api.GET("/restaurants/:id", h.HandleGetRestaurantByID)
 }
