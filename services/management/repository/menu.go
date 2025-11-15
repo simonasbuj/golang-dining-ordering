@@ -16,6 +16,10 @@ type MenuRepository interface {
 		ctx context.Context,
 		reqDto *dto.MenuCategoryDto,
 	) (*dto.MenuCategoryDto, error)
+	AddMenuItem(
+		ctx context.Context,
+		reqDto *dto.MenuItemDto,
+	) (*dto.MenuItemDto, error)
 }
 
 // menuRepository implements MenuRepository using sqlc-generated queries.
@@ -56,5 +60,33 @@ func (r *menuRepository) AddMenuCategory(
 		CreatedAt:    row.CreatedAt,
 		UpdatedAt:    row.UpdatedAt,
 		DeletedAt:    nil,
+	}, nil
+}
+
+func (r *menuRepository) AddMenuItem(
+		ctx context.Context,
+		reqDto *dto.MenuItemDto,
+	) (*dto.MenuItemDto, error) {
+	row, err := r.q.InsertMenuItem(ctx, db.InsertMenuItemParams{
+		ID: uuid.New().String(),
+		CategoryID: reqDto.CategoryID,
+		Name: reqDto.Name,
+		Description: sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
+		Price: reqDto.Price,
+		IsAvailable: true,
+		ImagePath: sql.NullString{String: reqDto.ImagePath, Valid: reqDto.ImagePath != ""},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &dto.MenuItemDto{
+		ID: row.ID,
+		CategoryID: row.CategoryID,
+		Name: row.Name,
+		Description: row.Description.String,
+		Price: row.Price,
+		IsAvailable: row.IsAvailable,
+		ImagePath: row.ImagePath.String,
 	}, nil
 }
