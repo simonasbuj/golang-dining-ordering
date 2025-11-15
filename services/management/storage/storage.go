@@ -3,5 +3,6 @@ package storage
 import "mime/multipart"
 
 type Storage interface {
-	StoreMenuItemImage(fileHeader *multipart.FileHeader) (string, error) 
+	StoreMenuItemImage(fileHeader *multipart.FileHeader) (string, error)
+	DeleteMenuItemImage(path string) error
 }

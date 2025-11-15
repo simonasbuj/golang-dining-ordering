@@ -82,11 +82,15 @@ func (s *menuService) AddMenuItem(
 	}
 
 	if reqDto.FileHeader != nil {
-		s.storage.StoreMenuItemImage(reqDto.FileHeader, )
+		reqDto.ImagePath, err = s.storage.StoreMenuItemImage(reqDto.FileHeader)
+		if err != nil {
+			return nil, fmt.Errorf("failed to store menu item image: %w", err)
+		}
 	}
 
 	resDto, err := s.menuRepo.AddMenuItem(ctx, reqDto)
 	if err != nil {
+		_ = s.storage.DeleteMenuItemImage(reqDto.ImagePath)
 		return nil, err
 	}
 
