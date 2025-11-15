@@ -143,3 +143,59 @@ func (q *Queries) InsertRestaurantManager(ctx context.Context, arg InsertRestaur
 	)
 	return i, err
 }
+
+const insertRestaurantMenu = `-- name: InsertRestaurantMenu :one
+INSERT INTO management.menus (id, restaurant_id)
+VALUES ($1, $2)
+RETURNING id, restaurant_id, created_at, updated_at
+`
+
+type InsertRestaurantMenuParams struct {
+	ID           string `json:"id"`
+	RestaurantID string `json:"restaurant_id"`
+}
+
+type InsertRestaurantMenuRow struct {
+	ID           string    `json:"id"`
+	RestaurantID string    `json:"restaurant_id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+func (q *Queries) InsertRestaurantMenu(ctx context.Context, arg InsertRestaurantMenuParams) (InsertRestaurantMenuRow, error) {
+	row := q.db.QueryRowContext(ctx, insertRestaurantMenu, arg.ID, arg.RestaurantID)
+	var i InsertRestaurantMenuRow
+	err := row.Scan(
+		&i.ID,
+		&i.RestaurantID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const isUserRestaurantManager = `-- name: IsUserRestaurantManager :one
+SELECT id, user_id, restaurant_id, created_at, updated_at
+FROM management.restaurant_managers
+WHERE user_id = $1
+  AND restaurant_id = $2
+`
+
+type IsUserRestaurantManagerParams struct {
+	UserID       string `json:"user_id"`
+	RestaurantID string `json:"restaurant_id"`
+}
+
+// Check if a user is a manager for a given restaurant
+func (q *Queries) IsUserRestaurantManager(ctx context.Context, arg IsUserRestaurantManagerParams) (ManagementRestaurantManager, error) {
+	row := q.db.QueryRowContext(ctx, isUserRestaurantManager, arg.UserID, arg.RestaurantID)
+	var i ManagementRestaurantManager
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RestaurantID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}

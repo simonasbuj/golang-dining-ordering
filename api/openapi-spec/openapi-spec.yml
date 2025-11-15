@@ -255,7 +255,7 @@ paths:
         Creates a new restaurant entry in the system.
         The restaurant owner is determined from the JWT token provided in the Authorization header.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       requestBody:
         required: true
         content:
@@ -310,7 +310,7 @@ paths:
         Retrieves a paginated list of restaurants.
         Pagination is handled via `page` and `limit` query parameters.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: page
           in: query
@@ -378,7 +378,7 @@ paths:
         Updates restaurant information.
         The owner is determined from the JWT token.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -443,7 +443,7 @@ paths:
       description: |
         Adds a new table to a specific restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -510,7 +510,7 @@ paths:
       summary: Get all tables for a restaurant
       description: Retrieves all tables for a specific restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -579,7 +579,7 @@ paths:
       summary: Update table information
       description: Updates the name, capacity, or active status of a table in a restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -657,7 +657,7 @@ paths:
       summary: Create a new menu category
       description: Adds a new category to the menu of a specific restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -722,7 +722,7 @@ paths:
       summary: Get all menu categories for a restaurant
       description: Retrieves all menu categories for a specific restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -777,7 +777,7 @@ paths:
       summary: Update a menu category
       description: Updates the name and description of a menu category for a restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -847,7 +847,7 @@ paths:
       summary: Create a new menu item
       description: Adds a new item to a restaurant menu. Supports image upload via form-data.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -941,7 +941,7 @@ paths:
       summary: Get all menu items for a restaurant grouped by category
       description: Retrieves all menu categories for a restaurant, and for each category, lists its menu items.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -1025,7 +1025,7 @@ paths:
       summary: Get a single menu item
       description: Retrieves details of a specific menu item for a restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -1095,7 +1095,7 @@ paths:
       summary: Update a menu item
       description: Updates details of a menu item. Supports optional image upload via form-data.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -1194,7 +1194,7 @@ paths:
       summary: Find waiter by email
       description: Retrieves waiters filtered by email. The waiter may not be assigned to any restaurant.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: email
           in: query
@@ -1249,7 +1249,7 @@ paths:
       summary: Assign a waiter to a restaurant
       description: Adds a waiter to the restaurant’s staff. Only restaurant owners can perform this action.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -1320,7 +1320,7 @@ paths:
       summary: List all waiters assigned to a restaurant
       description: Retrieves a list of all waiters assigned to a restaurant, including user details.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path
@@ -1376,7 +1376,7 @@ paths:
       summary: Unassign a waiter from a restaurant
       description: Removes a waiter from the restaurant’s staff. Only restaurant owners can perform this action.
       security:
-        - BearerJWT: []
+        - bearerAuth: []
       parameters:
         - name: id
           in: path

@@ -23,6 +23,7 @@ type RestaurantRepository interface {
 		reqDto *dto.GetRestaurantsReqDto,
 	) (*dto.GetRestaurantsRespDto, error)
 	GetRestaurantByID(ctx context.Context, id string) (*dto.RestaurantItemDto, error)
+	IsUserRestaurantManager(ctx context.Context, userID, restaurantID string) error
 }
 
 // restaurantRepository implements RestaurantRepository using sqlc-generated queries.
@@ -73,6 +74,16 @@ func (r *restaurantRepository) CreateRestaurant(
 		_ = tx.Rollback()
 
 		return nil, fmt.Errorf("error inserting new manager: %w", err)
+	}
+
+	_, err = qtx.InsertRestaurantMenu(ctx, db.InsertRestaurantMenuParams{
+		ID:           res.ID,
+		RestaurantID: res.ID,
+	})
+	if err != nil {
+		_ = tx.Rollback()
+
+		return nil, fmt.Errorf("error inserting restaurant menu: %w", err)
 	}
 
 	err = tx.Commit()
@@ -129,6 +140,21 @@ func (r *restaurantRepository) GetRestaurantByID(
 	}
 
 	return resDto, nil
+}
+
+func (r *restaurantRepository) IsUserRestaurantManager(
+	ctx context.Context,
+	userID, restaurantID string,
+) error {
+	_, err := r.q.IsUserRestaurantManager(ctx, db.IsUserRestaurantManagerParams{
+		UserID:       userID,
+		RestaurantID: restaurantID,
+	})
+	if err != nil {
+		return fmt.Errorf("failed to confirm if user is restaurant manager: %w", err)
+	}
+
+	return nil
 }
 
 func mapGetRestaurantsRows(rows []db.GetRestaurantsRow) []dto.RestaurantItemDto {
