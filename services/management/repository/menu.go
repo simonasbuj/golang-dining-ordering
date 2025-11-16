@@ -54,7 +54,7 @@ func (r *menuRepository) AddMenuCategory(
 
 	return &dto.MenuCategoryDto{
 		ID:           row.ID,
-		RestaurantID: "hi",
+		RestaurantID: reqDto.RestaurantID,
 		Name:         row.Name,
 		Description:  row.Description.String,
 		CreatedAt:    row.CreatedAt,
