@@ -24,7 +24,7 @@ type ManagementItem struct {
 	CategoryID  string         `json:"category_id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
-	Price       string         `json:"price"`
+	Price       float64        `json:"price"`
 	IsAvailable bool           `json:"is_available"`
 	ImagePath   sql.NullString `json:"image_path"`
 	CreatedAt   time.Time      `json:"created_at"`

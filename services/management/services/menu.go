@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/repository"
+	"golang-dining-ordering/services/management/storage"
 )
 
 const (
@@ -23,12 +24,18 @@ type MenuService interface {
 		reqDto *dto.MenuCategoryDto,
 		claims *dto.TokenClaimsDto,
 	) (*dto.MenuCategoryDto, error)
+	AddMenuItem(
+		ctx context.Context,
+		reqDto *dto.MenuItemDto,
+		claims *dto.TokenClaimsDto,
+	) (*dto.MenuItemDto, error)
 }
 
 // menuService implements MenuService.
 type menuService struct {
 	menuRepo repository.MenuRepository
 	restRepo repository.RestaurantRepository
+	storage  storage.Storage
 }
 
 // NewMenuService creates a new MenuService instance.
@@ -37,10 +44,12 @@ type menuService struct {
 func NewMenuService(
 	menuRepo repository.MenuRepository,
 	restRepo repository.RestaurantRepository,
+	storage storage.Storage,
 ) *menuService {
 	return &menuService{
 		menuRepo: menuRepo,
 		restRepo: restRepo,
+		storage:  storage,
 	}
 }
 
@@ -49,13 +58,9 @@ func (s *menuService) AddMenuCategory(
 	reqDto *dto.MenuCategoryDto,
 	claims *dto.TokenClaimsDto,
 ) (*dto.MenuCategoryDto, error) {
-	if claims.Role != userTypeManager {
-		return nil, ErrUserIsNotManager
-	}
-
-	err := s.restRepo.IsUserRestaurantManager(ctx, claims.UserID, reqDto.RestaurantID)
+	err := s.isUserRestaurantManager(ctx, claims, reqDto.RestaurantID)
 	if err != nil {
-		return nil, fmt.Errorf("%w: %w", ErrUserIsNotManager, err)
+		return nil, err
 	}
 
 	resDto, err := s.menuRepo.AddMenuCategory(ctx, reqDto)
@@ -64,4 +69,48 @@ func (s *menuService) AddMenuCategory(
 	}
 
 	return resDto, nil
+}
+
+func (s *menuService) AddMenuItem(
+	ctx context.Context,
+	reqDto *dto.MenuItemDto,
+	claims *dto.TokenClaimsDto,
+) (*dto.MenuItemDto, error) {
+	err := s.isUserRestaurantManager(ctx, claims, reqDto.RestaurantID)
+	if err != nil {
+		return nil, err
+	}
+
+	if reqDto.FileHeader != nil {
+		reqDto.ImagePath, err = s.storage.StoreMenuItemImage(reqDto.FileHeader)
+		if err != nil {
+			return nil, fmt.Errorf("failed to store menu item image: %w", err)
+		}
+	}
+
+	resDto, err := s.menuRepo.AddMenuItem(ctx, reqDto)
+	if err != nil {
+		_ = s.storage.DeleteMenuItemImage(reqDto.ImagePath)
+
+		return nil, fmt.Errorf("failed to delete menu item's image from storage: %w", err)
+	}
+
+	return resDto, nil
+}
+
+func (s *menuService) isUserRestaurantManager(
+	ctx context.Context,
+	claims *dto.TokenClaimsDto,
+	restaurantID string,
+) error {
+	if claims.Role != userTypeManager {
+		return ErrUserIsNotManager
+	}
+
+	err := s.restRepo.IsUserRestaurantManager(ctx, claims.UserID, restaurantID)
+	if err != nil {
+		return fmt.Errorf("%w: %w", ErrUserIsNotManager, err)
+	}
+
+	return nil
 }

@@ -27,7 +27,11 @@ func AddMenuRoutes(
 	h *handler.MenuHandler,
 	authEndpoint string,
 ) {
+	e.Static("/uploads", "uploads")
+
 	api := e.Group("/api/v1/restaurants/:restaurant_id")
 
 	api.POST("/menu/categories", h.HandleAddMenuCategory, middleware.AuthMiddleware(authEndpoint))
+
+	api.POST("/menu/items", h.HandleAddMenuItem, middleware.AuthMiddleware(authEndpoint))
 }

@@ -33,3 +33,6 @@ go.work.sum
 
 # build
 tmp/
+
+# local image uploads
+uploads/

@@ -10,4 +10,6 @@ type AppConfig struct {
 	DineTokenValidSeconds        int    `env:"DINE_TOKEN_VALID_SECONDS"`
 	DineRefreshTokenValidSeconds int    `env:"DINE_REFRESH_TOKEN_VALID_SECONDS"`
 	DineAuthorizeEndpoint        string `env:"DINE_AUTHORIZE_ENDPOINT"`
+	DineMaxImageSizeBytes        int64  `env:"DINE_MAX_IMAGE_SIZE_BYTES"`
+	DineUploadsDirectory         string `env:"DINE_UPLOADS_DIRECTORY"`
 }
