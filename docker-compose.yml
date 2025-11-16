@@ -22,12 +22,9 @@ services:
     deploy:
       mode: replicated
       replicas: 1
-    environment:
-      DINE_DB_URI: ${DINE_DB_URI}
-      DINE_HTTP_ADDRESS: ${DINE_HTTP_ADDRESS}
-      DINE_AUTH_SECRET: ${DINE_AUTH_SECRET}
-      DINE_TOKEN_VALID_HOURS: ${DINE_TOKEN_VALID_HOURS}
-      DINE_REFRESH_TOKEN_VALID_HOURS: ${DINE_REFRESH_TOKEN_VALID_HOURS}
+    env_file:
+        - .env.example
+        - .env
     ports:
        - "${DINE_HTTP_PORT}:${DINE_HTTP_PORT}"
 

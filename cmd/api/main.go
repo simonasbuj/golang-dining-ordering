@@ -65,16 +65,16 @@ func setupAuth(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	authConn, err := sql.Open("postgres", cfg.DineAuthDBURI)
 	if err != nil {
 		logger.Error("failed to prepare database connection", "error", err)
-
-		return
+		os.Exit(1)
 	}
 
 	err = authConn.PingContext(context.Background())
 	if err != nil {
 		logger.Error("failed to connect to auth database", "error", err)
-
-		return
+		os.Exit(1)
 	}
+
+	logger.Info("connected to auth db")
 
 	authQueries := authDB.New(authConn)
 
@@ -90,8 +90,20 @@ func setupAuth(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	authRoutes.AddRoutes(context.Background(), e, authHandler)
 }
 
-func setupManagement(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
-	db, _ := sql.Open("postgres", cfg.DineManagementDBURI)
+func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
+	db, err := sql.Open("postgres", cfg.DineManagementDBURI)
+	if err != nil {
+		logger.Error("failed to prepare database connection", "error", err)
+		os.Exit(1)
+	}
+
+	err = db.PingContext(context.Background())
+	if err != nil {
+		logger.Error("failed to connect to management database", "error", err)
+		os.Exit(1)
+	}
+
+	logger.Info("connected to management db")
 
 	queries := managementDB.New(db)
 
