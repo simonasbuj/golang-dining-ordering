@@ -64,29 +64,29 @@ func (r *menuRepository) AddMenuCategory(
 }
 
 func (r *menuRepository) AddMenuItem(
-		ctx context.Context,
-		reqDto *dto.MenuItemDto,
-	) (*dto.MenuItemDto, error) {
+	ctx context.Context,
+	reqDto *dto.MenuItemDto,
+) (*dto.MenuItemDto, error) {
 	row, err := r.q.InsertMenuItem(ctx, db.InsertMenuItemParams{
-		ID: uuid.New().String(),
-		CategoryID: reqDto.CategoryID,
-		Name: reqDto.Name,
+		ID:          uuid.New().String(),
+		CategoryID:  reqDto.CategoryID,
+		Name:        reqDto.Name,
 		Description: sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
-		Price: reqDto.Price,
+		Price:       reqDto.Price,
 		IsAvailable: true,
-		ImagePath: sql.NullString{String: reqDto.ImagePath, Valid: reqDto.ImagePath != ""},
+		ImagePath:   sql.NullString{String: reqDto.ImagePath, Valid: reqDto.ImagePath != ""},
 	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to insert new menu item: %w", err)
 	}
 
-	return &dto.MenuItemDto{
-		ID: row.ID,
-		CategoryID: row.CategoryID,
-		Name: row.Name,
+	return &dto.MenuItemDto{ //nolint:exhaustruct
+		ID:          row.ID,
+		CategoryID:  row.CategoryID,
+		Name:        row.Name,
 		Description: row.Description.String,
-		Price: row.Price,
+		Price:       row.Price,
 		IsAvailable: row.IsAvailable,
-		ImagePath: row.ImagePath.String,
+		ImagePath:   row.ImagePath.String,
 	}, nil
 }

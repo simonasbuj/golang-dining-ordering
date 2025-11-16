@@ -44,7 +44,7 @@ type menuService struct {
 func NewMenuService(
 	menuRepo repository.MenuRepository,
 	restRepo repository.RestaurantRepository,
-	storage  storage.Storage,
+	storage storage.Storage,
 ) *menuService {
 	return &menuService{
 		menuRepo: menuRepo,
@@ -91,7 +91,8 @@ func (s *menuService) AddMenuItem(
 	resDto, err := s.menuRepo.AddMenuItem(ctx, reqDto)
 	if err != nil {
 		_ = s.storage.DeleteMenuItemImage(reqDto.ImagePath)
-		return nil, err
+
+		return nil, fmt.Errorf("failed to delete menu item's image from storage: %w", err)
 	}
 
 	return resDto, nil

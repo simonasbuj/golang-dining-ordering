@@ -100,7 +100,7 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
 	restHandler := mngHandlers.NewRestaurantsHandler(restService)
 
 	menuRepo := mngRepos.NewMenuRepository(db, queries)
-	storage := mngStorage.NewLocalStorage(cfg.DineMaxImageSizeBytes)
+	storage := mngStorage.NewLocalStorage(cfg.DineMaxImageSizeBytes, cfg.DineUploadsDirectory)
 	menuSvc := mngServices.NewMenuService(menuRepo, restRepo, storage)
 	menuHandler := mngHandlers.NewMenuHandler(menuSvc)
 

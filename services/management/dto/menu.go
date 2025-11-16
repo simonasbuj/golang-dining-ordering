@@ -16,6 +16,7 @@ type MenuCategoryDto struct {
 	DeletedAt    *time.Time `json:"deletedAt"`
 }
 
+// MenuItemDto represents a menu item with its details and optional uploaded image.
 type MenuItemDto struct {
 	ID           string                `json:"id"`
 	RestaurantID string                `json:"-"           validate:"required"`

@@ -14,6 +14,11 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
+var (
+	errInvalidPriceValue       = errors.New("invalid price field value")
+	errInvalidIsAvailableValue = errors.New("invalid is_available field value")
+)
+
 // MenuHandler handles restaurant menu related HTTP requests.
 type MenuHandler struct {
 	svc services.MenuService
@@ -61,6 +66,7 @@ func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
 	return responses.JSONSuccess(c, "menu category created", resDto)
 }
 
+// HandleAddMenuItem handles HTTP requests to add a new menu item.
 func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
 	user, err := getUserFromContext(c)
 	if err != nil {
@@ -96,11 +102,12 @@ func (h *MenuHandler) getItemFormFields(c echo.Context) (*dto.MenuItemDto, error
 	reqDto.CategoryID = c.FormValue("category_id")
 	reqDto.Name = c.FormValue("name")
 	reqDto.Description = c.FormValue("description")
-	
+
 	priceStr := c.FormValue("price")
+
 	price, err := strconv.ParseFloat(priceStr, 64)
 	if err != nil {
-		return nil, errors.New("invalid price field value")
+		return nil, errInvalidPriceValue
 	}
 
 	reqDto.Price = price
@@ -109,7 +116,7 @@ func (h *MenuHandler) getItemFormFields(c echo.Context) (*dto.MenuItemDto, error
 	if isAvailableStr != "" {
 		isAvailable, err := strconv.ParseBool(isAvailableStr)
 		if err != nil {
-			return nil, errors.New("invalid is_available field value")
+			return nil, errInvalidIsAvailableValue
 		}
 
 		reqDto.IsAvailable = isAvailable
