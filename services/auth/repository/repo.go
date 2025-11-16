@@ -16,7 +16,7 @@ import (
 // Repository defines methods for accessing and managing user data.
 type Repository interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
-	GetUserByEmail(ctx context.Context, email string) (*db.User, error)
+	GetUserByEmail(ctx context.Context, email string) (*db.AuthUser, error)
 	IncrementTokenVersionForUser(ctx context.Context, userID string) (int64, error)
 	GetTokenVersionByUserID(ctx context.Context, userID string) (int64, error)
 }
@@ -59,7 +59,7 @@ func (r *repository) CreateUser(
 	return userRow.ID, nil
 }
 
-func (r *repository) GetUserByEmail(ctx context.Context, email string) (*db.User, error) {
+func (r *repository) GetUserByEmail(ctx context.Context, email string) (*db.AuthUser, error) {
 	user, err := r.q.GetUserByEmail(ctx, email)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch user from db: %w", err)

@@ -27,13 +27,13 @@ const (
 type mockUsersRepository struct {
 	sync.Mutex
 
-	users []*db.User
+	users []*db.AuthUser
 }
 
 // NewMockUserRepository creates a new mock implementation of UsersRepository for testing.
 func NewMockUserRepository() *mockUsersRepository {
 	return &mockUsersRepository{
-		users: make([]*db.User, 0),
+		users: make([]*db.AuthUser, 0),
 		Mutex: sync.Mutex{},
 	}
 }
@@ -46,7 +46,7 @@ func (r *mockUsersRepository) CreateUser(
 	r.Lock()
 	defer r.Unlock()
 
-	user := &db.User{ //nolint:exhaustruct
+	user := &db.AuthUser{ //nolint:exhaustruct
 		ID:           "some-fake-id-1",
 		Email:        req.Email,
 		PasswordHash: req.Password,
@@ -61,8 +61,11 @@ func (r *mockUsersRepository) CreateUser(
 }
 
 // GetUserByEmail returns a mock user for testing purposes.
-func (r *mockUsersRepository) GetUserByEmail(_ context.Context, email string) (*db.User, error) {
-	user := &db.User{ //nolint:exhaustruct
+func (r *mockUsersRepository) GetUserByEmail(
+	_ context.Context,
+	email string,
+) (*db.AuthUser, error) {
+	user := &db.AuthUser{ //nolint:exhaustruct
 		ID:    "user-123",
 		Email: email,
 		// hash for password123 with cost factor = 10

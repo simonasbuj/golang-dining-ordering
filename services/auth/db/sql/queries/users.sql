@@ -1,5 +1,5 @@
 -- name: CreateUser :one
-INSERT INTO users (
+INSERT INTO auth.users (
     id,
     email,
     password_hash,
@@ -34,16 +34,16 @@ SELECT
     created_at,
     updated_at,
     deleted_at
-FROM users
+FROM auth.users
 WHERE email = $1;
 
 -- name: IncrementTokenVersion :one
-UPDATE users
+UPDATE auth.users
 SET token_version = token_version + 1
 WHERE id = $1
 RETURNING token_version;
 
 -- name: GetTokenVersionByUserID :one
 SELECT token_version
-FROM users
+FROM auth.users
 WHERE id = $1;
