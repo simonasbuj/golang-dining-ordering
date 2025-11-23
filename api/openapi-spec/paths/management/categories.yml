@@ -1,0 +1,55 @@
+post:
+  tags:
+    - Management - Menus
+  summary: Create a new menu category
+  description: Adds a new category to the menu of a specific restaurant.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/management/menus.yml#/CreateCategoryRequest'
+  responses:
+    '201':
+      description: Menu category created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/menus.yml#/CategoryResponse'
+    '400':
+      description: Bad request (missing or invalid fields)
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant does not exist)
+    '500':
+      description: Internal server error
+
+get:
+  tags:
+    - Management - Menus
+  summary: Get all menu categories for a restaurant
+  description: Retrieves all menu categories for a specific restaurant.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
+  responses:
+    '200':
+      description: List of menu categories
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/menus.yml#/CategoryListResponse'
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '404':
+      description: Not found (restaurant does not exist)
+    '500':
+      description: Internal server error

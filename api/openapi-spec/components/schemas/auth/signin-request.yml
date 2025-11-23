@@ -1,0 +1,12 @@
+SigninRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      example: user@example.com
+    password:
+      type: string
+      example: secret123

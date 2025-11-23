@@ -1,0 +1,9 @@
+CategoryIDParam:
+  name: category_id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the category
+  example: "cat_001"
+  

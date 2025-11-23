@@ -1,0 +1,88 @@
+CreateTableRequest:
+  type: object
+  required:
+    - name
+    - capacity
+  properties:
+    name:
+      type: string
+      example: "Table A1"
+    capacity:
+      type: integer
+      minimum: 1
+      example: 4
+
+TableResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "table_001"
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    name:
+      type: string
+      example: "Table A1"
+    capacity:
+      type: integer
+      example: 4
+    is_active:
+      type: boolean
+      example: true
+    created_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+    updated_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+
+TableListResponse:
+  type: object
+  properties:
+    total:
+      type: integer
+      example: 12
+    tables:
+      type: array
+      items:
+        $ref: '#/TableResponse'
+
+UpdateTableRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      example: "Table A1 Updated"
+    capacity:
+      type: integer
+      minimum: 1
+      example: 6
+    is_active:
+      type: boolean
+      example: false
+
+TableUpdateResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "table_001"
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    name:
+      type: string
+      example: "Table A1 Updated"
+    capacity:
+      type: integer
+      example: 6
+    is_active:
+      type: boolean
+      example: false
+    updated_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"

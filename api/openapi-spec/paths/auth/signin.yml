@@ -1,0 +1,23 @@
+post:
+  tags:
+    - Auth
+  summary: Authenticate a user
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/auth/signin-request.yml#/SigninRequest'
+  responses:
+    '200':
+      description: Authentication successful
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/auth/signin-response.yml#/SigninResponse'
+    '400':
+      description: Bad request (missing or incorrect request body fields)
+    '401':
+      description: Unauthorized (invalid credentials)
+    '500':
+      description: Internal server error

@@ -1,0 +1,76 @@
+CreateRestaurantRequest:
+  type: object
+  required:
+    - name
+    - address
+  properties:
+    name:
+      type: string
+      example: "Insiga"
+    address:
+      type: string
+      example: "Švenčionių g. 36"
+
+RestaurantResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "rest_001"
+    name:
+      type: string
+      example: "Insiga"
+    address:
+      type: string
+      example: "Švenčionių g. 36"
+    created_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+
+RestaurantListResponse:
+  type: object
+  properties:
+    page:
+      type: integer
+      example: 1
+    limit:
+      type: integer
+      example: 10
+    total:
+      type: integer
+      example: 42
+    restaurants:
+      type: array
+      items:
+        $ref: '#/RestaurantResponse'
+
+RestaurantUpdateRequest:
+  type: object
+  required:
+    - name
+    - address
+  properties:
+    name:
+      type: string
+      example: "Insiga Updated"
+    address:
+      type: string
+      example: "Švenčionių g. 36 Updated"
+
+RestaurantUpdateResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "rest_001"
+    name:
+      type: string
+      example: "Insiga Updated"
+    address:
+      type: string
+      example: "Švenčionių g. 36 Updated"
+    updated_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"

@@ -1,0 +1,34 @@
+patch:
+  tags:
+    - Management - Restaurants
+  summary: Update restaurant information
+  description: |
+    Updates restaurant information.
+    The owner is determined from the JWT token.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/management/restaurants.yml#/RestaurantUpdateRequest'
+  responses:
+    '200':
+      description: Restaurant updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/restaurants.yml#/RestaurantUpdateResponse'
+    '400':
+      description: Bad request (invalid input)
+    '401':
+      description: Unauthorized (invalid JWT)
+    '403':
+      description: Forbidden (user is not owner)
+    '404':
+      description: Not found (restaurant does not exist)
+    '500':
+      description: Internal server error

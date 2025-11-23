@@ -1,0 +1,23 @@
+post:
+  tags:
+    - Auth
+  summary: Register a new user
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/auth/signup-request.yml#/SignupRequest'
+  responses:
+    '200':
+      description: User registered successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/auth/signup-response.yml#/SignupResponse'
+    '400':
+      description: Bad request (missing or invalid fields)
+    '409':
+      description: Email already exists
+    '500':
+      description: Internal server error

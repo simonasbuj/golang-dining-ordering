@@ -1,0 +1,21 @@
+SignupRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      example: user@example.com
+    password:
+      type: string
+      example: secret123
+    name:
+      type: string
+      example: sim
+    lastname:
+      type: string
+      example: sim
+    role:
+      type: integer
+      example: 1

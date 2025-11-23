@@ -1,0 +1,8 @@
+RestaurantIDParam:
+  name: id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the restaurant
+  example: "rest_001"

@@ -1,0 +1,6 @@
+LogoutResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "logged out successfully"

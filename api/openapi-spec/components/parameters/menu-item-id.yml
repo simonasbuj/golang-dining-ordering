@@ -1,0 +1,8 @@
+MenuItemIDParam:
+  name: item_id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the menu item
+  example: "item_001"

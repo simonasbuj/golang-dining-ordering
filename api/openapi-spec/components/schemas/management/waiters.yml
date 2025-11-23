@@ -1,0 +1,58 @@
+AssignWaiterRequest:
+  type: object
+  required:
+    - waiter_id
+  properties:
+    waiter_id:
+      type: string
+      description: Unique identifier of the waiter
+      example: "user_123"
+
+WaiterResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "user_123"
+    email:
+      type: string
+      example: "waiter@example.com"
+    name:
+      type: string
+      example: "Sim"
+    lastname:
+      type: string
+      example: "Sim"
+
+AssignWaiterResponse:
+  type: object
+  properties:
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    waiter:
+      $ref: '#/WaiterResponse'
+    assigned_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+
+ListWaitersResponse:
+  type: object
+  properties:
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    waiters:
+      type: array
+      items:
+        $ref: '#/WaiterResponse'
+
+UnassignWaiterResponse:
+  type: object
+  properties:
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    waiter:
+      $ref: '#/WaiterResponse'

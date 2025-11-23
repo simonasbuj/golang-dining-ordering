@@ -1,0 +1,63 @@
+post:
+  tags:
+    - Management - Tables
+  summary: Add a table to a restaurant
+  description: |
+    Adds a new table to a specific restaurant.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/management/tables.yml#/CreateTableRequest'
+  responses:
+    '201':
+      description: Table added successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/tables.yml#/TableResponse'
+    '400':
+      description: Bad request (missing or invalid fields)
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant does not exist)
+    '500':
+      description: Internal server error
+
+get:
+  tags:
+    - Management - Tables
+  summary: Get all tables for a restaurant
+  description: Retrieves all tables for a specific restaurant.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
+    - name: is_active
+      in: query
+      required: false
+      schema:
+        type: boolean
+      description: Filter tables by active status
+      example: true
+  responses:
+    '200':
+      description: List of tables
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/tables.yml#/TableListResponse'
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '404':
+      description: Not found (restaurant does not exist)
+    '500':
+      description: Internal server error

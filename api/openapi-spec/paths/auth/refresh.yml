@@ -1,0 +1,24 @@
+post:
+  tags:
+    - Auth
+  summary: Refresh an expired or expiring access token
+  description: Takes a valid refresh token and returns a new access token.
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/auth/refresh-request.yml#/RefreshRequest'
+  responses:
+    '200':
+      description: New access token issued successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/auth/refresh-response.yml#/RefreshResponse'
+    '400':
+      description: Bad request (missing refresh token)
+    '401':
+      description: Unauthorized (expired or invalid refresh token)
+    '500':
+      description: Internal server error
