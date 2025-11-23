@@ -26,7 +26,6 @@ SELECT
     id,
     email,
     password_hash,
-    token_version,
     name,
     lastname,
     role,
@@ -37,13 +36,23 @@ SELECT
 FROM auth.users
 WHERE email = $1;
 
--- name: IncrementTokenVersion :one
-UPDATE auth.users
-SET token_version = token_version + 1
-WHERE id = $1
-RETURNING token_version;
+-- name: SaveRefreshToken :one
+INSERT INTO auth.tokens (
+    id,
+    user_id
+) VALUES ($1, $2)
+RETURNING *;
 
--- name: GetTokenVersionByUserID :one
-SELECT token_version
-FROM auth.users
-WHERE id = $1;
+-- name: DeleteRefreshToken :exec
+DELETE FROM auth.tokens
+WHERE user_id = $1
+  AND id = $2;
+
+-- name: GetRefreshToken :one
+SELECT
+    id,
+    user_id,
+    created_at
+FROM auth.tokens
+WHERE user_id = $1
+  AND id = $2;

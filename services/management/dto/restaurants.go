@@ -1,14 +1,18 @@
 // Package dto contains data transfer objects for the application.
 package dto
 
-import "time"
+import (
+	"time"
+
+	"github.com/google/uuid"
+)
 
 // CreateRestaurantDto represents the payload for creating a new restaurant.
 type CreateRestaurantDto struct {
-	ID      string `json:"id"`
-	UserID  string `json:"userId"`
-	Name    string `json:"name"    validate:"required"`
-	Address string `json:"address" validate:"required"`
+	ID      uuid.UUID `json:"id"`
+	UserID  uuid.UUID `json:"userId"`
+	Name    string    `json:"name"    validate:"required"`
+	Address string    `json:"address" validate:"required"`
 }
 
 // GetRestaurantsReqDto represents pagination parameters for fetching restaurants.
@@ -19,7 +23,7 @@ type GetRestaurantsReqDto struct {
 
 // RestaurantItemDto represents a single restaurant in the response.
 type RestaurantItemDto struct {
-	ID        string    `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
 	CreatedAt time.Time `json:"createdAt"`

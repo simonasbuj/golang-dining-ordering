@@ -9,6 +9,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const createUser = `-- name: CreateUser :one
@@ -36,16 +38,16 @@ RETURNING
 `
 
 type CreateUserParams struct {
-	ID           string `json:"id"`
-	Email        string `json:"email"`
-	PasswordHash string `json:"password_hash"`
-	Name         string `json:"name"`
-	Lastname     string `json:"lastname"`
-	Role         int    `json:"role"`
+	ID           uuid.UUID `json:"id"`
+	Email        string    `json:"email"`
+	PasswordHash string    `json:"password_hash"`
+	Name         string    `json:"name"`
+	Lastname     string    `json:"lastname"`
+	Role         int       `json:"role"`
 }
 
 type CreateUserRow struct {
-	ID           string       `json:"id"`
+	ID           uuid.UUID    `json:"id"`
 	Email        string       `json:"email"`
 	PasswordHash string       `json:"password_hash"`
 	Name         string       `json:"name"`
@@ -80,17 +82,42 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (CreateU
 	return i, err
 }
 
-const getTokenVersionByUserID = `-- name: GetTokenVersionByUserID :one
-SELECT token_version
-FROM auth.users
-WHERE id = $1
+const deleteRefreshToken = `-- name: DeleteRefreshToken :exec
+DELETE FROM auth.tokens
+WHERE user_id = $1
+  AND id = $2
 `
 
-func (q *Queries) GetTokenVersionByUserID(ctx context.Context, id string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, getTokenVersionByUserID, id)
-	var token_version int64
-	err := row.Scan(&token_version)
-	return token_version, err
+type DeleteRefreshTokenParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	ID     string    `json:"id"`
+}
+
+func (q *Queries) DeleteRefreshToken(ctx context.Context, arg DeleteRefreshTokenParams) error {
+	_, err := q.db.ExecContext(ctx, deleteRefreshToken, arg.UserID, arg.ID)
+	return err
+}
+
+const getRefreshToken = `-- name: GetRefreshToken :one
+SELECT
+    id,
+    user_id,
+    created_at
+FROM auth.tokens
+WHERE user_id = $1
+  AND id = $2
+`
+
+type GetRefreshTokenParams struct {
+	UserID uuid.UUID `json:"user_id"`
+	ID     string    `json:"id"`
+}
+
+func (q *Queries) GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (AuthToken, error) {
+	row := q.db.QueryRowContext(ctx, getRefreshToken, arg.UserID, arg.ID)
+	var i AuthToken
+	err := row.Scan(&i.ID, &i.UserID, &i.CreatedAt)
+	return i, err
 }
 
 const getUserByEmail = `-- name: GetUserByEmail :one
@@ -98,7 +125,6 @@ SELECT
     id,
     email,
     password_hash,
-    token_version,
     name,
     lastname,
     role,
@@ -117,7 +143,6 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AuthUser, e
 		&i.ID,
 		&i.Email,
 		&i.PasswordHash,
-		&i.TokenVersion,
 		&i.Name,
 		&i.Lastname,
 		&i.Role,
@@ -129,16 +154,22 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AuthUser, e
 	return i, err
 }
 
-const incrementTokenVersion = `-- name: IncrementTokenVersion :one
-UPDATE auth.users
-SET token_version = token_version + 1
-WHERE id = $1
-RETURNING token_version
+const saveRefreshToken = `-- name: SaveRefreshToken :one
+INSERT INTO auth.tokens (
+    id,
+    user_id
+) VALUES ($1, $2)
+RETURNING id, user_id, created_at
 `
 
-func (q *Queries) IncrementTokenVersion(ctx context.Context, id string) (int64, error) {
-	row := q.db.QueryRowContext(ctx, incrementTokenVersion, id)
-	var token_version int64
-	err := row.Scan(&token_version)
-	return token_version, err
+type SaveRefreshTokenParams struct {
+	ID     string    `json:"id"`
+	UserID uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) (AuthToken, error) {
+	row := q.db.QueryRowContext(ctx, saveRefreshToken, arg.ID, arg.UserID)
+	var i AuthToken
+	err := row.Scan(&i.ID, &i.UserID, &i.CreatedAt)
+	return i, err
 }

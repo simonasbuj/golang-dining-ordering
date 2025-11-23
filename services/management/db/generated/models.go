@@ -7,11 +7,13 @@ package db
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 type ManagementCategory struct {
-	ID          string         `json:"id"`
-	MenuID      string         `json:"menu_id"`
+	ID          uuid.UUID      `json:"id"`
+	MenuID      uuid.UUID      `json:"menu_id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -20,28 +22,28 @@ type ManagementCategory struct {
 }
 
 type ManagementItem struct {
-	ID          string         `json:"id"`
-	CategoryID  string         `json:"category_id"`
-	Name        string         `json:"name"`
-	Description sql.NullString `json:"description"`
-	Price       float64        `json:"price"`
-	IsAvailable bool           `json:"is_available"`
-	ImagePath   sql.NullString `json:"image_path"`
-	CreatedAt   time.Time      `json:"created_at"`
-	UpdatedAt   time.Time      `json:"updated_at"`
-	DeletedAt   sql.NullTime   `json:"deleted_at"`
+	ID           uuid.UUID      `json:"id"`
+	CategoryID   uuid.UUID      `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	PriceInCents int            `json:"price_in_cents"`
+	IsAvailable  bool           `json:"is_available"`
+	ImagePath    sql.NullString `json:"image_path"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
 }
 
 type ManagementMenu struct {
-	ID           string       `json:"id"`
-	RestaurantID string       `json:"restaurant_id"`
+	ID           uuid.UUID    `json:"id"`
+	RestaurantID uuid.UUID    `json:"restaurant_id"`
 	CreatedAt    time.Time    `json:"created_at"`
 	UpdatedAt    time.Time    `json:"updated_at"`
 	DeletedAt    sql.NullTime `json:"deleted_at"`
 }
 
 type ManagementRestaurant struct {
-	ID        string       `json:"id"`
+	ID        uuid.UUID    `json:"id"`
 	Name      string       `json:"name"`
 	Address   string       `json:"address"`
 	CreatedAt time.Time    `json:"created_at"`
@@ -50,9 +52,9 @@ type ManagementRestaurant struct {
 }
 
 type ManagementRestaurantManager struct {
-	ID           string    `json:"id"`
-	UserID       string    `json:"user_id"`
-	RestaurantID string    `json:"restaurant_id"`
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }

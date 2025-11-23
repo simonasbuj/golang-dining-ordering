@@ -15,10 +15,11 @@ import (
 
 // Repository defines methods for accessing and managing user data.
 type Repository interface {
-	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
+	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, email string) (*db.AuthUser, error)
-	IncrementTokenVersionForUser(ctx context.Context, userID string) (int64, error)
-	GetTokenVersionByUserID(ctx context.Context, userID string) (int64, error)
+	SaveRefreshToken(ctx context.Context, userID uuid.UUID, token string) error
+	GetRefreshToken(ctx context.Context, userID uuid.UUID, token string) error
+	DeleteRefreshToken(ctx context.Context, userID uuid.UUID, token string) error
 }
 
 type repository struct {
@@ -37,9 +38,9 @@ func NewRepository(q *db.Queries) *repository {
 func (r *repository) CreateUser(
 	ctx context.Context,
 	req *dto.SignUpRequestDto,
-) (string, error) {
+) (uuid.UUID, error) {
 	userRow, err := r.q.CreateUser(ctx, db.CreateUserParams{
-		ID:           uuid.New().String(),
+		ID:           uuid.New(),
 		Email:        req.Email,
 		PasswordHash: req.Password,
 		Name:         req.Name,
@@ -48,12 +49,12 @@ func (r *repository) CreateUser(
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			return "", &ce.UniqueConstraintError{
+			return uuid.Nil, &ce.UniqueConstraintError{
 				CustomError: ce.CustomError{Message: err.Error()},
 			}
 		}
 
-		return "", fmt.Errorf("failed to insert user to db: %w", err)
+		return uuid.Nil, fmt.Errorf("inserting user to db: %w", err)
 	}
 
 	return userRow.ID, nil
@@ -62,29 +63,44 @@ func (r *repository) CreateUser(
 func (r *repository) GetUserByEmail(ctx context.Context, email string) (*db.AuthUser, error) {
 	user, err := r.q.GetUserByEmail(ctx, email)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch user from db: %w", err)
+		return nil, fmt.Errorf("fetching user from db: %w", err)
 	}
 
 	return &user, nil
 }
 
-func (r *repository) IncrementTokenVersionForUser(
-	ctx context.Context,
-	userID string,
-) (int64, error) {
-	newTokenVersion, err := r.q.IncrementTokenVersion(ctx, userID)
+func (r *repository) SaveRefreshToken(ctx context.Context, userID uuid.UUID, token string) error {
+	_, err := r.q.SaveRefreshToken(ctx, db.SaveRefreshTokenParams{
+		ID:     token,
+		UserID: userID,
+	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to increment token version: %w", err)
+		return fmt.Errorf("saving refresh token: %w", err)
 	}
 
-	return newTokenVersion, nil
+	return nil
 }
 
-func (r *repository) GetTokenVersionByUserID(ctx context.Context, userID string) (int64, error) {
-	tokenVersion, err := r.q.GetTokenVersionByUserID(ctx, userID)
+func (r *repository) GetRefreshToken(ctx context.Context, userID uuid.UUID, token string) error {
+	_, err := r.q.GetRefreshToken(ctx, db.GetRefreshTokenParams{
+		UserID: userID,
+		ID:     token,
+	})
 	if err != nil {
-		return 0, fmt.Errorf("failed to retrieve token version: %w", err)
+		return fmt.Errorf("fetching refresh token: %w", err)
 	}
 
-	return tokenVersion, nil
+	return nil
+}
+
+func (r *repository) DeleteRefreshToken(ctx context.Context, userID uuid.UUID, token string) error {
+	err := r.q.DeleteRefreshToken(ctx, db.DeleteRefreshTokenParams{
+		UserID: userID,
+		ID:     token,
+	})
+	if err != nil {
+		return fmt.Errorf("deleting refresh token from db: %w", err)
+	}
+
+	return nil
 }

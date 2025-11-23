@@ -1,6 +1,8 @@
 // Package dto contains data transfer objects used for API requests/responses.
 package dto
 
+import "github.com/google/uuid"
+
 // SignUpRequestDto represents the payload sent when signing up.
 type SignUpRequestDto struct {
 	Email    string `json:"email"    validate:"required,email"`
@@ -34,9 +36,8 @@ type LogoutRequestDto struct {
 
 // TokenClaimsDto represents the claims stored in a JWT for a user.
 type TokenClaimsDto struct {
-	UserID       string `json:"userId"`
-	Email        string `json:"email"`
-	TokenType    string `json:"tokenType"`
-	TokenVersion int64  `json:"tokenVersion"`
-	Role         int    `json:"role"`
+	UserID    uuid.UUID `json:"userId"`
+	Email     string    `json:"email"`
+	TokenType string    `json:"tokenType"`
+	Role      int       `json:"role"`
 }

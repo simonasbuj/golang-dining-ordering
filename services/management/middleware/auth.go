@@ -6,7 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"golang-dining-ordering/pkg/responses"
-	"golang-dining-ordering/services/management/dto"
+	authDto "golang-dining-ordering/services/auth/dto"
 	"io"
 	"net/http"
 
@@ -17,7 +17,7 @@ var errUnauthorized = errors.New("response from auth-service: unauthorized")
 
 // AuthResponse is response body from auth-service.
 type AuthResponse struct {
-	Data dto.TokenClaimsDto `json:"data"`
+	Data authDto.TokenClaimsDto `json:"data"`
 }
 
 // AuthMiddleware validates JWT tokens by delegating to the Auth service.

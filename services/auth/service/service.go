@@ -12,13 +12,14 @@ import (
 	ce "golang-dining-ordering/services/auth/customerrors"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 
 	"golang.org/x/crypto/bcrypt"
 )
 
 // Service defines authentication-related operations for users.
 type Service interface {
-	SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error)
+	SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (uuid.UUID, error)
 	SignInUser(ctx context.Context, req *dto.SignInRequestDto) (*dto.TokenResponseDto, error)
 	RefreshToken(ctx context.Context, refreshToken string) (*dto.TokenResponseDto, error)
 	LogoutUser(ctx context.Context, token string) error
@@ -44,10 +45,9 @@ const (
 )
 
 type generateTokenParams struct {
-	UserID               string
+	UserID               uuid.UUID
 	Email                string
 	TokenType            string
-	TokenVersion         int64
 	Role                 int
 	ValidDurationSeconds int
 }
@@ -62,17 +62,17 @@ func NewAuthService(cfg *Config, repo repository.Repository) *service {
 	}
 }
 
-func (s *service) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (string, error) {
+func (s *service) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (uuid.UUID, error) {
 	hashedPassword, err := s.hashPassword(req.Password)
 	if err != nil {
-		return "", err
+		return uuid.Nil, err
 	}
 
 	req.Password = hashedPassword
 
 	userID, err := s.repo.CreateUser(ctx, req)
 	if err != nil {
-		return "", fmt.Errorf("failed to sign up user: %w", err)
+		return uuid.Nil, fmt.Errorf("failed to sign up user: %w", err)
 	}
 
 	return userID, nil
@@ -92,33 +92,31 @@ func (s *service) SignInUser(
 		return nil, ce.ErrUnauthorized
 	}
 
-	newTokenVersion, err := s.repo.IncrementTokenVersionForUser(ctx, user.ID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to incerement token version: %w", err)
-	}
-
 	token, err := s.generateToken(generateTokenParams{
 		UserID:               user.ID,
 		Email:                user.Email,
 		TokenType:            tokenTypeAccess,
-		TokenVersion:         newTokenVersion,
 		Role:                 user.Role,
 		ValidDurationSeconds: s.cfg.TokenValidSeconds,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate token: %w", err)
+		return nil, fmt.Errorf("generating token: %w", err)
 	}
 
 	refreshToken, err := s.generateToken(generateTokenParams{
 		UserID:               user.ID,
 		Email:                user.Email,
 		TokenType:            tokenTypeRefresh,
-		TokenVersion:         newTokenVersion,
 		Role:                 user.Role,
 		ValidDurationSeconds: s.cfg.RefreshTokenValidSeconds,
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to generate refresh token: %w", err)
+		return nil, fmt.Errorf("generating refresh token: %w", err)
+	}
+
+	err = s.repo.SaveRefreshToken(ctx, user.ID, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("saving refresh token: %w", err)
 	}
 
 	res := &dto.TokenResponseDto{
@@ -138,20 +136,19 @@ func (s *service) RefreshToken(
 		return nil, err
 	}
 
-	if claimsDto.UserID == "" || claimsDto.Email == "" || claimsDto.Role == 0 {
+	if claimsDto.UserID == uuid.Nil || claimsDto.Email == "" || claimsDto.Role == 0 {
 		return nil, ce.ErrMissingClaims
 	}
 
-	newTokenVersion, err := s.repo.IncrementTokenVersionForUser(ctx, claimsDto.UserID)
+	err = s.repo.GetRefreshToken(ctx, claimsDto.UserID, refreshToken)
 	if err != nil {
-		return nil, fmt.Errorf("failed to increment token version: %w", err)
+		return nil, fmt.Errorf("validating if provided refresh token is not revoked: %w", err)
 	}
 
 	newToken, err := s.generateToken(generateTokenParams{
 		UserID:               claimsDto.UserID,
 		Email:                claimsDto.Email,
 		TokenType:            tokenTypeAccess,
-		TokenVersion:         newTokenVersion,
 		Role:                 claimsDto.Role,
 		ValidDurationSeconds: s.cfg.TokenValidSeconds,
 	})
@@ -163,12 +160,21 @@ func (s *service) RefreshToken(
 		UserID:               claimsDto.UserID,
 		Email:                claimsDto.Email,
 		TokenType:            tokenTypeRefresh,
-		TokenVersion:         newTokenVersion,
 		Role:                 claimsDto.Role,
 		ValidDurationSeconds: s.cfg.TokenValidSeconds,
 	})
 	if err != nil {
 		return nil, err
+	}
+
+	err = s.repo.DeleteRefreshToken(ctx, claimsDto.UserID, refreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("deleting refresh token: %w", err)
+	}
+
+	err = s.repo.SaveRefreshToken(ctx, claimsDto.UserID, newRefreshToken)
+	if err != nil {
+		return nil, fmt.Errorf("saving refresh token: %w", err)
 	}
 
 	res := &dto.TokenResponseDto{
@@ -180,14 +186,14 @@ func (s *service) RefreshToken(
 }
 
 func (s *service) LogoutUser(ctx context.Context, tokenStr string) error {
-	claims, err := s.verifyToken(ctx, tokenStr, tokenTypeAccess)
+	claims, err := s.verifyToken(ctx, tokenStr, tokenTypeRefresh)
 	if err != nil {
-		return fmt.Errorf("failed to verify token: %w", err)
+		return fmt.Errorf("verifying token: %w", err)
 	}
 
-	_, err = s.repo.IncrementTokenVersionForUser(ctx, claims.UserID)
+	err = s.repo.DeleteRefreshToken(ctx, claims.UserID, tokenStr)
 	if err != nil {
-		return fmt.Errorf("failed to increment token version: %w", err)
+		return fmt.Errorf("deleting refresh token: %w", err)
 	}
 
 	return nil
@@ -218,7 +224,7 @@ func (s *service) verifyPassword(plainPassword, hashedPassword string) bool {
 }
 
 func (s *service) generateToken(p generateTokenParams) (string, error) {
-	if p.UserID == "" || p.Email == "" || p.Role == 0 {
+	if p.UserID == uuid.Nil || p.Email == "" || p.Role == 0 {
 		return "", fmt.Errorf(
 			"%w: userID=%s, email=%s, role=%d",
 			ce.ErrInvalidTokenData,
@@ -229,12 +235,11 @@ func (s *service) generateToken(p generateTokenParams) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID":       p.UserID,
-		"email":        p.Email,
-		"role":         p.Role,
-		"tokenVersion": p.TokenVersion,
-		"tokenType":    p.TokenType,
-		"exp":          time.Now().Add(time.Second * time.Duration(p.ValidDurationSeconds)).Unix(),
+		"userID":    p.UserID,
+		"email":     p.Email,
+		"role":      p.Role,
+		"tokenType": p.TokenType,
+		"exp":       time.Now().Add(time.Second * time.Duration(p.ValidDurationSeconds)).Unix(),
 	})
 
 	tokenStr, err := token.SignedString([]byte(s.cfg.Secret))
@@ -246,7 +251,7 @@ func (s *service) generateToken(p generateTokenParams) (string, error) {
 }
 
 func (s *service) verifyToken(
-	ctx context.Context,
+	_ context.Context,
 	tokenStr string,
 	expectedType string,
 ) (*dto.TokenClaimsDto, error) {
@@ -277,15 +282,6 @@ func (s *service) verifyToken(
 
 	if claimsDto.TokenType != expectedType {
 		return nil, ce.ErrInvalidTokenType
-	}
-
-	dbTokenVersion, err := s.repo.GetTokenVersionByUserID(ctx, claimsDto.UserID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get user's token version from db: %w", err)
-	}
-
-	if dbTokenVersion != claimsDto.TokenVersion {
-		return nil, ce.ErrInvalidTokenVersion
 	}
 
 	return claimsDto, nil

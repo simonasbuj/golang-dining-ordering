@@ -43,7 +43,7 @@ func (r *menuRepository) AddMenuCategory(
 	reqDto *dto.MenuCategoryDto,
 ) (*dto.MenuCategoryDto, error) {
 	row, err := r.q.InsertMenuCategory(ctx, db.InsertMenuCategoryParams{
-		ID:          uuid.New().String(),
+		ID:          uuid.New(),
 		MenuID:      reqDto.RestaurantID,
 		Name:        reqDto.Name,
 		Description: sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
@@ -68,25 +68,25 @@ func (r *menuRepository) AddMenuItem(
 	reqDto *dto.MenuItemDto,
 ) (*dto.MenuItemDto, error) {
 	row, err := r.q.InsertMenuItem(ctx, db.InsertMenuItemParams{
-		ID:          uuid.New().String(),
-		CategoryID:  reqDto.CategoryID,
-		Name:        reqDto.Name,
-		Description: sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
-		Price:       reqDto.Price,
-		IsAvailable: true,
-		ImagePath:   sql.NullString{String: reqDto.ImagePath, Valid: reqDto.ImagePath != ""},
+		ID:           uuid.New(),
+		CategoryID:   reqDto.CategoryID,
+		Name:         reqDto.Name,
+		Description:  sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
+		PriceInCents: reqDto.PriceInCents,
+		IsAvailable:  true,
+		ImagePath:    sql.NullString{String: reqDto.ImagePath, Valid: reqDto.ImagePath != ""},
 	})
 	if err != nil {
 		return nil, fmt.Errorf("failed to insert new menu item: %w", err)
 	}
 
 	return &dto.MenuItemDto{ //nolint:exhaustruct
-		ID:          row.ID,
-		CategoryID:  row.CategoryID,
-		Name:        row.Name,
-		Description: row.Description.String,
-		Price:       row.Price,
-		IsAvailable: row.IsAvailable,
-		ImagePath:   row.ImagePath.String,
+		ID:           row.ID,
+		CategoryID:   row.CategoryID,
+		Name:         row.Name,
+		Description:  row.Description.String,
+		PriceInCents: row.PriceInCents,
+		IsAvailable:  row.IsAvailable,
+		ImagePath:    row.ImagePath.String,
 	}, nil
 }
