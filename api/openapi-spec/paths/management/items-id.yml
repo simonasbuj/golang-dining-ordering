@@ -1,0 +1,57 @@
+get:
+  tags:
+    - Management - Menus
+  summary: Get a single menu item
+  description: Retrieves details of a specific menu item for a restaurant.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/MenuItemIDParam'
+  responses:
+    '200':
+      description: Menu item details
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/menus.yml#/MenuItemResponse'
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '404':
+      description: Not found (restaurant or item does not exist)
+    '500':
+      description: Internal server error
+
+patch:
+  tags:
+    - Management - Menus
+  summary: Update a menu item
+  description: Updates details of a menu item. Supports optional image upload via form-data.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/MenuItemIDParam'
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: '../../components/schemas/management/menus.yml#/MenuItemUpdateRequest'
+  responses:
+    '200':
+      description: Menu item updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/menus.yml#/MenuItemResponse'
+    '400':
+      description: Bad request (invalid fields)
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant, category, or item does not exist)
+    '500':
+      description: Internal server error

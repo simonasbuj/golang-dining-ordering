@@ -1,0 +1,55 @@
+post:
+  tags:
+    - Management - Menus
+  summary: Create a new menu item
+  description: Adds a new item to a restaurant menu. Supports image upload via form-data.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+  requestBody:
+    required: true
+    content:
+      multipart/form-data:
+        schema:
+          $ref: '../../components/schemas/management/menus.yml#/MenuItemRequest'
+  responses:
+    '201':
+      description: Menu item created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/menus.yml#/MenuItemResponse'
+    '400':
+      description: Bad request (missing or invalid fields)
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant or category does not exist)
+    '500':
+      description: Internal server error
+
+get:
+  tags:
+    - Management - Menus
+  summary: Get all menu items for a restaurant grouped by category
+  description: Retrieves all items for restaurant grouped per category
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+  responses:
+    '200':
+      description: List of menu categories with items
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/menus.yml#/MenuCategoriesWithItemsResponse'
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '404':
+      description: Not found (restaurant does not exist)
+    '500':
+      description: Internal server error

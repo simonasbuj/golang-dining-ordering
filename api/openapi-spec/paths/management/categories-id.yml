@@ -1,0 +1,33 @@
+patch:
+  tags:
+    - Management - Menus
+  summary: Update a menu category
+  description: Updates the name and description of a menu category for a restaurant.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/CategoryIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/management/menus.yml#/UpdateCategoryRequest'
+  responses:
+    '200':
+      description: Menu category updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/menus.yml#/CategoryUpdateResponse'
+    '400':
+      description: Bad request (invalid fields)
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant or category does not exist)
+    '500':
+      description: Internal server error

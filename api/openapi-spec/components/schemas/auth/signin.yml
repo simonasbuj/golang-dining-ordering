@@ -1,0 +1,28 @@
+SigninRequest:
+  type: object
+  required:
+    - email
+    - password
+  properties:
+    email:
+      type: string
+      example: user@example.com
+    password:
+      type: string
+      example: secret123
+      
+SigninResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "user authenticated successfully"
+    data:
+      type: object
+      properties:
+        token:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+        refreshToken:
+          type: string
+          example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."

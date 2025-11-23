@@ -1,0 +1,188 @@
+CreateCategoryRequest:
+  type: object
+  required:
+    - name
+  properties:
+    name:
+      type: string
+      example: "Appetizers"
+    description:
+      type: string
+      example: "Light dishes to start your meal"
+
+CategoryResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "cat_001"
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    name:
+      type: string
+      example: "Appetizers"
+    description:
+      type: string
+      example: "Light dishes to start your meal"
+    created_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+
+CategoryListResponse:
+  type: object
+  properties:
+    total:
+      type: integer
+      example: 3
+    categories:
+      type: array
+      items:
+        $ref: '#/CategoryResponse'
+
+UpdateCategoryRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Updated name of the category
+      example: "Appetizers Updated"
+    description:
+      type: string
+      description: Updated description of the category
+      example: "Light dishes to start your meal, refreshed"
+
+CategoryUpdateResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "cat_001"
+    name:
+      type: string
+      example: "Appetizers Updated"
+    description:
+      type: string
+      example: "Light dishes to start your meal, refreshed"
+    updated_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+
+MenuItemRequest:
+  type: object
+  required:
+    - category_id
+    - name
+    - description
+    - price
+  properties:
+    category_id:
+      type: string
+      description: The category this item belongs to
+      example: "cat_001"
+    name:
+      type: string
+      description: Name of the menu item
+      example: "Cheeseburger"
+    description:
+      type: string
+      description: Description of the menu item
+      example: "Tasty Big Mac"
+    price:
+      type: number
+      format: int
+      description: Price in cents of the menu item
+      example: 1250
+    image:
+      type: string
+      format: binary
+      description: Image file of the menu item
+
+MenuItemResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "item_001"
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    category_id:
+      type: string
+      example: "cat_001"
+    name:
+      type: string
+      example: "Cheeseburger"
+    description:
+      type: string
+      example: "Tasty Big Mac"
+    price:
+      type: number
+      format: int
+      example: 1250
+    image_path:
+      type: string
+      example: "/uploads/images/item_001.png"
+    created_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+
+CategoryWithItemsResponse:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "cat_001"
+    name:
+      type: string
+      example: "Appetizers"
+    description:
+      type: string
+      example: "Light dishes to start your meal"
+    created_at:
+      type: string
+      format: date-time
+      example: "2025-10-22T12:00:00Z"
+    items:
+      type: array
+      items:
+        $ref: '#/MenuItemResponse'
+
+MenuCategoriesWithItemsResponse:
+  type: object
+  properties:
+    total_categories:
+      type: integer
+      example: 3
+    categories:
+      type: array
+      items:
+        $ref: '#/CategoryWithItemsResponse'
+
+MenuItemUpdateRequest:
+  type: object
+  properties:
+    name:
+      type: string
+      description: Name of the menu item
+      example: "Cheeseburger Deluxe"
+    description:
+      type: string
+      description: Description of the menu item
+      example: "Tasty Big Mac Deluxe"
+    price:
+      type: number
+      format: float
+      description: Price of the menu item
+      example: 13.50
+    image:
+      type: string
+      format: binary
+      description: Optional new image file of the menu item
+    is_available:
+      type: boolean
+      description: Whether the item is available
+      example: true

@@ -1,0 +1,25 @@
+AuthorizeSuccess:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "authorized"
+    data:
+      type: object
+      properties:
+        userId:
+          type: string
+          example: "user-123"
+        email:
+          type: string
+          example: "user@example.com"
+        role:
+          type: integer
+          example: 2
+
+AuthorizeUnauthorized:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "invalid token data"

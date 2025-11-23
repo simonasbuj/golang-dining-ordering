@@ -10,9 +10,13 @@ import (
 
 // AddSwaggerRoutes registers Swagger UI and specification endpoints.
 func AddSwaggerRoutes(e *echo.Echo) {
-	e.File("/openapi-spec.yml", "api/openapi-spec/openapi-spec.yml")
+	e.Static("/openapi-spec", "api/openapi-spec")
 
-	swaggerHandler := swagui.NewHandler("Dining Ordering API", "/openapi-spec.yml", "/docs")
+	swaggerHandler := swagui.NewHandler(
+		"Dining Ordering API",
+		"/openapi-spec/openapi-spec.yml",
+		"/docs",
+	)
 	e.GET("/docs/*", echo.WrapHandler(swaggerHandler))
 
 	e.GET("/docs", func(c echo.Context) error {

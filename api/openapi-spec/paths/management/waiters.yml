@@ -1,0 +1,59 @@
+post:
+  tags:
+    - Management - Waiters
+  summary: Assign a waiter to a restaurant
+  description: Adds a waiter to the restaurant’s staff. Only restaurant owners can perform this action.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/management/waiters.yml#/AssignWaiterRequest'
+  responses:
+    '200':
+      description: Waiter assigned successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/waiters.yml#/AssignWaiterResponse'
+    '400':
+      description: Bad request (missing or invalid waiter_id)
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant or waiter does not exist)
+    '409':
+      description: Conflict (waiter already assigned)
+    '500':
+      description: Internal server error
+
+get:
+  tags:
+    - Management - Waiters
+  summary: List all waiters assigned to a restaurant
+  description: Retrieves a list of all waiters assigned to a restaurant, including user details.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+  responses:
+    '200':
+      description: List of assigned waiters
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/waiters.yml#/ListWaitersResponse'
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant does not exist)
+    '500':
+      description: Internal server error

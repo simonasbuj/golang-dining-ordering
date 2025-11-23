@@ -1,0 +1,24 @@
+post:
+  tags:
+    - Auth
+  summary: Validate and authorize a JWT access token
+  description: >
+    Validates the provided Bearer access token and returns user authorization data.
+    The token must be passed in the `Authorization` header using the `Bearer` scheme.
+  security:
+    - bearerAuth: []
+  responses:
+    '200':
+      description: Token validated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/auth/authorize.yml#/AuthorizeSuccess'
+    '401':
+      description: Unauthorized (missing or invalid token)
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/auth/authorize.yml#/AuthorizeUnauthorized'
+    '500':
+      description: Internal server error

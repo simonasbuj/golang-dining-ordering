@@ -1,0 +1,33 @@
+patch:
+  tags:
+    - Management - Tables
+  summary: Update table information
+  description: Updates the name, capacity, or active status of a table in a restaurant.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/TableIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/management/tables.yml#/UpdateTableRequest'
+  responses:
+    '200':
+      description: Table updated successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/tables.yml#/TableUpdateResponse'
+    '400':
+      description: Bad request (invalid input)
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant or table does not exist)
+    '500':
+      description: Internal server error

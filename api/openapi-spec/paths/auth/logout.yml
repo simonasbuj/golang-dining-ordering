@@ -1,0 +1,22 @@
+post:
+  tags:
+    - Auth
+  summary: Log out the current user
+  description: Invalidates the current user's access or refresh token.
+  requestBody:
+    required: false
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/auth/logout.yml#/LogoutRequest'
+  responses:
+    '200':
+      description: Logged out successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/auth/logout.yml#/LogoutResponse'
+    '401':
+      description: Unauthorized (invalid or expired token)
+    '500':
+      description: Internal server error

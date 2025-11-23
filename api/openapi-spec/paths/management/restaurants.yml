@@ -1,0 +1,52 @@
+post:
+  tags:
+    - Management - Restaurants
+  summary: Register a new restaurant
+  description: |
+    Creates a new restaurant entry in the system.
+    The restaurant owner is determined from the JWT token provided in the Authorization header.
+  security:
+    - bearerAuth: []
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/management/restaurants.yml#/CreateRestaurantRequest'
+  responses:
+    '201':
+      description: Restaurant created successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/restaurants.yml#/RestaurantResponse'
+    '400':
+      description: Bad request (missing or invalid fields)
+    '401':
+      description: Unauthorized (missing or invalid JWT token)
+    '409':
+      description: Conflict (restaurant with same name already exists)
+    '500':
+      description: Internal server error
+
+get:
+  tags:
+    - Management - Restaurants
+  summary: Get all restaurants
+  description: |
+    Retrieves a paginated list of restaurants.
+    Pagination is handled via `page` and `limit` query parameters.
+  parameters:
+    - $ref: '../../components/parameters/pagination.yml#/PageParam'
+    - $ref: '../../components/parameters/pagination.yml#/LimitParam'
+  responses:
+    '200':
+      description: List of restaurants
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/restaurants.yml#/RestaurantListResponse'
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '500':
+      description: Internal server error

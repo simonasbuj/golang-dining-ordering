@@ -1,0 +1,14 @@
+LogoutRequest:
+  type: object
+  properties:
+    token:
+      type: string
+      example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+  description: Token is used to determine which user is logging out
+
+LogoutResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "logged out successfully"

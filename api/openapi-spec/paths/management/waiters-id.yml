@@ -1,0 +1,25 @@
+delete:
+  tags:
+    - Management - Waiters
+  summary: Unassign a waiter from a restaurant
+  description: Removes a waiter from the restaurant’s staff. Only restaurant owners can perform this action.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/WaiterIDParam'
+  responses:
+    '200':
+      description: Waiter unassigned successfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/management/waiters.yml#/UnassignWaiterResponse'
+    '401':
+      description: Unauthorized (missing or invalid JWT)
+    '403':
+      description: Forbidden (user is not the restaurant owner)
+    '404':
+      description: Not found (restaurant or waiter not assigned)
+    '500':
+      description: Internal server error
