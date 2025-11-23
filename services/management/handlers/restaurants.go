@@ -10,6 +10,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -93,7 +94,7 @@ func (h *RestaurantsHandler) HandleGetRestaurants(c echo.Context) error {
 
 // HandleGetRestaurantByID handles fetching a single restaurant by its ID.
 func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
-	id := c.Param("id")
+	id := uuid.MustParse(c.Param("id"))
 
 	resDto, err := h.svc.GetRestaurantByID(c.Request().Context(), id)
 	if err != nil {

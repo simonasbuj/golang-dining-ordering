@@ -22,8 +22,8 @@ type RestaurantRepository interface {
 		ctx context.Context,
 		reqDto *dto.GetRestaurantsReqDto,
 	) (*dto.GetRestaurantsRespDto, error)
-	GetRestaurantByID(ctx context.Context, id string) (*dto.RestaurantItemDto, error)
-	IsUserRestaurantManager(ctx context.Context, userID, restaurantID string) error
+	GetRestaurantByID(ctx context.Context, id uuid.UUID) (*dto.RestaurantItemDto, error)
+	IsUserRestaurantManager(ctx context.Context, userID, restaurantID uuid.UUID) error
 }
 
 // restaurantRepository implements RestaurantRepository using sqlc-generated queries.
@@ -55,7 +55,7 @@ func (r *restaurantRepository) CreateRestaurant(
 	qtx := r.q.WithTx(tx)
 
 	res, err := qtx.InsertRestaurant(ctx, db.InsertRestaurantParams{
-		ID:      uuid.New().String(),
+		ID:      uuid.New(),
 		Name:    reqDto.Name,
 		Address: reqDto.Address,
 	})
@@ -66,7 +66,7 @@ func (r *restaurantRepository) CreateRestaurant(
 	}
 
 	resMngr, err := qtx.InsertRestaurantManager(ctx, db.InsertRestaurantManagerParams{
-		ID:           uuid.New().String(),
+		ID:           uuid.New(),
 		UserID:       reqDto.UserID,
 		RestaurantID: res.ID,
 	})
@@ -125,7 +125,7 @@ func (r *restaurantRepository) GetRestaurants(
 
 func (r *restaurantRepository) GetRestaurantByID(
 	ctx context.Context,
-	id string,
+	id uuid.UUID,
 ) (*dto.RestaurantItemDto, error) {
 	row, err := r.q.GetRestaurantByID(ctx, id)
 	if err != nil {
@@ -144,7 +144,7 @@ func (r *restaurantRepository) GetRestaurantByID(
 
 func (r *restaurantRepository) IsUserRestaurantManager(
 	ctx context.Context,
-	userID, restaurantID string,
+	userID, restaurantID uuid.UUID,
 ) error {
 	_, err := r.q.IsUserRestaurantManager(ctx, db.IsUserRestaurantManagerParams{
 		UserID:       userID,

@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/repository"
+
+	"github.com/google/uuid"
 )
 
 var errIDNotProvided = errors.New("restaurant id not provided")
@@ -21,7 +23,7 @@ type RestaurantService interface {
 		ctx context.Context,
 		reqDto *dto.GetRestaurantsReqDto,
 	) (*dto.GetRestaurantsRespDto, error)
-	GetRestaurantByID(ctx context.Context, id string) (*dto.RestaurantItemDto, error)
+	GetRestaurantByID(ctx context.Context, id uuid.UUID) (*dto.RestaurantItemDto, error)
 }
 
 // restaurantService implements RestaurantService.
@@ -65,9 +67,9 @@ func (s *restaurantService) GetRestaurants(
 
 func (s *restaurantService) GetRestaurantByID(
 	ctx context.Context,
-	id string,
+	id uuid.UUID,
 ) (*dto.RestaurantItemDto, error) {
-	if id == "" {
+	if id == uuid.Nil {
 		return nil, errIDNotProvided
 	}
 

@@ -9,7 +9,7 @@ INSERT INTO management.items (
     category_id,
     name,
     description,
-    price,
+    price_in_cents,
     is_available,
     image_path
 ) VALUES (

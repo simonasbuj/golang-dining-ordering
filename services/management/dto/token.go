@@ -1,9 +1,11 @@
 package dto
 
+import "github.com/google/uuid"
+
 // TokenClaimsDto represents the claims extracted from a JWT token.
 type TokenClaimsDto struct {
-	UserID       string `json:"userId"`
-	Email        string `json:"email"`
-	Role         int    `json:"role"`
-	TokenVersion int64  `json:"tokenVersion"`
+	UserID       uuid.UUID `json:"userId"`
+	Email        string    `json:"email"`
+	Role         int       `json:"role"`
+	TokenVersion int64     `json:"tokenVersion"`
 }

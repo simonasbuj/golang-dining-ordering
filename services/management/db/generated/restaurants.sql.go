@@ -8,6 +8,8 @@ package db
 import (
 	"context"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const getRestaurantByID = `-- name: GetRestaurantByID :one
@@ -21,14 +23,14 @@ WHERE id = $1
 `
 
 type GetRestaurantByIDRow struct {
-	ID        string    `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
 // Get a single restaurant by its ID
-func (q *Queries) GetRestaurantByID(ctx context.Context, id string) (GetRestaurantByIDRow, error) {
+func (q *Queries) GetRestaurantByID(ctx context.Context, id uuid.UUID) (GetRestaurantByIDRow, error) {
 	row := q.db.QueryRowContext(ctx, getRestaurantByID, id)
 	var i GetRestaurantByIDRow
 	err := row.Scan(
@@ -58,7 +60,7 @@ type GetRestaurantsParams struct {
 }
 
 type GetRestaurantsRow struct {
-	ID        string    `json:"id"`
+	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
 	CreatedAt time.Time `json:"created_at"`
@@ -100,9 +102,9 @@ RETURNING id, name, address, created_at, updated_at, deleted_at
 `
 
 type InsertRestaurantParams struct {
-	ID      string `json:"id"`
-	Name    string `json:"name"`
-	Address string `json:"address"`
+	ID      uuid.UUID `json:"id"`
+	Name    string    `json:"name"`
+	Address string    `json:"address"`
 }
 
 func (q *Queries) InsertRestaurant(ctx context.Context, arg InsertRestaurantParams) (ManagementRestaurant, error) {
@@ -126,9 +128,9 @@ RETURNING id, user_id, restaurant_id, created_at, updated_at
 `
 
 type InsertRestaurantManagerParams struct {
-	ID           string `json:"id"`
-	UserID       string `json:"user_id"`
-	RestaurantID string `json:"restaurant_id"`
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
 }
 
 func (q *Queries) InsertRestaurantManager(ctx context.Context, arg InsertRestaurantManagerParams) (ManagementRestaurantManager, error) {
@@ -151,13 +153,13 @@ RETURNING id, restaurant_id, created_at, updated_at
 `
 
 type InsertRestaurantMenuParams struct {
-	ID           string `json:"id"`
-	RestaurantID string `json:"restaurant_id"`
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
 }
 
 type InsertRestaurantMenuRow struct {
-	ID           string    `json:"id"`
-	RestaurantID string    `json:"restaurant_id"`
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
@@ -182,8 +184,8 @@ WHERE user_id = $1
 `
 
 type IsUserRestaurantManagerParams struct {
-	UserID       string `json:"user_id"`
-	RestaurantID string `json:"restaurant_id"`
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
 }
 
 // Check if a user is a manager for a given restaurant

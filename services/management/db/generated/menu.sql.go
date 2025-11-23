@@ -9,6 +9,8 @@ import (
 	"context"
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
 const insertMenuCategory = `-- name: InsertMenuCategory :one
@@ -18,15 +20,15 @@ RETURNING id, menu_id, name, description, created_at, updated_at
 `
 
 type InsertMenuCategoryParams struct {
-	ID          string         `json:"id"`
-	MenuID      string         `json:"menu_id"`
+	ID          uuid.UUID      `json:"id"`
+	MenuID      uuid.UUID      `json:"menu_id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 }
 
 type InsertMenuCategoryRow struct {
-	ID          string         `json:"id"`
-	MenuID      string         `json:"menu_id"`
+	ID          uuid.UUID      `json:"id"`
+	MenuID      uuid.UUID      `json:"menu_id"`
 	Name        string         `json:"name"`
 	Description sql.NullString `json:"description"`
 	CreatedAt   time.Time      `json:"created_at"`
@@ -58,23 +60,23 @@ INSERT INTO management.items (
     category_id,
     name,
     description,
-    price,
+    price_in_cents,
     is_available,
     image_path
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7
 )
-RETURNING id, category_id, name, description, price, is_available, image_path, created_at, updated_at, deleted_at
+RETURNING id, category_id, name, description, price_in_cents, is_available, image_path, created_at, updated_at, deleted_at
 `
 
 type InsertMenuItemParams struct {
-	ID          string         `json:"id"`
-	CategoryID  string         `json:"category_id"`
-	Name        string         `json:"name"`
-	Description sql.NullString `json:"description"`
-	Price       float64        `json:"price"`
-	IsAvailable bool           `json:"is_available"`
-	ImagePath   sql.NullString `json:"image_path"`
+	ID           uuid.UUID      `json:"id"`
+	CategoryID   uuid.UUID      `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	PriceInCents int            `json:"price_in_cents"`
+	IsAvailable  bool           `json:"is_available"`
+	ImagePath    sql.NullString `json:"image_path"`
 }
 
 func (q *Queries) InsertMenuItem(ctx context.Context, arg InsertMenuItemParams) (ManagementItem, error) {
@@ -83,7 +85,7 @@ func (q *Queries) InsertMenuItem(ctx context.Context, arg InsertMenuItemParams) 
 		arg.CategoryID,
 		arg.Name,
 		arg.Description,
-		arg.Price,
+		arg.PriceInCents,
 		arg.IsAvailable,
 		arg.ImagePath,
 	)
@@ -93,7 +95,7 @@ func (q *Queries) InsertMenuItem(ctx context.Context, arg InsertMenuItemParams) 
 		&i.CategoryID,
 		&i.Name,
 		&i.Description,
-		&i.Price,
+		&i.PriceInCents,
 		&i.IsAvailable,
 		&i.ImagePath,
 		&i.CreatedAt,

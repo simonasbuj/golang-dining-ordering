@@ -1,6 +1,6 @@
 CREATE TABLE management.menus (
-    id VARCHAR(40) PRIMARY KEY,
-    restaurant_id VARCHAR(40) NOT NULL,
+    id UUID PRIMARY KEY,
+    restaurant_id UUID NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     deleted_at TIMESTAMPTZ,
@@ -13,8 +13,8 @@ CREATE TABLE management.menus (
 );
 
 CREATE TABLE management.categories (
-    id VARCHAR(40) PRIMARY KEY,
-    menu_id VARCHAR(40) NOT NULL,
+    id UUID PRIMARY KEY,
+    menu_id UUID NOT NULL,
     name VARCHAR(40) NOT NULL,
     description VARCHAR(200),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -29,11 +29,11 @@ CREATE TABLE management.categories (
 );
 
 CREATE TABLE management.items (
-    id VARCHAR(40) PRIMARY KEY,
-    category_id VARCHAR(40) NOT NULL,
+    id UUID PRIMARY KEY,
+    category_id UUID NOT NULL,
     name VARCHAR(40) NOT NULL,
     description VARCHAR(200),
-    price NUMERIC(10, 2) NOT NULL,
+    price_in_cents INTEGER NOT NULL,
     is_available BOOLEAN NOT NULL DEFAULT True,
     image_path VARCHAR(200),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),

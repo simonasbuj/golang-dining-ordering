@@ -7,6 +7,8 @@ import (
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/repository"
 	"golang-dining-ordering/services/management/storage"
+
+	"github.com/google/uuid"
 )
 
 const (
@@ -101,7 +103,7 @@ func (s *menuService) AddMenuItem(
 func (s *menuService) isUserRestaurantManager(
 	ctx context.Context,
 	claims *dto.TokenClaimsDto,
-	restaurantID string,
+	restaurantID uuid.UUID,
 ) error {
 	if claims.Role != userTypeManager {
 		return ErrUserIsNotManager

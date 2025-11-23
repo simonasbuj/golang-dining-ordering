@@ -11,6 +11,7 @@ import (
 	"strconv"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -47,7 +48,7 @@ func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
 		return responses.JSONError(c, err.Error(), err)
 	}
 
-	reqDto.RestaurantID = restaurantID
+	reqDto.RestaurantID = uuid.MustParse(restaurantID)
 
 	resDto, err := h.svc.AddMenuCategory(c.Request().Context(), &reqDto, user)
 	if err != nil {
@@ -98,19 +99,19 @@ func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
 func (h *MenuHandler) getItemFormFields(c echo.Context) (*dto.MenuItemDto, error) {
 	var reqDto dto.MenuItemDto
 
-	reqDto.RestaurantID = c.Param("restaurant_id")
-	reqDto.CategoryID = c.FormValue("category_id")
+	reqDto.RestaurantID = uuid.MustParse(c.Param("restaurant_id"))
+	reqDto.CategoryID = uuid.MustParse(c.FormValue("category_id"))
 	reqDto.Name = c.FormValue("name")
 	reqDto.Description = c.FormValue("description")
 
 	priceStr := c.FormValue("price")
 
-	price, err := strconv.ParseFloat(priceStr, 64)
+	price, err := strconv.Atoi(priceStr)
 	if err != nil {
 		return nil, errInvalidPriceValue
 	}
 
-	reqDto.Price = price
+	reqDto.PriceInCents = price
 
 	isAvailableStr := c.FormValue("is_available")
 	if isAvailableStr != "" {
