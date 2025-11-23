@@ -9,12 +9,14 @@ import (
 	"time"
 
 	"github.com/golang-jwt/jwt/v4"
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
 	"golang.org/x/crypto/bcrypt"
 )
 
-const (
-	TestUserID             = "user-123"
+//nolint:gochecknoglobals
+var (
+	TestUserID             = uuid.MustParse("67676767-6767-4676-8767-676767676767")
 	TestEmail              = "user-123@email.com"
 	TestPassword           = "password123"
 	TestName               = "sim"
@@ -42,12 +44,12 @@ func NewMockUserRepository() *mockUsersRepository {
 func (r *mockUsersRepository) CreateUser(
 	_ context.Context,
 	req *dto.SignUpRequestDto,
-) (string, error) {
+) (uuid.UUID, error) {
 	r.Lock()
 	defer r.Unlock()
 
 	user := &db.AuthUser{ //nolint:exhaustruct
-		ID:           "some-fake-id-1",
+		ID:           uuid.MustParse("67676767-6767-4676-8767-676767676767"),
 		Email:        req.Email,
 		PasswordHash: req.Password,
 		Name:         req.Name,
@@ -66,7 +68,7 @@ func (r *mockUsersRepository) GetUserByEmail(
 	email string,
 ) (*db.AuthUser, error) {
 	user := &db.AuthUser{ //nolint:exhaustruct
-		ID:    "user-123",
+		ID:    uuid.MustParse("67676767-6767-4676-8767-676767676767"),
 		Email: email,
 		// hash for password123 with cost factor = 10
 		PasswordHash: "$2a$10$00.4AZj71Ls5Riz43mlXUebnpdCuBWine0/v3KtSPpmM/Cb3IyURi",
@@ -76,20 +78,31 @@ func (r *mockUsersRepository) GetUserByEmail(
 	return user, nil
 }
 
-// IncrementTokenVersionForUser returns a mocked increased token version.
-func (r *mockUsersRepository) IncrementTokenVersionForUser(
+// SaveRefreshToken mocks saving refresh token in db.
+func (r *mockUsersRepository) SaveRefreshToken(
 	_ context.Context,
+	_ uuid.UUID,
 	_ string,
-) (int64, error) {
-	return TestTokenVersion, nil
+) error {
+	return nil
 }
 
-// GetTokenVersionByUserID returns a mocked token version.
-func (r *mockUsersRepository) GetTokenVersionByUserID(
+// GetRefreshToken mocks fetching refresh token from db.
+func (r *mockUsersRepository) GetRefreshToken(
 	_ context.Context,
+	_ uuid.UUID,
 	_ string,
-) (int64, error) {
-	return TestTokenVersion, nil
+) error {
+	return nil
+}
+
+// DeleteRefreshToken mocks deleting refresh token from db.
+func (r *mockUsersRepository) DeleteRefreshToken(
+	_ context.Context,
+	_ uuid.UUID,
+	_ string,
+) error {
+	return nil
 }
 
 type AuthServiceTestSuite struct {
@@ -118,7 +131,7 @@ func (suite *AuthServiceTestSuite) TestSignUpUser_Success() {
 		Role:     TestRole,
 	}
 
-	expectedUserID := "some-fake-id-1"
+	expectedUserID := TestUserID
 
 	user, err := suite.svc.SignUpUser(context.Background(), reqDto)
 
@@ -154,7 +167,6 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 		UserID:               TestUserID,
 		Email:                TestEmail,
 		TokenType:            tokenTypeAccess,
-		TokenVersion:         TestTokenVersion,
 		Role:                 TestRole,
 		ValidDurationSeconds: 1,
 	})
@@ -173,13 +185,12 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	suite.Require().True(ok)
 
-	suite.Equal(TestUserID, claims["userID"])
+	suite.Equal(TestUserID, uuid.MustParse(claims["userID"].(string))) //nolint:forcetypeassert
 	suite.Equal(TestEmail, claims["email"])
 	suite.Equal(
 		TestRole,
 		int(claims["role"].(float64)), //nolint:forcetypeassert
 	)
-	suite.Equal(TestTokenVersion, int64(claims["tokenVersion"].(float64))) //nolint:forcetypeassert
 
 	expFloat, ok := claims["exp"].(float64)
 	suite.True(ok, "exp claim should be a float64")
@@ -193,12 +204,12 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 	testCases := []struct {
 		desc         string
-		userID       string
+		userID       uuid.UUID
 		email        string
 		role         int
 		tokenVersion int64
 	}{
-		{"missing userID", "", TestEmail, TestRole, TestTokenVersion},
+		{"missing userID", uuid.Nil, TestEmail, TestRole, TestTokenVersion},
 		{"missing email", TestUserID, "", TestRole, TestTokenVersion},
 		{"missing role", TestUserID, TestEmail, 0, TestTokenVersion},
 		{"missing tokenVersion", TestUserID, TestEmail, 0, 0},
@@ -210,7 +221,6 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 				UserID:               tc.userID,
 				Email:                tc.email,
 				TokenType:            tokenTypeAccess,
-				TokenVersion:         tc.tokenVersion,
 				Role:                 tc.role,
 				ValidDurationSeconds: 1,
 			})
@@ -286,7 +296,6 @@ func (suite *AuthServiceTestSuite) TestRefreshToken_Success1() {
 		UserID:               TestUserID,
 		Email:                TestEmail,
 		TokenType:            tokenTypeRefresh,
-		TokenVersion:         TestTokenVersion,
 		Role:                 TestRole,
 		ValidDurationSeconds: 24,
 	})

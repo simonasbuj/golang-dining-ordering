@@ -7,13 +7,20 @@ package db
 import (
 	"database/sql"
 	"time"
+
+	"github.com/google/uuid"
 )
 
+type AuthToken struct {
+	ID        string    `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
 type AuthUser struct {
-	ID           string       `json:"id"`
+	ID           uuid.UUID    `json:"id"`
 	Email        string       `json:"email"`
 	PasswordHash string       `json:"password_hash"`
-	TokenVersion int64        `json:"token_version"`
 	Name         string       `json:"name"`
 	Lastname     string       `json:"lastname"`
 	Role         int          `json:"role"`
