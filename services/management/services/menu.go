@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/repository"
 	"golang-dining-ordering/services/management/storage"
@@ -24,12 +25,12 @@ type MenuService interface {
 	AddMenuCategory(
 		ctx context.Context,
 		reqDto *dto.MenuCategoryDto,
-		claims *dto.TokenClaimsDto,
+		claims *authDto.TokenClaimsDto,
 	) (*dto.MenuCategoryDto, error)
 	AddMenuItem(
 		ctx context.Context,
 		reqDto *dto.MenuItemDto,
-		claims *dto.TokenClaimsDto,
+		claims *authDto.TokenClaimsDto,
 	) (*dto.MenuItemDto, error)
 }
 
@@ -58,7 +59,7 @@ func NewMenuService(
 func (s *menuService) AddMenuCategory(
 	ctx context.Context,
 	reqDto *dto.MenuCategoryDto,
-	claims *dto.TokenClaimsDto,
+	claims *authDto.TokenClaimsDto,
 ) (*dto.MenuCategoryDto, error) {
 	err := s.isUserRestaurantManager(ctx, claims, reqDto.RestaurantID)
 	if err != nil {
@@ -76,7 +77,7 @@ func (s *menuService) AddMenuCategory(
 func (s *menuService) AddMenuItem(
 	ctx context.Context,
 	reqDto *dto.MenuItemDto,
-	claims *dto.TokenClaimsDto,
+	claims *authDto.TokenClaimsDto,
 ) (*dto.MenuItemDto, error) {
 	err := s.isUserRestaurantManager(ctx, claims, reqDto.RestaurantID)
 	if err != nil {
@@ -102,7 +103,7 @@ func (s *menuService) AddMenuItem(
 
 func (s *menuService) isUserRestaurantManager(
 	ctx context.Context,
-	claims *dto.TokenClaimsDto,
+	claims *authDto.TokenClaimsDto,
 	restaurantID uuid.UUID,
 ) error {
 	if claims.Role != userTypeManager {

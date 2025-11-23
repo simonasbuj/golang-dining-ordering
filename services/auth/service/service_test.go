@@ -233,12 +233,11 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID":       TestUserID,
-		"email":        TestEmail,
-		"tokenVersion": TestTokenVersion,
-		"tokenType":    tokenTypeAccess,
-		"role":         TestRole,
-		"exp":          time.Now().Add(time.Hour).Unix(),
+		"userID":    TestUserID,
+		"email":     TestEmail,
+		"tokenType": tokenTypeAccess,
+		"role":      TestRole,
+		"exp":       time.Now().Add(time.Hour).Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)
@@ -250,7 +249,6 @@ func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
 	suite.Equal(TestUserID, claims.UserID)
 	suite.Equal(TestEmail, claims.Email)
 	suite.Equal(TestRole, claims.Role)
-	suite.Equal(TestTokenVersion, claims.TokenVersion)
 }
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_InvalidSecret() {

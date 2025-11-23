@@ -36,9 +36,8 @@ type LogoutRequestDto struct {
 
 // TokenClaimsDto represents the claims stored in a JWT for a user.
 type TokenClaimsDto struct {
-	UserID       uuid.UUID `json:"userId"`
-	Email        string    `json:"email"`
-	TokenType    string    `json:"tokenType"`
-	TokenVersion int64     `json:"tokenVersion"`
-	Role         int       `json:"role"`
+	UserID    uuid.UUID `json:"userId"`
+	Email     string    `json:"email"`
+	TokenType string    `json:"tokenType"`
+	Role      int       `json:"role"`
 }
