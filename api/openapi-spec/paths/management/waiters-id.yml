@@ -6,8 +6,8 @@ delete:
   security:
     - bearerAuth: []
   parameters:
-    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
-    - $ref: '../../components/parameters/waiter-id.yml#/WaiterIDParam'
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/WaiterIDParam'
   responses:
     '200':
       description: Waiter unassigned successfully

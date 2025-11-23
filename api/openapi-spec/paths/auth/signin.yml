@@ -7,14 +7,14 @@ post:
     content:
       application/json:
         schema:
-          $ref: '../../components/schemas/auth/signin-request.yml#/SigninRequest'
+          $ref: '../../components/schemas/auth/signin.yml#/SigninRequest'
   responses:
     '200':
       description: Authentication successful
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/auth/signin-response.yml#/SigninResponse'
+            $ref: '../../components/schemas/auth/signin.yml#/SigninResponse'
     '400':
       description: Bad request (missing or incorrect request body fields)
     '401':

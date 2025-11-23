@@ -1,6 +1,0 @@
-SignupResponse:
-  type: object
-  properties:
-    message:
-      type: string
-      example: "new user registered successfully"

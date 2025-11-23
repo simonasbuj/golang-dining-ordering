@@ -19,3 +19,10 @@ SignupRequest:
     role:
       type: integer
       example: 1
+
+SignupResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "new user registered successfully"

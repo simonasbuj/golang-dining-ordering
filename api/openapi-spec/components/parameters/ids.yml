@@ -1,0 +1,44 @@
+RestaurantIDParam:
+  name: id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the restaurant
+  example: "rest_001"
+
+CategoryIDParam:
+  name: category_id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the category
+  example: "cat_001"
+  
+MenuItemIDParam:
+  name: item_id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the menu item
+  example: "item_001"
+
+TableIDParam:
+  name: table_id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the table
+  example: "table_001"
+
+WaiterIDParam:
+  name: waiter_id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the waiter
+  example: "user_123"

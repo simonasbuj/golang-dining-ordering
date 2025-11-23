@@ -7,14 +7,14 @@ post:
     content:
       application/json:
         schema:
-          $ref: '../../components/schemas/auth/signup-request.yml#/SignupRequest'
+          $ref: '../../components/schemas/auth/signup.yml#/SignupRequest'
   responses:
     '200':
       description: User registered successfully
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/auth/signup-response.yml#/SignupResponse'
+            $ref: '../../components/schemas/auth/signup.yml#/SignupResponse'
     '400':
       description: Bad request (missing or invalid fields)
     '409':

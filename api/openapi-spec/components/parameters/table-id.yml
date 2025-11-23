@@ -1,8 +1,0 @@
-TableIDParam:
-  name: table_id
-  in: path
-  required: true
-  schema:
-    type: string
-  description: Unique identifier of the table
-  example: "table_001"

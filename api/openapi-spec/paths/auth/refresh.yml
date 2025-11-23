@@ -8,14 +8,14 @@ post:
     content:
       application/json:
         schema:
-          $ref: '../../components/schemas/auth/refresh-request.yml#/RefreshRequest'
+          $ref: '../../components/schemas/auth/refresh.yml#/RefreshRequest'
   responses:
     '200':
       description: New access token issued successfully
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/auth/refresh-response.yml#/RefreshResponse'
+            $ref: '../../components/schemas/auth/refresh.yml#/RefreshResponse'
     '400':
       description: Bad request (missing refresh token)
     '401':

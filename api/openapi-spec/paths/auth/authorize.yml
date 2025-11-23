@@ -13,12 +13,12 @@ post:
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/auth/authorize-response.yml#/AuthorizeSuccess'
+            $ref: '../../components/schemas/auth/authorize.yml#/AuthorizeSuccess'
     '401':
       description: Unauthorized (missing or invalid token)
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/auth/authorize-response.yml#/AuthorizeUnauthorized'
+            $ref: '../../components/schemas/auth/authorize.yml#/AuthorizeUnauthorized'
     '500':
       description: Internal server error

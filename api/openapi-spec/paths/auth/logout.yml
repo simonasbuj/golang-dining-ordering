@@ -8,14 +8,14 @@ post:
     content:
       application/json:
         schema:
-          $ref: '../../components/schemas/auth/logout-request.yml#/LogoutRequest'
+          $ref: '../../components/schemas/auth/logout.yml#/LogoutRequest'
   responses:
     '200':
       description: Logged out successfully
       content:
         application/json:
           schema:
-            $ref: '../../components/schemas/auth/logout-response.yml#/LogoutResponse'
+            $ref: '../../components/schemas/auth/logout.yml#/LogoutResponse'
     '401':
       description: Unauthorized (invalid or expired token)
     '500':

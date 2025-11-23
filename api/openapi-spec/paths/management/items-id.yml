@@ -6,8 +6,8 @@ get:
   security:
     - bearerAuth: []
   parameters:
-    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
-    - $ref: '../../components/parameters/menu-item-id.yml#/MenuItemIDParam'
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/MenuItemIDParam'
   responses:
     '200':
       description: Menu item details
@@ -30,8 +30,8 @@ patch:
   security:
     - bearerAuth: []
   parameters:
-    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
-    - $ref: '../../components/parameters/menu-item-id.yml#/MenuItemIDParam'
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/MenuItemIDParam'
   requestBody:
     required: true
     content:

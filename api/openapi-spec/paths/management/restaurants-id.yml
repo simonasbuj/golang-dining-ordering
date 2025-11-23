@@ -8,7 +8,7 @@ patch:
   security:
     - bearerAuth: []
   parameters:
-    - $ref: '../../components/parameters/restaurant-id.yml#/RestaurantIDParam'
+    - $ref: '../../components/parameters/ids.yml#/RestaurantIDParam'
   requestBody:
     required: true
     content:
