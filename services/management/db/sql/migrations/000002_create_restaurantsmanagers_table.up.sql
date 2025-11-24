@@ -1,4 +1,4 @@
-CREATE TABLE management.restaurant_managers (
+CREATE TABLE management.restaurants_managers (
     id UUID PRIMARY KEY,
     user_id UUID NOT NULL,
     restaurant_id UUID NOT NULL,

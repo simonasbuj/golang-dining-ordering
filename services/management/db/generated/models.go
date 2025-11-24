@@ -51,7 +51,7 @@ type ManagementRestaurant struct {
 	DeletedAt sql.NullTime `json:"deleted_at"`
 }
 
-type ManagementRestaurantManager struct {
+type ManagementRestaurantsManager struct {
 	ID           uuid.UUID `json:"id"`
 	UserID       uuid.UUID `json:"user_id"`
 	RestaurantID uuid.UUID `json:"restaurant_id"`
