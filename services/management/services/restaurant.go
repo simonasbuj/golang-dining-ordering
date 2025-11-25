@@ -33,12 +33,14 @@ type restaurantService struct {
 
 // NewRestaurantService creates a new RestaurantService instance.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewRestaurantService(repo repository.RestaurantRepository) *restaurantService {
 	return &restaurantService{
 		repo: repo,
 	}
 }
+
+//revive:enable:unexported-return
 
 // CreateRestaurant creates a new restaurant using the repository.
 func (s *restaurantService) CreateRestaurant(

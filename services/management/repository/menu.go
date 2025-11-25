@@ -30,13 +30,15 @@ type menuRepository struct {
 
 // NewMenuRepository creates a new MenuRepository instance.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewMenuRepository(db *sql.DB, q *db.Queries) *menuRepository {
 	return &menuRepository{
 		db: db,
 		q:  q,
 	}
 }
+
+//revive:enable:unexported-return
 
 func (r *menuRepository) AddMenuCategory(
 	ctx context.Context,
@@ -80,13 +82,15 @@ func (r *menuRepository) AddMenuItem(
 		return nil, fmt.Errorf("inserting new menu item: %w", err)
 	}
 
-	return &dto.MenuItemDto{ //nolint:exhaustruct
+	return &dto.MenuItemDto{
 		ID:           row.ID,
+		RestaurantID: reqDto.RestaurantID,
 		CategoryID:   row.CategoryID,
 		Name:         row.Name,
 		Description:  row.Description.String,
 		PriceInCents: row.PriceInCents,
 		IsAvailable:  row.IsAvailable,
 		ImagePath:    row.ImagePath.String,
+		FileHeader:   nil,
 	}, nil
 }

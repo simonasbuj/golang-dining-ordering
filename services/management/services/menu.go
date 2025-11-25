@@ -34,7 +34,7 @@ type menuService struct {
 
 // NewMenuService creates a new MenuService instance.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewMenuService(
 	menuRepo repository.MenuRepository,
 	restRepo repository.RestaurantRepository,
@@ -46,6 +46,8 @@ func NewMenuService(
 		storage:  storage,
 	}
 }
+
+//revive:enable:unexported-return
 
 func (s *menuService) AddMenuCategory(
 	ctx context.Context,

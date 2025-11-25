@@ -34,13 +34,15 @@ type restaurantRepository struct {
 
 // NewRestaurantRepository creates a new RestaurantRepository instance.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewRestaurantRepository(db *sql.DB, q *db.Queries) *restaurantRepository {
 	return &restaurantRepository{
 		db: db,
 		q:  q,
 	}
 }
+
+//revive:enable:unexported-return
 
 // CreateRestaurant inserts a new restaurant, adds owner to restaurant managers and returns the created DTO.
 func (r *restaurantRepository) CreateRestaurant(
@@ -88,7 +90,7 @@ func (r *restaurantRepository) CreateRestaurant(
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, fmt.Errorf("commiting create new restaurant transaction: %w", err)
+		return nil, fmt.Errorf("committing create new restaurant transaction: %w", err)
 	}
 
 	return &dto.CreateRestaurantDto{
@@ -106,8 +108,8 @@ func (r *restaurantRepository) GetRestaurants(
 	offset := max(min((reqDto.Page-1)*reqDto.Limit, math.MaxInt32), 0)
 
 	rows, err := r.q.GetRestaurants(ctx, db.GetRestaurantsParams{
-		Limit:  int32(reqDto.Limit), //nolint:gosec
-		Offset: int32(offset),       //nolint:gosec
+		Limit:  reqDto.Limit,
+		Offset: offset,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("fetching restaurants with %+v: %w", reqDto, err)

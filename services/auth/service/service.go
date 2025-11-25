@@ -54,13 +54,15 @@ type generateTokenParams struct {
 
 // NewAuthService creates a new instance of authService.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewAuthService(cfg *Config, repo repository.Repository) *service {
 	return &service{
 		cfg:  cfg,
 		repo: repo,
 	}
 }
+
+//revive:enable:unexported-return
 
 func (s *service) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (uuid.UUID, error) {
 	hashedPassword, err := s.hashPassword(req.Password)
@@ -241,11 +243,11 @@ func (s *service) generateToken(p generateTokenParams) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID":    p.UserID,
-		"email":     p.Email,
-		"role":      p.Role,
-		"tokenType": p.TokenType,
-		"exp":       time.Now().Add(time.Second * time.Duration(p.ValidDurationSeconds)).Unix(),
+		"user_id":    p.UserID,
+		"email":      p.Email,
+		"role":       p.Role,
+		"token_type": p.TokenType,
+		"exp":        time.Now().Add(time.Second * time.Duration(p.ValidDurationSeconds)).Unix(),
 	})
 
 	tokenStr, err := token.SignedString([]byte(s.cfg.Secret))

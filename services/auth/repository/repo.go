@@ -29,12 +29,14 @@ type repository struct {
 
 // NewRepository creates a new userRepository with the given database connection.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewRepository(q *db.Queries) *repository {
 	return &repository{
 		q: q,
 	}
 }
+
+//revive:enable:unexported-return
 
 func (r *repository) CreateUser(
 	ctx context.Context,

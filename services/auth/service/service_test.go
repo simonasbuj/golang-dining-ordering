@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"database/sql"
 	db "golang-dining-ordering/services/auth/db/generated"
 	"golang-dining-ordering/services/auth/dto"
 	"sync"
@@ -48,13 +49,17 @@ func (r *mockUsersRepository) CreateUser(
 	r.Lock()
 	defer r.Unlock()
 
-	user := &db.AuthUser{ //nolint:exhaustruct
+	user := &db.AuthUser{
 		ID:           uuid.MustParse("67676767-6767-4676-8767-676767676767"),
 		Email:        req.Email,
 		PasswordHash: req.Password,
 		Name:         req.Name,
 		Lastname:     req.Lastname,
 		Role:         int(req.Role),
+		IsActive:     sql.NullBool{Bool: true, Valid: true},
+		CreatedAt:    time.Time{},
+		UpdatedAt:    time.Time{},
+		DeletedAt:    sql.NullTime{Time: time.Time{}, Valid: false},
 	}
 
 	r.users = append(r.users, user)
@@ -67,12 +72,18 @@ func (r *mockUsersRepository) GetUserByEmail(
 	_ context.Context,
 	email string,
 ) (*db.AuthUser, error) {
-	user := &db.AuthUser{ //nolint:exhaustruct
+	user := &db.AuthUser{
 		ID:    uuid.MustParse("67676767-6767-4676-8767-676767676767"),
 		Email: email,
 		// hash for password123 with cost factor = 10
 		PasswordHash: "$2a$10$00.4AZj71Ls5Riz43mlXUebnpdCuBWine0/v3KtSPpmM/Cb3IyURi",
-		Role:         2,
+		Name:         TestName,
+		Lastname:     TestLastname,
+		Role:         int(TestRole),
+		IsActive:     sql.NullBool{Bool: true, Valid: true},
+		CreatedAt:    time.Time{},
+		UpdatedAt:    time.Time{},
+		DeletedAt:    sql.NullTime{Time: time.Time{}, Valid: false},
 	}
 
 	return user, nil
@@ -185,7 +196,7 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
 	suite.Require().True(ok)
 
-	suite.Equal(TestUserID, uuid.MustParse(claims["userID"].(string))) //nolint:forcetypeassert
+	suite.Equal(TestUserID, uuid.MustParse(claims["user_id"].(string))) //nolint:forcetypeassert
 	suite.Equal(TestEmail, claims["email"])
 	suite.Equal(
 		TestRole,
@@ -203,16 +214,14 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 
 func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 	testCases := []struct {
-		desc         string
-		userID       uuid.UUID
-		email        string
-		role         dto.Role
-		tokenVersion int64
+		desc   string
+		userID uuid.UUID
+		email  string
+		role   dto.Role
 	}{
-		{"missing userID", uuid.Nil, TestEmail, TestRole, TestTokenVersion},
-		{"missing email", TestUserID, "", TestRole, TestTokenVersion},
-		{"missing role", TestUserID, TestEmail, 0, TestTokenVersion},
-		{"missing tokenVersion", TestUserID, TestEmail, 0, 0},
+		{"missing userID", uuid.Nil, TestEmail, TestRole},
+		{"missing email", TestUserID, "", TestRole},
+		{"missing role", TestUserID, TestEmail, 0},
 	}
 
 	for _, tc := range testCases {
@@ -233,11 +242,11 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 
 func (suite *AuthServiceTestSuite) TestVerifyToken_Success() {
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID":    TestUserID,
-		"email":     TestEmail,
-		"tokenType": tokenTypeAccess,
-		"role":      TestRole,
-		"exp":       time.Now().Add(time.Hour).Unix(),
+		"user_id":    TestUserID,
+		"email":      TestEmail,
+		"token_type": tokenTypeAccess,
+		"role":       TestRole,
+		"exp":        time.Now().Add(time.Hour).Unix(),
 	})
 	tokenStr, err := token.SignedString([]byte(suite.svc.cfg.Secret))
 	suite.Require().NoError(err)

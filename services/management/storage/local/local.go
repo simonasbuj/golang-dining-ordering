@@ -31,13 +31,15 @@ type localStorage struct {
 
 // NewLocalStorage creates a new local storage with max file size and upload directory.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewLocalStorage(maxFileSize int64, uploadsDir string) *localStorage {
 	return &localStorage{
 		maxFileSize: maxFileSize,
 		uploadsDir:  uploadsDir,
 	}
 }
+
+//revive:enable:unexported-return
 
 // StoreMenuItemImage stores an image file and returns its local path.
 func (s *localStorage) StoreMenuItemImage(fileHeader *multipart.FileHeader) (string, error) {
