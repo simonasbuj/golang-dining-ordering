@@ -8,7 +8,8 @@ import (
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/services"
 	"net/http"
-	"strconv"
+
+	// "strconv".
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -59,32 +60,14 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 
 // HandleGetRestaurants handles fetching a paginated list of restaurants.
 func (h *RestaurantsHandler) HandleGetRestaurants(c echo.Context) error {
-	limitStr := c.QueryParam("limit")
-	pageStr := c.QueryParam("page")
+	var reqDto dto.GetRestaurantsReqDto
 
-	limit := 10
-	page := 1
-
-	if limitStr != "" {
-		l, err := strconv.Atoi(limitStr)
-		if err == nil && l > 0 {
-			limit = l
-		}
+	err := validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
 	}
 
-	if pageStr != "" {
-		p, err := strconv.Atoi(pageStr)
-		if err == nil && p > 0 {
-			page = p
-		}
-	}
-
-	reqDto := &dto.GetRestaurantsReqDto{
-		Page:  page,
-		Limit: limit,
-	}
-
-	resDto, err := h.svc.GetRestaurants(c.Request().Context(), reqDto)
+	resDto, err := h.svc.GetRestaurants(c.Request().Context(), &reqDto)
 	if err != nil {
 		return responses.JSONError(c, "failed to fetch restaurants", err)
 	}

@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/management/dto"
@@ -11,14 +10,6 @@ import (
 
 	"github.com/google/uuid"
 )
-
-const (
-	userTypeManager = 1
-	uerTypeWaiter   = 2
-)
-
-// ErrUserIsNotManager is returned when a user attempts an action that requires restaurant manager privileges.
-var ErrUserIsNotManager = errors.New("user is not a manager")
 
 // MenuService defines business logic methods for restaurant menus.
 type MenuService interface {
@@ -106,10 +97,6 @@ func (s *menuService) isUserRestaurantManager(
 	claims *authDto.TokenClaimsDto,
 	restaurantID uuid.UUID,
 ) error {
-	if claims.Role != userTypeManager {
-		return ErrUserIsNotManager
-	}
-
 	err := s.restRepo.IsUserRestaurantManager(ctx, claims.UserID, restaurantID)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrUserIsNotManager, err)

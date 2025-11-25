@@ -17,8 +17,8 @@ type CreateRestaurantDto struct {
 
 // GetRestaurantsReqDto represents pagination parameters for fetching restaurants.
 type GetRestaurantsReqDto struct {
-	Page  int `json:"page"`
-	Limit int `json:"limit"`
+	Page  int `query:"page"`
+	Limit int `query:"limit" validate:"max=100"`
 }
 
 // RestaurantItemDto represents a single restaurant in the response.

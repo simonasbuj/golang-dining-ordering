@@ -15,6 +15,9 @@ import (
 
 var errUnauthorized = errors.New("response from auth-service: unauthorized")
 
+// ContextKeyAuthUser is the key used to store the authenticated user in echo.Context.
+const ContextKeyAuthUser = "authUser"
+
 // AuthResponse is response body from auth-service.
 type AuthResponse struct {
 	Data authDto.TokenClaimsDto `json:"data"`
@@ -80,17 +83,41 @@ func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
 	}
 }
 
+// RoleMiddleware returns an Echo middleware that allows access only to users
+// with one of the specified roles. It reads the authenticated user from the context.
+func RoleMiddleware(allowedRoles ...authDto.Role) echo.MiddlewareFunc {
+	return func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			rawClaims := c.Get(ContextKeyAuthUser)
+			if rawClaims == nil {
+				return echo.NewHTTPError(http.StatusBadRequest, "missing claims")
+			}
+
+			claims, ok := rawClaims.(*authDto.TokenClaimsDto)
+			if !ok || claims == nil {
+				return echo.NewHTTPError(http.StatusBadRequest, "failed to parse claims into dto")
+			}
+
+			for _, role := range allowedRoles {
+				if claims.Role == role {
+					return next(c)
+				}
+			}
+
+			return echo.NewHTTPError(http.StatusForbidden, "insufficient role")
+		}
+	}
+}
+
 // parseAndStoreAuthResponse parses the auth service response and stores the claims in context.
 func parseAndStoreAuthResponse(c echo.Context, resp *http.Response) error {
 	defer resp.Body.Close() //nolint:errcheck
 
-	// Read body
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
 		return fmt.Errorf("failed to read auth response body: %w", err)
 	}
 
-	// Decode JSON into struct
 	var authResp AuthResponse
 
 	err = json.Unmarshal(body, &authResp)
@@ -98,8 +125,7 @@ func parseAndStoreAuthResponse(c echo.Context, resp *http.Response) error {
 		return fmt.Errorf("failed to unmarshal auth response: %w", err)
 	}
 
-	// Store in context
-	c.Set("authUser", &authResp.Data)
+	c.Set(ContextKeyAuthUser, &authResp.Data)
 
 	return nil
 }
