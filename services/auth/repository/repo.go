@@ -70,10 +70,14 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*db.Auth
 	return &user, nil
 }
 
-func (r *repository) SaveRefreshToken(ctx context.Context, token string, claims *dto.TokenClaimsDto) error {
+func (r *repository) SaveRefreshToken(
+	ctx context.Context,
+	token string,
+	claims *dto.TokenClaimsDto,
+) error {
 	_, err := r.q.SaveRefreshToken(ctx, db.SaveRefreshTokenParams{
-		ID:     token,
-		UserID: claims.UserID,
+		ID:        token,
+		UserID:    claims.UserID,
 		ExpiresAt: time.Unix(claims.Exp, 0).UTC(),
 	})
 	if err != nil {

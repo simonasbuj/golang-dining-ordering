@@ -79,7 +79,11 @@ func (r *mockUsersRepository) GetUserByEmail(
 }
 
 // SaveRefreshToken mocks saving refresh token in db.
-func (r *mockUsersRepository) SaveRefreshToken(_ context.Context, _ string, _ *dto.TokenClaimsDto) error {
+func (r *mockUsersRepository) SaveRefreshToken(
+	_ context.Context,
+	_ string,
+	_ *dto.TokenClaimsDto,
+) error {
 	return nil
 }
 

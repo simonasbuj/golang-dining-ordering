@@ -141,10 +141,6 @@ func (s *service) RefreshToken(
 		return nil, err
 	}
 
-	if claimsDto.UserID == uuid.Nil || claimsDto.Email == "" || claimsDto.Role == 0 {
-		return nil, ce.ErrMissingClaims
-	}
-
 	err = s.repo.GetRefreshToken(ctx, claimsDto.UserID, refreshToken)
 	if err != nil {
 		return nil, fmt.Errorf("validating if provided refresh token is not revoked: %w", err)
@@ -282,6 +278,10 @@ func (s *service) verifyToken(
 	claimsDto, err := s.mapClaimsToDTO(claims)
 	if err != nil {
 		return nil, fmt.Errorf("failed to unmarshal claims into dto: %w", err)
+	}
+
+	if claimsDto.UserID == uuid.Nil || claimsDto.Email == "" || claimsDto.Role == 0 {
+		return nil, ce.ErrMissingClaims
 	}
 
 	if claimsDto.TokenType != expectedType {

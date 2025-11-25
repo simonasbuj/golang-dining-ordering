@@ -3,11 +3,14 @@ package dto
 
 import "github.com/google/uuid"
 
+// Role represents the type of user in the system.
 type Role int
 
 const (
+	// RoleManager is the manager role.
 	RoleManager Role = 1
-	RoleWaiter  Role = 2
+	// RoleWaiter is the waiter role.
+	RoleWaiter Role = 2
 )
 
 // SignUpRequestDto represents the payload sent when signing up.
@@ -47,5 +50,5 @@ type TokenClaimsDto struct {
 	Email     string    `json:"email"`
 	TokenType string    `json:"tokenType"`
 	Role      Role      `json:"role"`
-	Exp 	  int64		`json:"exp"`
+	Exp       int64     `json:"exp"`
 }
