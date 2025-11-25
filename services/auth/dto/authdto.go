@@ -31,12 +31,12 @@ type SignInRequestDto struct {
 // TokenResponseDto represents the payload when a new access token is issued.
 type TokenResponseDto struct {
 	Token        string `json:"token"`
-	RefreshToken string `json:"refreshToken"`
+	RefreshToken string `json:"refresh_token"`
 }
 
 // RefreshTokenRequestDto represents the payload required to refresh an authentication token.
 type RefreshTokenRequestDto struct {
-	RefreshToken string `json:"refreshToken" validate:"required"`
+	RefreshToken string `json:"refresh_token" validate:"required"`
 }
 
 // LogoutRequestDto represents the payload required to logout user by making their tokens invalid in database.
@@ -46,9 +46,9 @@ type LogoutRequestDto struct {
 
 // TokenClaimsDto represents the claims stored in a JWT for a user.
 type TokenClaimsDto struct {
-	UserID    uuid.UUID `json:"userId"`
+	UserID    uuid.UUID `json:"user_id"`
 	Email     string    `json:"email"`
-	TokenType string    `json:"tokenType"`
+	TokenType string    `json:"token_type"`
 	Role      Role      `json:"role"`
 	Exp       int64     `json:"exp"`
 }

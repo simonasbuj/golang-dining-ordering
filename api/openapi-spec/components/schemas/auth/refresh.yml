@@ -1,9 +1,9 @@
 RefreshRequest:
   type: object
   required:
-    - refreshToken
+    - refresh_token
   properties:
-    refreshToken:
+    refresh_token:
       type: string
       example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 

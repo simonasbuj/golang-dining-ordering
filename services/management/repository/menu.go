@@ -30,13 +30,15 @@ type menuRepository struct {
 
 // NewMenuRepository creates a new MenuRepository instance.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewMenuRepository(db *sql.DB, q *db.Queries) *menuRepository {
 	return &menuRepository{
 		db: db,
 		q:  q,
 	}
 }
+
+//revive:enable:unexported-return
 
 func (r *menuRepository) AddMenuCategory(
 	ctx context.Context,
@@ -49,7 +51,7 @@ func (r *menuRepository) AddMenuCategory(
 		Description: sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert new category: %w", err)
+		return nil, fmt.Errorf("inserting new category: %w", err)
 	}
 
 	return &dto.MenuCategoryDto{
@@ -77,16 +79,18 @@ func (r *menuRepository) AddMenuItem(
 		ImagePath:    sql.NullString{String: reqDto.ImagePath, Valid: reqDto.ImagePath != ""},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert new menu item: %w", err)
+		return nil, fmt.Errorf("inserting new menu item: %w", err)
 	}
 
-	return &dto.MenuItemDto{ //nolint:exhaustruct
+	return &dto.MenuItemDto{
 		ID:           row.ID,
+		RestaurantID: reqDto.RestaurantID,
 		CategoryID:   row.CategoryID,
 		Name:         row.Name,
 		Description:  row.Description.String,
 		PriceInCents: row.PriceInCents,
 		IsAvailable:  row.IsAvailable,
 		ImagePath:    row.ImagePath.String,
+		FileHeader:   nil,
 	}, nil
 }

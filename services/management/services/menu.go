@@ -2,7 +2,6 @@ package services
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/management/dto"
@@ -11,14 +10,6 @@ import (
 
 	"github.com/google/uuid"
 )
-
-const (
-	userTypeManager = 1
-	uerTypeWaiter   = 2
-)
-
-// ErrUserIsNotManager is returned when a user attempts an action that requires restaurant manager privileges.
-var ErrUserIsNotManager = errors.New("user is not a manager")
 
 // MenuService defines business logic methods for restaurant menus.
 type MenuService interface {
@@ -43,7 +34,7 @@ type menuService struct {
 
 // NewMenuService creates a new MenuService instance.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewMenuService(
 	menuRepo repository.MenuRepository,
 	restRepo repository.RestaurantRepository,
@@ -55,6 +46,8 @@ func NewMenuService(
 		storage:  storage,
 	}
 }
+
+//revive:enable:unexported-return
 
 func (s *menuService) AddMenuCategory(
 	ctx context.Context,
@@ -68,7 +61,7 @@ func (s *menuService) AddMenuCategory(
 
 	resDto, err := s.menuRepo.AddMenuCategory(ctx, reqDto)
 	if err != nil {
-		return nil, fmt.Errorf("failed to add menu category: %w", err)
+		return nil, fmt.Errorf("adding menu category: %w", err)
 	}
 
 	return resDto, nil
@@ -87,7 +80,7 @@ func (s *menuService) AddMenuItem(
 	if reqDto.FileHeader != nil {
 		reqDto.ImagePath, err = s.storage.StoreMenuItemImage(reqDto.FileHeader)
 		if err != nil {
-			return nil, fmt.Errorf("failed to store menu item image: %w", err)
+			return nil, fmt.Errorf("storing menu item image in storage: %w", err)
 		}
 	}
 
@@ -95,7 +88,7 @@ func (s *menuService) AddMenuItem(
 	if err != nil {
 		_ = s.storage.DeleteMenuItemImage(reqDto.ImagePath)
 
-		return nil, fmt.Errorf("failed to delete menu item's image from storage: %w", err)
+		return nil, fmt.Errorf("deleting menu item's image from storage: %w", err)
 	}
 
 	return resDto, nil
@@ -106,10 +99,6 @@ func (s *menuService) isUserRestaurantManager(
 	claims *authDto.TokenClaimsDto,
 	restaurantID uuid.UUID,
 ) error {
-	if claims.Role != userTypeManager {
-		return ErrUserIsNotManager
-	}
-
 	err := s.restRepo.IsUserRestaurantManager(ctx, claims.UserID, restaurantID)
 	if err != nil {
 		return fmt.Errorf("%w: %w", ErrUserIsNotManager, err)

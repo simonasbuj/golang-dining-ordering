@@ -2,6 +2,7 @@
 package routes
 
 import (
+	authDto "golang-dining-ordering/services/auth/dto"
 	handler "golang-dining-ordering/services/management/handlers"
 	"golang-dining-ordering/services/management/middleware"
 
@@ -16,7 +17,10 @@ func AddRrestaurantRoutes(
 ) {
 	api := e.Group("/api/v1")
 
-	api.POST("/restaurants", h.HandleCreateRestaurant, middleware.AuthMiddleware(authEndpoint))
+	api.POST("/restaurants", h.HandleCreateRestaurant,
+		middleware.AuthMiddleware(authEndpoint),
+		middleware.RoleMiddleware(authDto.RoleManager),
+	)
 	api.GET("/restaurants", h.HandleGetRestaurants)
 	api.GET("/restaurants/:id", h.HandleGetRestaurantByID)
 }

@@ -54,13 +54,15 @@ type generateTokenParams struct {
 
 // NewAuthService creates a new instance of authService.
 //
-//nolint:revive // intended unexported type return
+//revive:disable:unexported-return
 func NewAuthService(cfg *Config, repo repository.Repository) *service {
 	return &service{
 		cfg:  cfg,
 		repo: repo,
 	}
 }
+
+//revive:enable:unexported-return
 
 func (s *service) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (uuid.UUID, error) {
 	hashedPassword, err := s.hashPassword(req.Password)
@@ -72,7 +74,7 @@ func (s *service) SignUpUser(ctx context.Context, req *dto.SignUpRequestDto) (uu
 
 	userID, err := s.repo.CreateUser(ctx, req)
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("failed to sign up user: %w", err)
+		return uuid.Nil, fmt.Errorf("signing up user: %w", err)
 	}
 
 	return userID, nil
@@ -84,7 +86,7 @@ func (s *service) SignInUser(
 ) (*dto.TokenResponseDto, error) {
 	user, err := s.repo.GetUserByEmail(ctx, req.Email)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user from db: %w", err)
+		return nil, fmt.Errorf("fetching user from db: %w", err)
 	}
 
 	ok := s.verifyPassword(req.Password, user.PasswordHash)
@@ -217,7 +219,7 @@ func (s *service) Authorize(ctx context.Context, tokenStr string) (*dto.TokenCla
 func (s *service) hashPassword(password string) (string, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
-		return "", fmt.Errorf("failed to generate hashed password: %w", err)
+		return "", fmt.Errorf("generating hashed password: %w", err)
 	}
 
 	return string(hash), nil
@@ -241,16 +243,16 @@ func (s *service) generateToken(p generateTokenParams) (string, error) {
 	}
 
 	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"userID":    p.UserID,
-		"email":     p.Email,
-		"role":      p.Role,
-		"tokenType": p.TokenType,
-		"exp":       time.Now().Add(time.Second * time.Duration(p.ValidDurationSeconds)).Unix(),
+		"user_id":    p.UserID,
+		"email":      p.Email,
+		"role":       p.Role,
+		"token_type": p.TokenType,
+		"exp":        time.Now().Add(time.Second * time.Duration(p.ValidDurationSeconds)).Unix(),
 	})
 
 	tokenStr, err := token.SignedString([]byte(s.cfg.Secret))
 	if err != nil {
-		return "", fmt.Errorf("failed to create SignedString from JWT token: %w", err)
+		return "", fmt.Errorf("createing SignedString from JWT token: %w", err)
 	}
 
 	return tokenStr, nil
@@ -277,7 +279,7 @@ func (s *service) verifyToken(
 
 	claimsDto, err := s.mapClaimsToDTO(claims)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal claims into dto: %w", err)
+		return nil, fmt.Errorf("unmarshaling claims into dto: %w", err)
 	}
 
 	if claimsDto.UserID == uuid.Nil || claimsDto.Email == "" || claimsDto.Role == 0 {
@@ -318,14 +320,14 @@ func (s *service) tokenIntoClaims(token *jwt.Token) (jwt.MapClaims, error) {
 func (s *service) mapClaimsToDTO(claims jwt.MapClaims) (*dto.TokenClaimsDto, error) {
 	data, err := json.Marshal(claims)
 	if err != nil {
-		return nil, fmt.Errorf("failed to marshal claims: %w", err)
+		return nil, fmt.Errorf("marshaling claims: %w", err)
 	}
 
 	var dto dto.TokenClaimsDto
 
 	err = json.Unmarshal(data, &dto)
 	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal claims: %w", err)
+		return nil, fmt.Errorf("unmarshaling claims: %w", err)
 	}
 
 	return &dto, nil

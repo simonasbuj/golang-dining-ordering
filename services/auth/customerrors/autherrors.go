@@ -28,7 +28,7 @@ var ErrInvalidTokenData = errors.New(
 )
 
 // ErrMissingClaims is returned when jwt token is missing required claims.
-var ErrMissingClaims = errors.New("refresh token is missing required claims")
+var ErrMissingClaims = errors.New("token is missing required claims")
 
 // ErrInvalidTokenVersion is returned when jwt token's claim 'tokenVersion' doesnt match the one in db.
 var ErrInvalidTokenVersion = errors.New("invalid token version")
