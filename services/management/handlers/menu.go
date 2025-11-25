@@ -96,6 +96,26 @@ func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
 	return responses.JSONSuccess(c, "new menu item added", resDto)
 }
 
+// HandleGetMenuItems retrieves all menu categories and items for a restaurant.
+func (h *MenuHandler) HandleGetMenuItems(c echo.Context) error {
+	restaurantID, err := uuid.Parse(c.Param("restaurant_id"))
+	if err != nil {
+		return responses.JSONError(c, "failed to parse restaurant_id", err)
+	}
+
+	resDto, err := h.svc.GetMenuItems(c.Request().Context(), restaurantID)
+	if err != nil {
+		return responses.JSONError(
+			c,
+			"failed to fetch menu items",
+			err,
+			http.StatusInternalServerError,
+		)
+	}
+
+	return responses.JSONSuccess(c, "menu items fetched", resDto)
+}
+
 func (h *MenuHandler) getItemFormFields(c echo.Context) (*dto.MenuItemDto, error) {
 	var reqDto dto.MenuItemDto
 

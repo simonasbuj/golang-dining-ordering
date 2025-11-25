@@ -1,34 +1,62 @@
+RestaurantID:
+  type: string
+  example: "rest_001"
+
+CategoryID:
+  type: string
+  example: "cat_001"
+CategoryName:
+  type: string
+  example: "Appetizers"
+CategoryDescription:
+  type: string
+  example: "Light dishes to start your meal"
+
+ItemID:
+  type: string
+  example: "item_001"
+ItemName:
+  type: string
+  description: Name of the menu item
+  example: "Cheeseburger"
+ItemDescription:
+  type: string
+  description: Description of the menu item
+  example: "Tasty Big Mac"
+ItemPriceInCents:
+  type: number
+  format: int
+  description: "Price of the menu item in cents"
+  example: 1420
+
+DateTime:
+  type: string
+  format: date-time
+  example: "2025-10-22T12:00:00Z"
+
 CreateCategoryRequest:
   type: object
   required:
     - name
   properties:
     name:
-      type: string
-      example: "Appetizers"
+      $ref: '#/CategoryName'
     description:
-      type: string
-      example: "Light dishes to start your meal"
+      $ref: '#/CategoryDescription'
 
 CategoryResponse:
   type: object
   properties:
     id:
-      type: string
-      example: "cat_001"
+      $ref: '#/CategoryID'
     restaurant_id:
-      type: string
-      example: "rest_001"
+      $ref: '#/RestaurantID'
     name:
-      type: string
-      example: "Appetizers"
+      $ref: '#/CategoryName'
     description:
-      type: string
-      example: "Light dishes to start your meal"
+      $ref: '#/CategoryDescription'
     created_at:
-      type: string
-      format: date-time
-      example: "2025-10-22T12:00:00Z"
+      $ref: '#/DateTime'
 
 CategoryListResponse:
   type: object
@@ -45,30 +73,21 @@ UpdateCategoryRequest:
   type: object
   properties:
     name:
-      type: string
-      description: Updated name of the category
-      example: "Appetizers Updated"
+      $ref: '#/CategoryName'
     description:
-      type: string
-      description: Updated description of the category
-      example: "Light dishes to start your meal, refreshed"
+      $ref: '#/CategoryDescription'
 
 CategoryUpdateResponse:
   type: object
   properties:
     id:
-      type: string
-      example: "cat_001"
+      $ref: '#/CategoryID'
     name:
-      type: string
-      example: "Appetizers Updated"
+      $ref: '#/CategoryName'
     description:
-      type: string
-      example: "Light dishes to start your meal, refreshed"
+      $ref: '#/CategoryDescription'
     updated_at:
-      type: string
-      format: date-time
-      example: "2025-10-22T12:00:00Z"
+      $ref: '#/DateTime'
 
 MenuItemRequest:
   type: object
@@ -76,25 +95,16 @@ MenuItemRequest:
     - category_id
     - name
     - description
-    - price
+    - price_in_cents
   properties:
     category_id:
-      type: string
-      description: The category this item belongs to
-      example: "cat_001"
+      $ref: '#/CategoryID'
     name:
-      type: string
-      description: Name of the menu item
-      example: "Cheeseburger"
+      $ref: '#/ItemName'
     description:
-      type: string
-      description: Description of the menu item
-      example: "Tasty Big Mac"
-    price:
-      type: number
-      format: int
-      description: Price in cents of the menu item
-      example: 1250
+      $ref: '#/ItemDescription'
+    price_in_cents:
+      $ref: '#/ItemPriceInCents'
     image:
       type: string
       format: binary
@@ -104,48 +114,34 @@ MenuItemResponse:
   type: object
   properties:
     id:
-      type: string
-      example: "item_001"
+      $ref: '#/ItemID'
     restaurant_id:
-      type: string
-      example: "rest_001"
+      $ref: '#/RestaurantID'
     category_id:
-      type: string
-      example: "cat_001"
+      $ref: '#/CategoryID'
     name:
-      type: string
-      example: "Cheeseburger"
+      $ref: '#/ItemName'
     description:
-      type: string
-      example: "Tasty Big Mac"
-    price:
-      type: number
-      format: int
-      example: 1250
+      $ref: '#/ItemDescription'
+    price_in_cents:
+      $ref: '#/ItemPriceInCents'
     image_path:
       type: string
       example: "/uploads/images/item_001.png"
     created_at:
-      type: string
-      format: date-time
-      example: "2025-10-22T12:00:00Z"
+      $ref: '#/DateTime'
 
 CategoryWithItemsResponse:
   type: object
   properties:
     id:
-      type: string
-      example: "cat_001"
+      $ref: '#/CategoryID'
     name:
-      type: string
-      example: "Appetizers"
+      $ref: '#/CategoryName'
     description:
-      type: string
-      example: "Light dishes to start your meal"
+      $ref: '#/CategoryDescription'
     created_at:
-      type: string
-      format: date-time
-      example: "2025-10-22T12:00:00Z"
+      $ref: '#/DateTime'
     items:
       type: array
       items:
@@ -154,9 +150,6 @@ CategoryWithItemsResponse:
 MenuCategoriesWithItemsResponse:
   type: object
   properties:
-    total_categories:
-      type: integer
-      example: 3
     categories:
       type: array
       items:
@@ -166,18 +159,11 @@ MenuItemUpdateRequest:
   type: object
   properties:
     name:
-      type: string
-      description: Name of the menu item
-      example: "Cheeseburger Deluxe"
+      $ref: '#/ItemName'
     description:
-      type: string
-      description: Description of the menu item
-      example: "Tasty Big Mac Deluxe"
-    price:
-      type: number
-      format: float
-      description: Price of the menu item
-      example: 13.50
+      $ref: '#/ItemDescription'
+    price_in_cents:
+      $ref: '#/ItemPriceInCents'
     image:
       type: string
       format: binary
@@ -185,4 +171,4 @@ MenuItemUpdateRequest:
     is_available:
       type: boolean
       description: Whether the item is available
-      example: true
+      example: false

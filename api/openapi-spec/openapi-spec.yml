@@ -51,9 +51,9 @@ paths:
   /restaurants/{id}/menu/categories/{category_id}:
     $ref: './paths/management/categories-id.yml' 
   /restaurants/{id}/menu/items:
-    $ref: './paths/management/items.yml' 
+    $ref: './paths/management/items.yml'
   /restaurants/{id}/menu/items/{item_id}:
-    $ref: './paths/management/items-id.yml' 
+    $ref: './paths/management/items-id.yml'
 
   /restaurants/{id}/waiters:
     $ref: './paths/management/waiters.yml' 

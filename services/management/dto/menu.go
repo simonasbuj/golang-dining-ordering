@@ -21,12 +21,25 @@ type MenuCategoryDto struct {
 // MenuItemDto represents a menu item with its details and optional uploaded image.
 type MenuItemDto struct {
 	ID           uuid.UUID             `json:"id"`
-	RestaurantID uuid.UUID             `json:"-"            validate:"required"`
-	CategoryID   uuid.UUID             `json:"category_id"  validate:"required"`
-	Name         string                `json:"name"         validate:"required"`
-	Description  string                `json:"description"  validate:"required"`
-	PriceInCents int                   `json:"price"        validate:"required,gt=0"`
+	RestaurantID uuid.UUID             `json:"-"              validate:"required"`
+	CategoryID   uuid.UUID             `json:"category_id"    validate:"required"`
+	Name         string                `json:"name"           validate:"required"`
+	Description  string                `json:"description"    validate:"required"`
+	PriceInCents int                   `json:"price_in_cents" validate:"required,gt=0"`
 	IsAvailable  bool                  `json:"is_available"`
 	FileHeader   *multipart.FileHeader `json:"-"`
 	ImagePath    string                `json:"image_path"`
+}
+
+// CategoryDto represents a menu category containing its items.
+type CategoryDto struct {
+	ID          uuid.UUID     `json:"id"`
+	Name        string        `json:"name"`
+	Description string        `json:"description"`
+	Items       []MenuItemDto `json:"items"`
+}
+
+// ListMenuItemsDto holds the full list of categories and their items.
+type ListMenuItemsDto struct {
+	Categories []CategoryDto `json:"categories"`
 }

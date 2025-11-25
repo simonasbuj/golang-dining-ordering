@@ -23,6 +23,7 @@ type MenuService interface {
 		reqDto *dto.MenuItemDto,
 		claims *authDto.TokenClaimsDto,
 	) (*dto.MenuItemDto, error)
+	GetMenuItems(ctx context.Context, restaurantID uuid.UUID) (*dto.ListMenuItemsDto, error)
 }
 
 // menuService implements MenuService.
@@ -92,6 +93,18 @@ func (s *menuService) AddMenuItem(
 	}
 
 	return resDto, nil
+}
+
+func (s *menuService) GetMenuItems(
+	ctx context.Context,
+	restaurantID uuid.UUID,
+) (*dto.ListMenuItemsDto, error) {
+	respDto, err := s.menuRepo.GetMenuItems(ctx, restaurantID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching menu items: %w", err)
+	}
+
+	return respDto, nil
 }
 
 func (s *menuService) isUserRestaurantManager(

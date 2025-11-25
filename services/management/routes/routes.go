@@ -38,4 +38,5 @@ func AddMenuRoutes(
 	api.POST("/menu/categories", h.HandleAddMenuCategory, middleware.AuthMiddleware(authEndpoint))
 
 	api.POST("/menu/items", h.HandleAddMenuItem, middleware.AuthMiddleware(authEndpoint))
+	api.GET("/menu/items", h.HandleGetMenuItems)
 }
