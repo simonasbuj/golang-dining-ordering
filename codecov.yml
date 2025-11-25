@@ -9,5 +9,4 @@ comment:
 coverage:
   status:
     project:
-      default: true 
-
+      default: true
