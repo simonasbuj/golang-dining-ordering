@@ -8,4 +8,10 @@ comment:
 
 coverage:
   status:
-    patch: off 
+    project:
+      default:
+        target: auto
+        threshold: 0%
+    patch:
+      default:
+        target: 0%
