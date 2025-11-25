@@ -59,7 +59,7 @@ func (s *menuService) AddMenuCategory(
 
 	resDto, err := s.menuRepo.AddMenuCategory(ctx, reqDto)
 	if err != nil {
-		return nil, fmt.Errorf("failed to add menu category: %w", err)
+		return nil, fmt.Errorf("adding menu category: %w", err)
 	}
 
 	return resDto, nil
@@ -78,7 +78,7 @@ func (s *menuService) AddMenuItem(
 	if reqDto.FileHeader != nil {
 		reqDto.ImagePath, err = s.storage.StoreMenuItemImage(reqDto.FileHeader)
 		if err != nil {
-			return nil, fmt.Errorf("failed to store menu item image: %w", err)
+			return nil, fmt.Errorf("storing menu item image in storage: %w", err)
 		}
 	}
 
@@ -86,7 +86,7 @@ func (s *menuService) AddMenuItem(
 	if err != nil {
 		_ = s.storage.DeleteMenuItemImage(reqDto.ImagePath)
 
-		return nil, fmt.Errorf("failed to delete menu item's image from storage: %w", err)
+		return nil, fmt.Errorf("deleting menu item's image from storage: %w", err)
 	}
 
 	return resDto, nil

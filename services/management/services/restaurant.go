@@ -47,7 +47,7 @@ func (s *restaurantService) CreateRestaurant(
 ) (*dto.CreateRestaurantDto, error) {
 	resDto, err := s.repo.CreateRestaurant(ctx, reqDto)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create restaurant: %w", err)
+		return nil, fmt.Errorf("creating restaurant: %w", err)
 	}
 
 	return resDto, nil
@@ -59,7 +59,7 @@ func (s *restaurantService) GetRestaurants(
 ) (*dto.GetRestaurantsRespDto, error) {
 	resDto, err := s.repo.GetRestaurants(ctx, reqDto)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch restaurants: %w", err)
+		return nil, fmt.Errorf("fetching restaurants: %w", err)
 	}
 
 	return resDto, nil
@@ -75,7 +75,7 @@ func (s *restaurantService) GetRestaurantByID(
 
 	resDto, err := s.repo.GetRestaurantByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch restaurant: %w", err)
+		return nil, fmt.Errorf("fetching restaurant: %w", err)
 	}
 
 	return resDto, nil

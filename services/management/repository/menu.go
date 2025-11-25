@@ -49,7 +49,7 @@ func (r *menuRepository) AddMenuCategory(
 		Description: sql.NullString{String: reqDto.Description, Valid: reqDto.Description != ""},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert new category: %w", err)
+		return nil, fmt.Errorf("inserting new category: %w", err)
 	}
 
 	return &dto.MenuCategoryDto{
@@ -77,7 +77,7 @@ func (r *menuRepository) AddMenuItem(
 		ImagePath:    sql.NullString{String: reqDto.ImagePath, Valid: reqDto.ImagePath != ""},
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to insert new menu item: %w", err)
+		return nil, fmt.Errorf("inserting new menu item: %w", err)
 	}
 
 	return &dto.MenuItemDto{ //nolint:exhaustruct

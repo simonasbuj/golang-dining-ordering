@@ -49,7 +49,7 @@ func (r *restaurantRepository) CreateRestaurant(
 ) (*dto.CreateRestaurantDto, error) {
 	tx, err := r.db.BeginTx(ctx, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to start transaction: %w", err)
+		return nil, fmt.Errorf("starting database transaction: %w", err)
 	}
 
 	qtx := r.q.WithTx(tx)
@@ -62,7 +62,7 @@ func (r *restaurantRepository) CreateRestaurant(
 	if err != nil {
 		_ = tx.Rollback()
 
-		return nil, fmt.Errorf("error inserting new restaurant: %w", err)
+		return nil, fmt.Errorf("inserting new restaurant: %w", err)
 	}
 
 	resMngr, err := qtx.InsertRestaurantManager(ctx, db.InsertRestaurantManagerParams{
@@ -73,7 +73,7 @@ func (r *restaurantRepository) CreateRestaurant(
 	if err != nil {
 		_ = tx.Rollback()
 
-		return nil, fmt.Errorf("error inserting new manager: %w", err)
+		return nil, fmt.Errorf("inserting new manager: %w", err)
 	}
 
 	_, err = qtx.InsertRestaurantMenu(ctx, db.InsertRestaurantMenuParams{
@@ -83,12 +83,12 @@ func (r *restaurantRepository) CreateRestaurant(
 	if err != nil {
 		_ = tx.Rollback()
 
-		return nil, fmt.Errorf("error inserting restaurant menu: %w", err)
+		return nil, fmt.Errorf("inserting restaurant menu: %w", err)
 	}
 
 	err = tx.Commit()
 	if err != nil {
-		return nil, fmt.Errorf("failed to commit create new restaurant transaction: %w", err)
+		return nil, fmt.Errorf("commiting create new restaurant transaction: %w", err)
 	}
 
 	return &dto.CreateRestaurantDto{
@@ -110,7 +110,7 @@ func (r *restaurantRepository) GetRestaurants(
 		Offset: int32(offset),       //nolint:gosec
 	})
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch restaurants with %+v: %w", reqDto, err)
+		return nil, fmt.Errorf("fetching restaurants with %+v: %w", reqDto, err)
 	}
 
 	respDto := &dto.GetRestaurantsRespDto{
@@ -129,7 +129,7 @@ func (r *restaurantRepository) GetRestaurantByID(
 ) (*dto.RestaurantItemDto, error) {
 	row, err := r.q.GetRestaurantByID(ctx, id)
 	if err != nil {
-		return nil, fmt.Errorf("failed to fetch restaurant with id '%s' : %w", id, err)
+		return nil, fmt.Errorf("fetching restaurant with id '%s' : %w", id, err)
 	}
 
 	resDto := &dto.RestaurantItemDto{
@@ -151,7 +151,7 @@ func (r *restaurantRepository) IsUserRestaurantManager(
 		RestaurantID: restaurantID,
 	})
 	if err != nil {
-		return fmt.Errorf("failed to confirm if user is restaurant manager: %w", err)
+		return fmt.Errorf("confirming if user is restaurant manager: %w", err)
 	}
 
 	return nil
