@@ -36,11 +36,11 @@ lint-fix:
 
 .PHONY: test
 test:
-	go test -v -coverprofile=coverage.out  ./...
+	go test -v -coverprofile=coverage.txt  ./...
 
 .PHONY: coverage
 coverage:
-	go tool cover -func=coverage.out
+	go tool cover -func=coverage.txt
 
 # database
 start-postgres:
