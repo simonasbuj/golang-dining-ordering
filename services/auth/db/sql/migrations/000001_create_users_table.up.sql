@@ -16,6 +16,7 @@ CREATE TABLE IF NOT EXISTS auth.users (
 CREATE TABLE IF NOT EXISTS auth.tokens (
     id TEXT PRIMARY KEY,
     user_id UUID NOT NULL,
+    expires_at TIMESTAMP WITH TIME ZONE NOT NULL, 
     created_at TIMESTAMP WITH TIME ZONE NOT NULL DEFAULT NOW(),
 
     CONSTRAINT fk_token_user FOREIGN KEY (user_id)

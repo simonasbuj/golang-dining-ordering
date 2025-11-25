@@ -21,7 +21,7 @@ var (
 	TestPassword           = "password123"
 	TestName               = "sim"
 	TestLastname           = "sim"
-	TestRole               = 2
+	TestRole               = dto.Role(2)
 	TestTokenVersion int64 = 2
 )
 
@@ -54,7 +54,7 @@ func (r *mockUsersRepository) CreateUser(
 		PasswordHash: req.Password,
 		Name:         req.Name,
 		Lastname:     req.Lastname,
-		Role:         req.Role,
+		Role:         int(req.Role),
 	}
 
 	r.users = append(r.users, user)
@@ -79,11 +79,7 @@ func (r *mockUsersRepository) GetUserByEmail(
 }
 
 // SaveRefreshToken mocks saving refresh token in db.
-func (r *mockUsersRepository) SaveRefreshToken(
-	_ context.Context,
-	_ uuid.UUID,
-	_ string,
-) error {
+func (r *mockUsersRepository) SaveRefreshToken(_ context.Context, _ string, _ *dto.TokenClaimsDto) error {
 	return nil
 }
 
@@ -189,7 +185,7 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_Success() {
 	suite.Equal(TestEmail, claims["email"])
 	suite.Equal(
 		TestRole,
-		int(claims["role"].(float64)), //nolint:forcetypeassert
+		dto.Role(int(claims["role"].(float64))), //nolint:forcetypeassert
 	)
 
 	expFloat, ok := claims["exp"].(float64)
@@ -206,7 +202,7 @@ func (suite *AuthServiceTestSuite) TestGenerateToken_InvalidInput() {
 		desc         string
 		userID       uuid.UUID
 		email        string
-		role         int
+		role         dto.Role
 		tokenVersion int64
 	}{
 		{"missing userID", uuid.Nil, TestEmail, TestRole, TestTokenVersion},

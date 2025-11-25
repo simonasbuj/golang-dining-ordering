@@ -39,8 +39,9 @@ WHERE email = $1;
 -- name: SaveRefreshToken :one
 INSERT INTO auth.tokens (
     id,
-    user_id
-) VALUES ($1, $2)
+    user_id,
+    expires_at
+) VALUES ($1, $2, $3)
 RETURNING *;
 
 -- name: DeleteRefreshToken :exec

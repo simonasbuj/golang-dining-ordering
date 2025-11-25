@@ -3,13 +3,20 @@ package dto
 
 import "github.com/google/uuid"
 
+type Role int
+
+const (
+	RoleManager Role = 1
+	RoleWaiter  Role = 2
+)
+
 // SignUpRequestDto represents the payload sent when signing up.
 type SignUpRequestDto struct {
 	Email    string `json:"email"    validate:"required,email"`
 	Password string `json:"password" validate:"required,min=8"`
 	Name     string `json:"name"     validate:"required"`
 	Lastname string `json:"lastname" validate:"required"`
-	Role     int    `json:"role"     validate:"required,oneof=1 2 3"`
+	Role     Role   `json:"role"     validate:"required,oneof=1 2"`
 }
 
 // SignInRequestDto represents the payload sent when signing in.
@@ -39,5 +46,6 @@ type TokenClaimsDto struct {
 	UserID    uuid.UUID `json:"userId"`
 	Email     string    `json:"email"`
 	TokenType string    `json:"tokenType"`
-	Role      int       `json:"role"`
+	Role      Role      `json:"role"`
+	Exp 	  int64		`json:"exp"`
 }

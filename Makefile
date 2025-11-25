@@ -57,3 +57,11 @@ down-migrations:
 
 sqlc-generate:
 	sqlc generate
+
+up-all-migrations:
+	@echo "Migrate auth"
+	migrate -path "./services/auth/db/sql/migrations" -database "$(DINE_AUTH_DB_URI)" up
+
+	@echo "Migrate management"
+	migrate -path "./services/management/db/sql/migrations" -database "$(DINE_MANAGEMENT_DB_URI)" up
+

@@ -113,9 +113,15 @@ type GetRefreshTokenParams struct {
 	ID     string    `json:"id"`
 }
 
-func (q *Queries) GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (AuthToken, error) {
+type GetRefreshTokenRow struct {
+	ID        string    `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+func (q *Queries) GetRefreshToken(ctx context.Context, arg GetRefreshTokenParams) (GetRefreshTokenRow, error) {
 	row := q.db.QueryRowContext(ctx, getRefreshToken, arg.UserID, arg.ID)
-	var i AuthToken
+	var i GetRefreshTokenRow
 	err := row.Scan(&i.ID, &i.UserID, &i.CreatedAt)
 	return i, err
 }
@@ -157,19 +163,26 @@ func (q *Queries) GetUserByEmail(ctx context.Context, email string) (AuthUser, e
 const saveRefreshToken = `-- name: SaveRefreshToken :one
 INSERT INTO auth.tokens (
     id,
-    user_id
-) VALUES ($1, $2)
-RETURNING id, user_id, created_at
+    user_id,
+    expires_at
+) VALUES ($1, $2, $3)
+RETURNING id, user_id, expires_at, created_at
 `
 
 type SaveRefreshTokenParams struct {
-	ID     string    `json:"id"`
-	UserID uuid.UUID `json:"user_id"`
+	ID        string    `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
 }
 
 func (q *Queries) SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) (AuthToken, error) {
-	row := q.db.QueryRowContext(ctx, saveRefreshToken, arg.ID, arg.UserID)
+	row := q.db.QueryRowContext(ctx, saveRefreshToken, arg.ID, arg.UserID, arg.ExpiresAt)
 	var i AuthToken
-	err := row.Scan(&i.ID, &i.UserID, &i.CreatedAt)
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.ExpiresAt,
+		&i.CreatedAt,
+	)
 	return i, err
 }
