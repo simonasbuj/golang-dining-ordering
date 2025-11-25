@@ -68,4 +68,3 @@ up-all-migrations:
 
 	@echo "Migrate management"
 	migrate -path "./services/management/db/sql/migrations" -database "$(DINE_MANAGEMENT_DB_URI)" up
-

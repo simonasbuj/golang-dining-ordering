@@ -12,6 +12,47 @@ import (
 	"github.com/google/uuid"
 )
 
+const createTable = `-- name: CreateTable :one
+INSERT INTO management.tables (
+    id,
+    restaurant_id,
+    name,
+    capacity
+) VALUES ($1, $2, $3, $4)
+RETURNING id, restaurant_id, name, capacity
+`
+
+type CreateTableParams struct {
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	Name         string    `json:"name"`
+	Capacity     int       `json:"capacity"`
+}
+
+type CreateTableRow struct {
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	Name         string    `json:"name"`
+	Capacity     int       `json:"capacity"`
+}
+
+func (q *Queries) CreateTable(ctx context.Context, arg CreateTableParams) (CreateTableRow, error) {
+	row := q.db.QueryRowContext(ctx, createTable,
+		arg.ID,
+		arg.RestaurantID,
+		arg.Name,
+		arg.Capacity,
+	)
+	var i CreateTableRow
+	err := row.Scan(
+		&i.ID,
+		&i.RestaurantID,
+		&i.Name,
+		&i.Capacity,
+	)
+	return i, err
+}
+
 const getRestaurantByID = `-- name: GetRestaurantByID :one
 SELECT
     id,

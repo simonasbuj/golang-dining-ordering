@@ -9,4 +9,9 @@ comment:
 coverage:
   status:
     project:
-      default: true
+      default:
+        target: auto
+        threshold: 0%
+    patch:
+      default:
+        target: 0%

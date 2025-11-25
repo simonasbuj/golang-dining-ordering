@@ -58,3 +58,13 @@ type ManagementRestaurantsManager struct {
 	CreatedAt    time.Time `json:"created_at"`
 	UpdatedAt    time.Time `json:"updated_at"`
 }
+
+type ManagementTable struct {
+	ID           uuid.UUID    `json:"id"`
+	RestaurantID uuid.UUID    `json:"restaurant_id"`
+	Name         string       `json:"name"`
+	Capacity     int          `json:"capacity"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
+}

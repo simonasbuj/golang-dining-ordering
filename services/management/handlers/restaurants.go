@@ -86,3 +86,8 @@ func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
 
 	return responses.JSONSuccess(c, "restaurant fetched", resDto)
 }
+
+// HandleCreateTable handles creating a new table for a restaurant.
+func (h *RestaurantsHandler) HandleCreateTable(c echo.Context) error {
+	return responses.JSONSuccess(c, "hi", nil)
+}
