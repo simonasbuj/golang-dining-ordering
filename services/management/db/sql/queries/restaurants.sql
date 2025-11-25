@@ -41,3 +41,12 @@ SELECT id, user_id, restaurant_id, created_at, updated_at
 FROM management.restaurants_managers
 WHERE user_id = $1
   AND restaurant_id = $2;
+
+-- name: CreateTable :one
+INSERT INTO management.tables (
+    id,
+    restaurant_id,
+    name,
+    capacity
+) VALUES ($1, $2, $3, $4)
+RETURNING id, restaurant_id, name, capacity;

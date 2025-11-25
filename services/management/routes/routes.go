@@ -7,22 +7,31 @@ import (
 	"golang-dining-ordering/services/management/middleware"
 
 	"github.com/labstack/echo/v4"
+	echoMiddleware "github.com/labstack/echo/v4/middleware"
 )
 
-// AddRrestaurantRoutes registers restaurant management related HTTP routes.
-func AddRrestaurantRoutes(
+// AddRestaurantRoutes registers restaurant management related HTTP routes.
+func AddRestaurantRoutes(
 	e *echo.Echo,
 	h *handler.RestaurantsHandler,
 	authEndpoint string,
 ) {
-	api := e.Group("/api/v1")
+	e.Pre(echoMiddleware.RemoveTrailingSlash())
 
-	api.POST("/restaurants", h.HandleCreateRestaurant,
+	api := e.Group("/api/v1/restaurants")
+
+	api.POST("", h.HandleCreateRestaurant,
 		middleware.AuthMiddleware(authEndpoint),
 		middleware.RoleMiddleware(authDto.RoleManager),
 	)
-	api.GET("/restaurants", h.HandleGetRestaurants)
-	api.GET("/restaurants/:id", h.HandleGetRestaurantByID)
+	api.GET("", h.HandleGetRestaurants)
+	api.GET("/:id", h.HandleGetRestaurantByID)
+
+	tablesGroup := api.Group("/:id/tables",
+		middleware.AuthMiddleware(authEndpoint),
+		middleware.RoleMiddleware(authDto.RoleManager),
+	)
+	tablesGroup.POST("", h.HandleCreateTable)
 }
 
 // AddMenuRoutes registers restaurant menus management related HTTP routes.

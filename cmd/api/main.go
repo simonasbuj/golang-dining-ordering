@@ -116,7 +116,7 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	menuSvc := mngServices.NewMenuService(menuRepo, restRepo, storage)
 	menuHandler := mngHandlers.NewMenuHandler(menuSvc)
 
-	mngRoutes.AddRrestaurantRoutes(e, restHandler,
+	mngRoutes.AddRestaurantRoutes(e, restHandler,
 		cfg.AuthorizeEndpoint,
 	)
 
