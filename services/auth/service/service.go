@@ -48,7 +48,7 @@ type generateTokenParams struct {
 	UserID               uuid.UUID
 	Email                string
 	TokenType            string
-	Role                 int
+	Role                 dto.Role
 	ValidDurationSeconds int
 }
 
@@ -96,7 +96,7 @@ func (s *service) SignInUser(
 		UserID:               user.ID,
 		Email:                user.Email,
 		TokenType:            tokenTypeAccess,
-		Role:                 user.Role,
+		Role:                 dto.Role(user.Role),
 		ValidDurationSeconds: s.cfg.TokenValidSeconds,
 	})
 	if err != nil {
@@ -107,14 +107,19 @@ func (s *service) SignInUser(
 		UserID:               user.ID,
 		Email:                user.Email,
 		TokenType:            tokenTypeRefresh,
-		Role:                 user.Role,
+		Role:                 dto.Role(user.Role),
 		ValidDurationSeconds: s.cfg.RefreshTokenValidSeconds,
 	})
 	if err != nil {
 		return nil, fmt.Errorf("generating refresh token: %w", err)
 	}
 
-	err = s.repo.SaveRefreshToken(ctx, user.ID, refreshToken)
+	claims, err := s.tokenStrIntoClaimsDTO(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.repo.SaveRefreshToken(ctx, refreshToken, claims)
 	if err != nil {
 		return nil, fmt.Errorf("saving refresh token: %w", err)
 	}
@@ -134,10 +139,6 @@ func (s *service) RefreshToken(
 	claimsDto, err := s.verifyToken(ctx, refreshToken, tokenTypeRefresh)
 	if err != nil {
 		return nil, err
-	}
-
-	if claimsDto.UserID == uuid.Nil || claimsDto.Email == "" || claimsDto.Role == 0 {
-		return nil, ce.ErrMissingClaims
 	}
 
 	err = s.repo.GetRefreshToken(ctx, claimsDto.UserID, refreshToken)
@@ -172,7 +173,12 @@ func (s *service) RefreshToken(
 		return nil, fmt.Errorf("deleting refresh token: %w", err)
 	}
 
-	err = s.repo.SaveRefreshToken(ctx, claimsDto.UserID, newRefreshToken)
+	claims, err := s.tokenStrIntoClaimsDTO(refreshToken)
+	if err != nil {
+		return nil, err
+	}
+
+	err = s.repo.SaveRefreshToken(ctx, refreshToken, claims)
 	if err != nil {
 		return nil, fmt.Errorf("saving refresh token: %w", err)
 	}
@@ -255,6 +261,37 @@ func (s *service) verifyToken(
 	tokenStr string,
 	expectedType string,
 ) (*dto.TokenClaimsDto, error) {
+	token, err := s.parseToken(tokenStr)
+	if err != nil {
+		return nil, err
+	}
+
+	if !token.Valid {
+		return nil, ce.ErrInvalidToken
+	}
+
+	claims, err := s.tokenIntoClaims(token)
+	if err != nil {
+		return nil, err
+	}
+
+	claimsDto, err := s.mapClaimsToDTO(claims)
+	if err != nil {
+		return nil, fmt.Errorf("failed to unmarshal claims into dto: %w", err)
+	}
+
+	if claimsDto.UserID == uuid.Nil || claimsDto.Email == "" || claimsDto.Role == 0 {
+		return nil, ce.ErrMissingClaims
+	}
+
+	if claimsDto.TokenType != expectedType {
+		return nil, ce.ErrInvalidTokenType
+	}
+
+	return claimsDto, nil
+}
+
+func (s *service) parseToken(tokenStr string) (*jwt.Token, error) {
 	token, err := jwt.Parse(tokenStr, func(t *jwt.Token) (any, error) {
 		if _, ok := t.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, ce.ErrUnexpectedSigninMethod
@@ -266,25 +303,16 @@ func (s *service) verifyToken(
 		return nil, ce.ErrParseToken
 	}
 
-	if !token.Valid {
-		return nil, ce.ErrInvalidToken
-	}
+	return token, nil
+}
 
+func (s *service) tokenIntoClaims(token *jwt.Token) (jwt.MapClaims, error) {
 	claims, ok := token.Claims.(jwt.MapClaims)
 	if !ok {
 		return nil, ce.ErrParseClaims
 	}
 
-	claimsDto, err := s.mapClaimsToDTO(claims)
-	if err != nil {
-		return nil, fmt.Errorf("failed to unmarshal claims into dto: %w", err)
-	}
-
-	if claimsDto.TokenType != expectedType {
-		return nil, ce.ErrInvalidTokenType
-	}
-
-	return claimsDto, nil
+	return claims, nil
 }
 
 func (s *service) mapClaimsToDTO(claims jwt.MapClaims) (*dto.TokenClaimsDto, error) {
@@ -301,4 +329,23 @@ func (s *service) mapClaimsToDTO(claims jwt.MapClaims) (*dto.TokenClaimsDto, err
 	}
 
 	return &dto, nil
+}
+
+func (s *service) tokenStrIntoClaimsDTO(tokenStr string) (*dto.TokenClaimsDto, error) {
+	token, err := s.parseToken(tokenStr)
+	if err != nil {
+		return nil, err
+	}
+
+	tokenMapClaims, err := s.tokenIntoClaims(token)
+	if err != nil {
+		return nil, err
+	}
+
+	claimsDto, err := s.mapClaimsToDTO(tokenMapClaims)
+	if err != nil {
+		return nil, err
+	}
+
+	return claimsDto, nil
 }

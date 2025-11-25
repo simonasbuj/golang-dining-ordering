@@ -53,16 +53,16 @@ func main() {
 	setupAuth(e, &cfg, logger)
 	setupManagement(e, &cfg, logger)
 
-	logger.Info("starting server on address " + cfg.DineHTTPAddress)
+	logger.Info("starting server on address " + cfg.HTTPAddress)
 
-	err = e.Start(cfg.DineHTTPAddress)
+	err = e.Start(cfg.HTTPAddress)
 	if err != nil {
 		logger.Error("server stopped", "error", err)
 	}
 }
 
 func setupAuth(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
-	authConn, err := sql.Open("postgres", cfg.DineAuthDBURI)
+	authConn, err := sql.Open("postgres", cfg.AuthDBURI)
 	if err != nil {
 		logger.Error("failed to prepare database connection", "error", err)
 		os.Exit(1)
@@ -80,9 +80,9 @@ func setupAuth(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 
 	usersRepo := authRepo.NewRepository(authQueries)
 	authConfig := &authService.Config{
-		Secret:                   cfg.DineAuthSecret,
-		TokenValidSeconds:        cfg.DineTokenValidSeconds,
-		RefreshTokenValidSeconds: cfg.DineRefreshTokenValidSeconds,
+		Secret:                   cfg.AuthSecret,
+		TokenValidSeconds:        cfg.TokenValidSeconds,
+		RefreshTokenValidSeconds: cfg.RefreshTokenValidSeconds,
 	}
 	authService := authService.NewAuthService(authConfig, usersRepo)
 	authHandler := authHandler.NewAuthHandler(logger, authService)
@@ -91,7 +91,7 @@ func setupAuth(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 }
 
 func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
-	db, err := sql.Open("postgres", cfg.DineManagementDBURI)
+	db, err := sql.Open("postgres", cfg.ManagementDBURI)
 	if err != nil {
 		logger.Error("failed to prepare database connection", "error", err)
 		os.Exit(1)
@@ -112,13 +112,13 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	restHandler := mngHandlers.NewRestaurantsHandler(restService)
 
 	menuRepo := mngRepos.NewMenuRepository(db, queries)
-	storage := mngStorage.NewLocalStorage(cfg.DineMaxImageSizeBytes, cfg.DineUploadsDirectory)
+	storage := mngStorage.NewLocalStorage(cfg.MaxImageSizeBytes, cfg.UploadsDirectory)
 	menuSvc := mngServices.NewMenuService(menuRepo, restRepo, storage)
 	menuHandler := mngHandlers.NewMenuHandler(menuSvc)
 
 	mngRoutes.AddRrestaurantRoutes(e, restHandler,
-		cfg.DineAuthorizeEndpoint,
+		cfg.AuthorizeEndpoint,
 	)
 
-	mngRoutes.AddMenuRoutes(e, menuHandler, cfg.DineAuthorizeEndpoint)
+	mngRoutes.AddMenuRoutes(e, menuHandler, cfg.AuthorizeEndpoint)
 }

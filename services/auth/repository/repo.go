@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"golang-dining-ordering/services/auth/dto"
 	"strings"
+	"time"
 
 	ce "golang-dining-ordering/services/auth/customerrors"
 	db "golang-dining-ordering/services/auth/db/generated"
@@ -17,7 +18,7 @@ import (
 type Repository interface {
 	CreateUser(ctx context.Context, req *dto.SignUpRequestDto) (uuid.UUID, error)
 	GetUserByEmail(ctx context.Context, email string) (*db.AuthUser, error)
-	SaveRefreshToken(ctx context.Context, userID uuid.UUID, token string) error
+	SaveRefreshToken(ctx context.Context, token string, claims *dto.TokenClaimsDto) error
 	GetRefreshToken(ctx context.Context, userID uuid.UUID, token string) error
 	DeleteRefreshToken(ctx context.Context, userID uuid.UUID, token string) error
 }
@@ -45,7 +46,7 @@ func (r *repository) CreateUser(
 		PasswordHash: req.Password,
 		Name:         req.Name,
 		Lastname:     req.Lastname,
-		Role:         req.Role,
+		Role:         int(req.Role),
 	})
 	if err != nil {
 		if strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
@@ -69,10 +70,15 @@ func (r *repository) GetUserByEmail(ctx context.Context, email string) (*db.Auth
 	return &user, nil
 }
 
-func (r *repository) SaveRefreshToken(ctx context.Context, userID uuid.UUID, token string) error {
+func (r *repository) SaveRefreshToken(
+	ctx context.Context,
+	token string,
+	claims *dto.TokenClaimsDto,
+) error {
 	_, err := r.q.SaveRefreshToken(ctx, db.SaveRefreshTokenParams{
-		ID:     token,
-		UserID: userID,
+		ID:        token,
+		UserID:    claims.UserID,
+		ExpiresAt: time.Unix(claims.Exp, 0).UTC(),
 	})
 	if err != nil {
 		return fmt.Errorf("saving refresh token: %w", err)
