@@ -8,10 +8,65 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
 )
+
+const getMenuCategoriesWithItems = `-- name: GetMenuCategoriesWithItems :many
+
+SELECT json_build_object(
+    'categories', json_agg(
+        json_build_object(
+            'id', c.id,
+            'name', c.name,
+            'description', c.description,
+            'created_at', c.created_at,
+            'items', COALESCE(
+                (SELECT json_agg(
+                    json_build_object(
+                        'id', i.id,
+                        'category_id', i.category_id,
+                        'name', i.name,
+                        'description', i.description,
+                        'price_in_cents', i.price_in_cents,
+                        'image_path', i.image_path,
+                        'is_available', i.is_available,
+                        'created_at', i.created_at
+                    )
+                ) FROM management.items i WHERE i.category_id = c.id),
+                '[]'::json
+            )
+        )
+    )
+) AS result
+FROM management.categories c
+WHERE c.menu_id = $1
+`
+
+func (q *Queries) GetMenuCategoriesWithItems(ctx context.Context, menuID uuid.UUID) ([]json.RawMessage, error) {
+	rows, err := q.db.QueryContext(ctx, getMenuCategoriesWithItems, menuID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []json.RawMessage
+	for rows.Next() {
+		var result json.RawMessage
+		if err := rows.Scan(&result); err != nil {
+			return nil, err
+		}
+		items = append(items, result)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
 
 const insertMenuCategory = `-- name: InsertMenuCategory :one
 INSERT INTO management.categories (id, menu_id, name, description)

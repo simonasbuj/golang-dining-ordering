@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"fmt"
 	db "golang-dining-ordering/services/management/db/generated"
 	"golang-dining-ordering/services/management/dto"
@@ -20,6 +21,7 @@ type MenuRepository interface {
 		ctx context.Context,
 		reqDto *dto.MenuItemDto,
 	) (*dto.MenuItemDto, error)
+	GetMenuItems(ctx context.Context, restaurantID uuid.UUID) (*dto.ListMenuItemsDto, error)
 }
 
 // menuRepository implements MenuRepository using sqlc-generated queries.
@@ -93,4 +95,23 @@ func (r *menuRepository) AddMenuItem(
 		ImagePath:    row.ImagePath.String,
 		FileHeader:   nil,
 	}, nil
+}
+
+func (r *menuRepository) GetMenuItems(
+	ctx context.Context,
+	restaurantID uuid.UUID,
+) (*dto.ListMenuItemsDto, error) {
+	rows, err := r.q.GetMenuCategoriesWithItems(ctx, restaurantID)
+	if err != nil {
+		return nil, fmt.Errorf("fetching items from database: %w", err)
+	}
+
+	var respDto dto.ListMenuItemsDto
+
+	err = json.Unmarshal(rows[0], &respDto)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshaling database results into ListMenuItemsDto: %w", err)
+	}
+
+	return &respDto, nil
 }
