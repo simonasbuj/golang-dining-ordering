@@ -26,6 +26,10 @@ func AddRestaurantRoutes(
 	)
 	api.GET("", h.HandleGetRestaurants)
 	api.GET("/:id", h.HandleGetRestaurantByID)
+	api.PATCH("/:id", h.HandleUpdateRestaurant,
+		middleware.AuthMiddleware(authEndpoint),
+		middleware.RoleMiddleware(authDto.RoleManager),
+	)
 
 	tablesGroup := api.Group("/:id/tables",
 		middleware.AuthMiddleware(authEndpoint),

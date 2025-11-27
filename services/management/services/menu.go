@@ -55,7 +55,7 @@ func (s *menuService) AddMenuCategory(
 	reqDto *dto.MenuCategoryDto,
 	claims *authDto.TokenClaimsDto,
 ) (*dto.MenuCategoryDto, error) {
-	err := s.isUserRestaurantManager(ctx, claims, reqDto.RestaurantID)
+	err := isUserRestaurantManager(ctx, claims.UserID, reqDto.RestaurantID, s.restRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -73,7 +73,7 @@ func (s *menuService) AddMenuItem(
 	reqDto *dto.MenuItemDto,
 	claims *authDto.TokenClaimsDto,
 ) (*dto.MenuItemDto, error) {
-	err := s.isUserRestaurantManager(ctx, claims, reqDto.RestaurantID)
+	err := isUserRestaurantManager(ctx, claims.UserID, reqDto.RestaurantID, s.restRepo)
 	if err != nil {
 		return nil, err
 	}
@@ -105,17 +105,4 @@ func (s *menuService) GetMenuItems(
 	}
 
 	return respDto, nil
-}
-
-func (s *menuService) isUserRestaurantManager(
-	ctx context.Context,
-	claims *authDto.TokenClaimsDto,
-	restaurantID uuid.UUID,
-) error {
-	err := s.restRepo.IsUserRestaurantManager(ctx, claims.UserID, restaurantID)
-	if err != nil {
-		return fmt.Errorf("%w: %w", ErrUserIsNotManager, err)
-	}
-
-	return nil
 }

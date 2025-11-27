@@ -2,20 +2,14 @@
 package handlers
 
 import (
-	"errors"
 	"golang-dining-ordering/pkg/responses"
 	"golang-dining-ordering/pkg/validation"
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/services"
 	"net/http"
 
-	// "strconv".
-
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
-
-var errMissingUser = errors.New("missing user in context")
 
 // RestaurantsHandler handles restaurant-related HTTP requests.
 type RestaurantsHandler struct {
@@ -77,7 +71,10 @@ func (h *RestaurantsHandler) HandleGetRestaurants(c echo.Context) error {
 
 // HandleGetRestaurantByID handles fetching a single restaurant by its ID.
 func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
-	id := uuid.MustParse(c.Param("id"))
+	id, err := getRestaurantFromParams(c)
+	if err != nil {
+		return err
+	}
 
 	resDto, err := h.svc.GetRestaurantByID(c.Request().Context(), id)
 	if err != nil {
@@ -85,6 +82,36 @@ func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
 	}
 
 	return responses.JSONSuccess(c, "restaurant fetched", resDto)
+}
+
+// HandleUpdateRestaurant updates a restaurant’s details.
+func (h *RestaurantsHandler) HandleUpdateRestaurant(c echo.Context) error {
+	id, err := getRestaurantFromParams(c)
+	if err != nil {
+		return err
+	}
+
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.UpdateRestaurantRequestDto
+
+	reqDto.ID = id
+	reqDto.UserID = user.UserID
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	resDto, err := h.svc.UpdateRestaurant(c.Request().Context(), &reqDto)
+	if err != nil {
+		return responses.JSONError(c, "failed to update restaurant", err)
+	}
+
+	return responses.JSONSuccess(c, "restaurant updated", resDto)
 }
 
 // HandleCreateTable handles creating a new table for a restaurant.

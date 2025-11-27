@@ -24,6 +24,10 @@ type RestaurantService interface {
 		reqDto *dto.GetRestaurantsReqDto,
 	) (*dto.GetRestaurantsRespDto, error)
 	GetRestaurantByID(ctx context.Context, id uuid.UUID) (*dto.RestaurantItemDto, error)
+	UpdateRestaurant(
+		ctx context.Context,
+		reqDto *dto.UpdateRestaurantRequestDto,
+	) (*dto.UpdateRestaurantResponseDto, error)
 }
 
 // restaurantService implements RestaurantService.
@@ -81,4 +85,21 @@ func (s *restaurantService) GetRestaurantByID(
 	}
 
 	return resDto, nil
+}
+
+func (s *restaurantService) UpdateRestaurant(
+	ctx context.Context,
+	reqDto *dto.UpdateRestaurantRequestDto,
+) (*dto.UpdateRestaurantResponseDto, error) {
+	err := isUserRestaurantManager(ctx, reqDto.UserID, reqDto.ID, s.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	respDto, err := s.repo.UpdateRestaurant(ctx, reqDto)
+	if err != nil {
+		return nil, fmt.Errorf("updating restaurant: %w", err)
+	}
+
+	return respDto, nil
 }

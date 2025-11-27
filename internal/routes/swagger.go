@@ -2,8 +2,6 @@
 package routes
 
 import (
-	"net/http"
-
 	"github.com/labstack/echo/v4"
 	swagui "github.com/swaggest/swgui/v3"
 )
@@ -17,9 +15,5 @@ func AddSwaggerRoutes(e *echo.Echo) {
 		"/openapi-spec/openapi-spec.yml",
 		"/docs",
 	)
-	e.GET("/docs/*", echo.WrapHandler(swaggerHandler))
-
-	e.GET("/docs", func(c echo.Context) error {
-		return c.Redirect(http.StatusFound, "/docs/")
-	})
+	e.GET("/docs*", echo.WrapHandler(swaggerHandler))
 }
