@@ -2,6 +2,7 @@
 package storage
 
 import (
+	"context"
 	"errors"
 	"fmt"
 	"io"
@@ -42,7 +43,10 @@ func NewLocalStorage(maxFileSize int64, uploadsDir string) *localStorage {
 //revive:enable:unexported-return
 
 // StoreMenuItemImage stores an image file and returns its local path.
-func (s *localStorage) StoreMenuItemImage(fileHeader *multipart.FileHeader) (string, error) {
+func (s *localStorage) StoreMenuItemImage(
+	_ context.Context,
+	fileHeader *multipart.FileHeader,
+) (string, error) {
 	if fileHeader.Size > s.maxFileSize {
 		return "", fmt.Errorf(
 			"%w: %d bytes, max is %d bytes",
@@ -89,7 +93,7 @@ func (s *localStorage) StoreMenuItemImage(fileHeader *multipart.FileHeader) (str
 }
 
 // DeleteMenuItemImage deletes an image file at the given path.
-func (s *localStorage) DeleteMenuItemImage(path string) error {
+func (s *localStorage) DeleteMenuItemImage(_ context.Context, path string) error {
 	if path == "" {
 		return errPathIsEmpty
 	}

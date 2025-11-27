@@ -158,6 +158,8 @@ MenuCategoriesWithItemsResponse:
 MenuItemUpdateRequest:
   type: object
   properties:
+    category_id:
+      $ref: '#/CategoryID'
     name:
       $ref: '#/ItemName'
     description:
@@ -171,4 +173,4 @@ MenuItemUpdateRequest:
     is_available:
       type: boolean
       description: Whether the item is available
-      example: false
+      example: true

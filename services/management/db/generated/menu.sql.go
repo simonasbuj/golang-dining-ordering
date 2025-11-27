@@ -14,8 +14,32 @@ import (
 	"github.com/google/uuid"
 )
 
-const getMenuCategoriesWithItems = `-- name: GetMenuCategoriesWithItems :many
+const getItemByID = `-- name: GetItemByID :one
+SELECT
+    id, category_id, name, description, price_in_cents, is_available, image_path, created_at, updated_at, deleted_at
+FROM management.items
+WHERE id = $1
+`
 
+func (q *Queries) GetItemByID(ctx context.Context, id uuid.UUID) (ManagementItem, error) {
+	row := q.db.QueryRowContext(ctx, getItemByID, id)
+	var i ManagementItem
+	err := row.Scan(
+		&i.ID,
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.PriceInCents,
+		&i.IsAvailable,
+		&i.ImagePath,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const getMenuCategoriesWithItems = `-- name: GetMenuCategoriesWithItems :many
 SELECT json_build_object(
     'categories', json_agg(
         json_build_object(
@@ -136,6 +160,59 @@ type InsertMenuItemParams struct {
 
 func (q *Queries) InsertMenuItem(ctx context.Context, arg InsertMenuItemParams) (ManagementItem, error) {
 	row := q.db.QueryRowContext(ctx, insertMenuItem,
+		arg.ID,
+		arg.CategoryID,
+		arg.Name,
+		arg.Description,
+		arg.PriceInCents,
+		arg.IsAvailable,
+		arg.ImagePath,
+	)
+	var i ManagementItem
+	err := row.Scan(
+		&i.ID,
+		&i.CategoryID,
+		&i.Name,
+		&i.Description,
+		&i.PriceInCents,
+		&i.IsAvailable,
+		&i.ImagePath,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
+const updateItem = `-- name: UpdateItem :one
+UPDATE management.items
+SET
+    category_id    = $2,
+    name           = $3,
+    description    = $4,
+    price_in_cents = $5,
+    is_available   = $6,
+    image_path     = CASE
+                        WHEN $7::text IS NULL OR $7 = '' THEN image_path
+                        ELSE $7
+                     END,
+    updated_at     = NOW()
+WHERE id = $1
+RETURNING id, category_id, name, description, price_in_cents, is_available, image_path, created_at, updated_at, deleted_at
+`
+
+type UpdateItemParams struct {
+	ID           uuid.UUID      `json:"id"`
+	CategoryID   uuid.UUID      `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	PriceInCents int            `json:"price_in_cents"`
+	IsAvailable  bool           `json:"is_available"`
+	ImagePath    sql.NullString `json:"image_path"`
+}
+
+func (q *Queries) UpdateItem(ctx context.Context, arg UpdateItemParams) (ManagementItem, error) {
+	row := q.db.QueryRowContext(ctx, updateItem,
 		arg.ID,
 		arg.CategoryID,
 		arg.Name,

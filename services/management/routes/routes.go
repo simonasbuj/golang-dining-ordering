@@ -18,24 +18,18 @@ func AddRestaurantRoutes(
 ) {
 	e.Pre(echoMiddleware.RemoveTrailingSlash())
 
-	api := e.Group("/api/v1/restaurants")
-
-	api.POST("", h.HandleCreateRestaurant,
-		middleware.AuthMiddleware(authEndpoint),
-		middleware.RoleMiddleware(authDto.RoleManager),
-	)
-	api.GET("", h.HandleGetRestaurants)
-	api.GET("/:id", h.HandleGetRestaurantByID)
-	api.PATCH("/:id", h.HandleUpdateRestaurant,
+	publicAPI := e.Group("/api/v1/restaurants")
+	managerAPI := publicAPI.Group("",
 		middleware.AuthMiddleware(authEndpoint),
 		middleware.RoleMiddleware(authDto.RoleManager),
 	)
 
-	tablesGroup := api.Group("/:id/tables",
-		middleware.AuthMiddleware(authEndpoint),
-		middleware.RoleMiddleware(authDto.RoleManager),
-	)
-	tablesGroup.POST("", h.HandleCreateTable)
+	managerAPI.POST("", h.HandleCreateRestaurant)
+	managerAPI.PATCH("/:id", h.HandleUpdateRestaurant)
+	publicAPI.GET("", h.HandleGetRestaurants)
+	publicAPI.GET("/:id", h.HandleGetRestaurantByID)
+
+	managerAPI.POST("/:id/tables", h.HandleCreateTable)
 }
 
 // AddMenuRoutes registers restaurant menus management related HTTP routes.
@@ -46,10 +40,15 @@ func AddMenuRoutes(
 ) {
 	e.Static("/uploads", "uploads")
 
-	api := e.Group("/api/v1/restaurants/:restaurant_id")
+	publicAPI := e.Group("/api/v1/restaurants/:restaurant_id/menu")
+	managerAPI := publicAPI.Group("",
+		middleware.AuthMiddleware(authEndpoint),
+		middleware.RoleMiddleware(authDto.RoleManager),
+	)
 
-	api.POST("/menu/categories", h.HandleAddMenuCategory, middleware.AuthMiddleware(authEndpoint))
+	managerAPI.POST("categories", h.HandleAddMenuCategory)
 
-	api.POST("/menu/items", h.HandleAddMenuItem, middleware.AuthMiddleware(authEndpoint))
-	api.GET("/menu/items", h.HandleGetMenuItems)
+	managerAPI.POST("/items", h.HandleAddMenuItem)
+	managerAPI.PATCH("/items/:item_id", h.HandleUpdateMenuItem)
+	publicAPI.GET("/items", h.HandleGetMenuItems)
 }

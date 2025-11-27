@@ -13,15 +13,11 @@ import (
 
 // MenuRepository defines methods for accessing and managing restaurant data.
 type MenuRepository interface {
-	AddMenuCategory(
-		ctx context.Context,
-		reqDto *dto.MenuCategoryDto,
-	) (*dto.MenuCategoryDto, error)
-	AddMenuItem(
-		ctx context.Context,
-		reqDto *dto.MenuItemDto,
-	) (*dto.MenuItemDto, error)
+	AddMenuCategory(ctx context.Context, reqDto *dto.MenuCategoryDto) (*dto.MenuCategoryDto, error)
+	AddMenuItem(ctx context.Context, reqDto *dto.MenuItemDto) (*dto.MenuItemDto, error)
+	UpdateMenuItem(ctx context.Context, reqDto *dto.MenuItemDto) (*dto.MenuItemDto, error)
 	GetMenuItems(ctx context.Context, restaurantID uuid.UUID) (*dto.ListMenuItemsDto, error)
+	GetMenuItemByID(ctx context.Context, id uuid.UUID) (*dto.MenuItemDto, error)
 }
 
 // menuRepository implements MenuRepository using sqlc-generated queries.
@@ -84,17 +80,27 @@ func (r *menuRepository) AddMenuItem(
 		return nil, fmt.Errorf("inserting new menu item: %w", err)
 	}
 
-	return &dto.MenuItemDto{
-		ID:           row.ID,
-		RestaurantID: reqDto.RestaurantID,
-		CategoryID:   row.CategoryID,
-		Name:         row.Name,
-		Description:  row.Description.String,
-		PriceInCents: row.PriceInCents,
-		IsAvailable:  row.IsAvailable,
-		ImagePath:    row.ImagePath.String,
-		FileHeader:   nil,
-	}, nil
+	return r.sqlcItemToDto(&row), nil
+}
+
+func (r *menuRepository) UpdateMenuItem(
+	ctx context.Context,
+	reqDto *dto.MenuItemDto,
+) (*dto.MenuItemDto, error) {
+	row, err := r.q.UpdateItem(ctx, db.UpdateItemParams{
+		ID:           reqDto.ID,
+		CategoryID:   reqDto.CategoryID,
+		Name:         reqDto.Name,
+		Description:  sql.NullString{String: reqDto.Description, Valid: true},
+		PriceInCents: reqDto.PriceInCents,
+		IsAvailable:  reqDto.IsAvailable,
+		ImagePath:    sql.NullString{String: reqDto.ImagePath, Valid: true},
+	})
+	if err != nil {
+		return nil, fmt.Errorf("updating item in database: %w", err)
+	}
+
+	return r.sqlcItemToDto(&row), nil
 }
 
 func (r *menuRepository) GetMenuItems(
@@ -114,4 +120,30 @@ func (r *menuRepository) GetMenuItems(
 	}
 
 	return &respDto, nil
+}
+
+func (r *menuRepository) GetMenuItemByID(
+	ctx context.Context,
+	id uuid.UUID,
+) (*dto.MenuItemDto, error) {
+	row, err := r.q.GetItemByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("fetching item by id %s from database: %w", id, err)
+	}
+
+	return r.sqlcItemToDto(&row), nil
+}
+
+func (r *menuRepository) sqlcItemToDto(row *db.ManagementItem) *dto.MenuItemDto {
+	return &dto.MenuItemDto{
+		ID:           row.ID,
+		RestaurantID: uuid.Nil,
+		CategoryID:   row.CategoryID,
+		Name:         row.Name,
+		Description:  row.Description.String,
+		PriceInCents: row.PriceInCents,
+		IsAvailable:  row.IsAvailable,
+		ImagePath:    row.ImagePath.String,
+		FileHeader:   nil,
+	}
 }
