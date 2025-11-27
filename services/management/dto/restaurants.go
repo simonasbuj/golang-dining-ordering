@@ -55,3 +55,12 @@ type UpdateRestaurantResponseDto struct {
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at"`
 }
+
+// RestaurantTableDto represents a restaurant table used for both request payloads and responses.
+type RestaurantTableDto struct {
+	ID           uuid.UUID `json:"id"`
+	RestaurantID uuid.UUID `json:"-"        validate:"required"`
+	UserID       uuid.UUID `json:"-"        validate:"required"`
+	Name         string    `json:"name"     validate:"required"`
+	Capacity     int       `json:"capacity" validate:"required,gt=0,lt=100"`
+}

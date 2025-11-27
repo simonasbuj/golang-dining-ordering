@@ -2,6 +2,7 @@
 package handlers
 
 import (
+	"errors"
 	"golang-dining-ordering/pkg/responses"
 	"golang-dining-ordering/pkg/validation"
 	"golang-dining-ordering/services/management/dto"
@@ -116,5 +117,39 @@ func (h *RestaurantsHandler) HandleUpdateRestaurant(c echo.Context) error {
 
 // HandleCreateTable handles creating a new table for a restaurant.
 func (h *RestaurantsHandler) HandleCreateTable(c echo.Context) error {
-	return responses.JSONSuccess(c, "hi", nil)
+	id, err := getUUUIDFromParams(c, restaurantIDParamName)
+	if err != nil {
+		return err
+	}
+
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.RestaurantTableDto
+
+	reqDto.RestaurantID = id
+	reqDto.UserID = user.UserID
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	respDto, err := h.svc.CreateTable(c.Request().Context(), &reqDto)
+	if err != nil {
+		if errors.Is(err, services.ErrUserIsNotManager) {
+			return responses.JSONError(
+				c,
+				"user is unauthorized to add tables for this restaurant",
+				err,
+				http.StatusUnauthorized,
+			)
+		}
+
+		return responses.JSONError(c, "failed to add table", err)
+	}
+
+	return responses.JSONSuccess(c, "table added to restaurant", respDto)
 }
