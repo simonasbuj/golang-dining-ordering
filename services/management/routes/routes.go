@@ -46,7 +46,7 @@ func AddMenuRoutes(
 		middleware.RoleMiddleware(authDto.RoleManager),
 	)
 
-	managerAPI.POST("categories", h.HandleAddMenuCategory)
+	managerAPI.POST("/categories", h.HandleAddMenuCategory)
 
 	managerAPI.POST("/items", h.HandleAddMenuItem)
 	managerAPI.PATCH("/items/:item_id", h.HandleUpdateMenuItem)
