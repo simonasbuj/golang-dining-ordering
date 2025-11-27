@@ -36,3 +36,22 @@ type GetRestaurantsRespDto struct {
 	Total       int                 `json:"total"`
 	Restaurants []RestaurantItemDto `json:"restaurants"`
 }
+
+// UpdateRestaurantRequestDto represents the fields for updating a restaurant.
+type UpdateRestaurantRequestDto struct {
+	ID         uuid.UUID `json:"id"          validate:"required"`
+	UserID     uuid.UUID `json:"user_id"     validate:"required"`
+	Name       *string   `json:"name"`
+	Address    *string   `json:"address"`
+	DeleteFlag *bool     `json:"delete_flag"`
+}
+
+// UpdateRestaurantResponseDto represents the restaurant data returned after an update.
+type UpdateRestaurantResponseDto struct {
+	ID        uuid.UUID `json:"id"`
+	Name      string    `json:"name"`
+	Address   string    `json:"address"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
+	DeletedAt time.Time `json:"deleted_at"`
+}

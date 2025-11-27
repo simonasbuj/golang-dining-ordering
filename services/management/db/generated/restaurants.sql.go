@@ -7,6 +7,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"time"
 
 	"github.com/google/uuid"
@@ -239,6 +240,47 @@ func (q *Queries) IsUserRestaurantManager(ctx context.Context, arg IsUserRestaur
 		&i.RestaurantID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateRestaurant = `-- name: UpdateRestaurant :one
+UPDATE management.restaurants
+SET
+    name = COALESCE($2, name),
+    address = COALESCE($3, address),
+    deleted_at = CASE
+        WHEN $4::boolean IS NULL THEN deleted_at
+        WHEN $4 = TRUE THEN NOW()
+        WHEN $4 = FALSE THEN NULL
+    END,
+    updated_at = NOW()
+WHERE id = $1
+RETURNING id, name, address, created_at, updated_at, deleted_at
+`
+
+type UpdateRestaurantParams struct {
+	ID         uuid.UUID      `json:"id"`
+	Name       sql.NullString `json:"name"`
+	Address    sql.NullString `json:"address"`
+	DeleteFlag sql.NullBool   `json:"delete_flag"`
+}
+
+func (q *Queries) UpdateRestaurant(ctx context.Context, arg UpdateRestaurantParams) (ManagementRestaurant, error) {
+	row := q.db.QueryRowContext(ctx, updateRestaurant,
+		arg.ID,
+		arg.Name,
+		arg.Address,
+		arg.DeleteFlag,
+	)
+	var i ManagementRestaurant
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

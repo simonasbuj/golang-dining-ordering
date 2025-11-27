@@ -2,22 +2,13 @@ package handlers
 
 import (
 	"errors"
-	"fmt"
 	"golang-dining-ordering/pkg/responses"
 	"golang-dining-ordering/pkg/validation"
 	"golang-dining-ordering/services/management/dto"
 	"golang-dining-ordering/services/management/services"
 	"net/http"
-	"strconv"
 
-	"github.com/go-playground/validator/v10"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-)
-
-var (
-	errInvalidPriceValue       = errors.New("invalid price field value")
-	errInvalidIsAvailableValue = errors.New("invalid is_available field value")
 )
 
 // MenuHandler handles restaurant menu related HTTP requests.
@@ -34,7 +25,10 @@ func NewMenuHandler(svc services.MenuService) *MenuHandler {
 
 // HandleAddMenuCategory handles adding a new menu category.
 func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
-	restaurantID := c.Param("restaurant_id")
+	restaurantID, err := getRestaurantFromParams(c)
+	if err != nil {
+		return err
+	}
 
 	user, err := getUserFromContext(c)
 	if err != nil {
@@ -48,7 +42,7 @@ func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
 		return responses.JSONError(c, err.Error(), err)
 	}
 
-	reqDto.RestaurantID = uuid.MustParse(restaurantID)
+	reqDto.RestaurantID = restaurantID
 
 	resDto, err := h.svc.AddMenuCategory(c.Request().Context(), &reqDto, user)
 	if err != nil {
@@ -69,17 +63,26 @@ func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
 
 // HandleAddMenuItem handles HTTP requests to add a new menu item.
 func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
+	restaurantID, err := getRestaurantFromParams(c)
+	if err != nil {
+		return err
+	}
+
 	user, err := getUserFromContext(c)
 	if err != nil {
 		return err
 	}
 
-	reqDto, err := h.getItemFormFields(c)
+	var reqDto dto.MenuItemDto
+
+	reqDto.RestaurantID = restaurantID
+
+	err = validation.ValidateDto(c, &reqDto)
 	if err != nil {
 		return responses.JSONError(c, err.Error(), err)
 	}
 
-	resDto, err := h.svc.AddMenuItem(c.Request().Context(), reqDto, user)
+	resDto, err := h.svc.AddMenuItem(c.Request().Context(), &reqDto, user)
 	if err != nil {
 		if errors.Is(err, services.ErrUserIsNotManager) {
 			return responses.JSONError(
@@ -98,9 +101,9 @@ func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
 
 // HandleGetMenuItems retrieves all menu categories and items for a restaurant.
 func (h *MenuHandler) HandleGetMenuItems(c echo.Context) error {
-	restaurantID, err := uuid.Parse(c.Param("restaurant_id"))
+	restaurantID, err := getRestaurantFromParams(c)
 	if err != nil {
-		return responses.JSONError(c, "failed to parse restaurant_id", err)
+		return err
 	}
 
 	resDto, err := h.svc.GetMenuItems(c.Request().Context(), restaurantID)
@@ -114,41 +117,4 @@ func (h *MenuHandler) HandleGetMenuItems(c echo.Context) error {
 	}
 
 	return responses.JSONSuccess(c, "menu items fetched", resDto)
-}
-
-func (h *MenuHandler) getItemFormFields(c echo.Context) (*dto.MenuItemDto, error) {
-	var reqDto dto.MenuItemDto
-
-	reqDto.RestaurantID = uuid.MustParse(c.Param("restaurant_id"))
-	reqDto.CategoryID = uuid.MustParse(c.FormValue("category_id"))
-	reqDto.Name = c.FormValue("name")
-	reqDto.Description = c.FormValue("description")
-
-	priceStr := c.FormValue("price")
-
-	price, err := strconv.Atoi(priceStr)
-	if err != nil {
-		return nil, errInvalidPriceValue
-	}
-
-	reqDto.PriceInCents = price
-
-	isAvailableStr := c.FormValue("is_available")
-	if isAvailableStr != "" {
-		isAvailable, err := strconv.ParseBool(isAvailableStr)
-		if err != nil {
-			return nil, errInvalidIsAvailableValue
-		}
-
-		reqDto.IsAvailable = isAvailable
-	}
-
-	reqDto.FileHeader, _ = c.FormFile("image")
-
-	err = validator.New().Struct(reqDto)
-	if err != nil {
-		return nil, fmt.Errorf("input form validation failed: %w", err)
-	}
-
-	return &reqDto, nil
 }

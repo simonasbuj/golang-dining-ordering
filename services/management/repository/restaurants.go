@@ -24,6 +24,10 @@ type RestaurantRepository interface {
 	) (*dto.GetRestaurantsRespDto, error)
 	GetRestaurantByID(ctx context.Context, id uuid.UUID) (*dto.RestaurantItemDto, error)
 	IsUserRestaurantManager(ctx context.Context, userID, restaurantID uuid.UUID) error
+	UpdateRestaurant(
+		ctx context.Context,
+		reqDto *dto.UpdateRestaurantRequestDto,
+	) (*dto.UpdateRestaurantResponseDto, error)
 }
 
 // restaurantRepository implements RestaurantRepository using sqlc-generated queries.
@@ -159,6 +163,32 @@ func (r *restaurantRepository) IsUserRestaurantManager(
 	return nil
 }
 
+func (r *restaurantRepository) UpdateRestaurant(
+	ctx context.Context,
+	reqDto *dto.UpdateRestaurantRequestDto,
+) (*dto.UpdateRestaurantResponseDto, error) {
+	row, err := r.q.UpdateRestaurant(ctx, db.UpdateRestaurantParams{
+		ID:         reqDto.ID,
+		Name:       nullString(reqDto.Name),
+		Address:    nullString(reqDto.Address),
+		DeleteFlag: nullBool(reqDto.DeleteFlag),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("updating restaurant in db: %w", err)
+	}
+
+	respDto := &dto.UpdateRestaurantResponseDto{
+		ID:        row.ID,
+		Name:      row.Name,
+		Address:   row.Address,
+		CreatedAt: row.CreatedAt,
+		UpdatedAt: row.UpdatedAt,
+		DeletedAt: row.DeletedAt.Time,
+	}
+
+	return respDto, nil
+}
+
 func mapGetRestaurantsRows(rows []db.GetRestaurantsRow) []dto.RestaurantItemDto {
 	result := make([]dto.RestaurantItemDto, len(rows))
 	for i, r := range rows {
@@ -171,4 +201,20 @@ func mapGetRestaurantsRows(rows []db.GetRestaurantsRow) []dto.RestaurantItemDto 
 	}
 
 	return result
+}
+
+func nullString(s *string) sql.NullString {
+	if s == nil {
+		return sql.NullString{String: "", Valid: false}
+	}
+
+	return sql.NullString{String: *s, Valid: true}
+}
+
+func nullBool(b *bool) sql.NullBool {
+	if b == nil {
+		return sql.NullBool{Bool: false, Valid: false}
+	}
+
+	return sql.NullBool{Bool: *b, Valid: true}
 }
