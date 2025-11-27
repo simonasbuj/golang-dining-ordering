@@ -25,7 +25,7 @@ func NewMenuHandler(svc services.MenuService) *MenuHandler {
 
 // HandleAddMenuCategory handles adding a new menu category.
 func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
-	restaurantID, err := getRestaurantFromParams(c)
+	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
 
 // HandleAddMenuItem handles HTTP requests to add a new menu item.
 func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
-	restaurantID, err := getRestaurantFromParams(c)
+	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}
@@ -99,9 +99,53 @@ func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
 	return responses.JSONSuccess(c, "new menu item added", resDto)
 }
 
+// HandleUpdateMenuItem updates a menu item for the specified restaurant.
+func (h *MenuHandler) HandleUpdateMenuItem(c echo.Context) error {
+	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
+	if err != nil {
+		return err
+	}
+
+	itemID, err := getUUUIDFromParams(c, menuItemIDParamName)
+	if err != nil {
+		return err
+	}
+
+	user, err := getUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.MenuItemDto
+
+	reqDto.RestaurantID = restaurantID
+	reqDto.ID = itemID
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	respDto, err := h.svc.UpdateMenuItem(c.Request().Context(), &reqDto, user)
+	if err != nil {
+		if errors.Is(err, services.ErrUserIsNotManager) {
+			return responses.JSONError(
+				c,
+				"user is unauthorized to edit this item",
+				err,
+				http.StatusUnauthorized,
+			)
+		}
+
+		return responses.JSONError(c, "failed to add menu item", err)
+	}
+
+	return responses.JSONSuccess(c, "updated menu item", respDto)
+}
+
 // HandleGetMenuItems retrieves all menu categories and items for a restaurant.
 func (h *MenuHandler) HandleGetMenuItems(c echo.Context) error {
-	restaurantID, err := getRestaurantFromParams(c)
+	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}

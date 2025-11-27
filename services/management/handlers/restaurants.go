@@ -71,7 +71,7 @@ func (h *RestaurantsHandler) HandleGetRestaurants(c echo.Context) error {
 
 // HandleGetRestaurantByID handles fetching a single restaurant by its ID.
 func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
-	id, err := getRestaurantFromParams(c)
+	id, err := getUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}
@@ -86,7 +86,7 @@ func (h *RestaurantsHandler) HandleGetRestaurantByID(c echo.Context) error {
 
 // HandleUpdateRestaurant updates a restaurant’s details.
 func (h *RestaurantsHandler) HandleUpdateRestaurant(c echo.Context) error {
-	id, err := getRestaurantFromParams(c)
+	id, err := getUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}

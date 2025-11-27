@@ -24,6 +24,11 @@ type MenuService interface {
 		claims *authDto.TokenClaimsDto,
 	) (*dto.MenuItemDto, error)
 	GetMenuItems(ctx context.Context, restaurantID uuid.UUID) (*dto.ListMenuItemsDto, error)
+	UpdateMenuItem(
+		ctx context.Context,
+		reqDto *dto.MenuItemDto,
+		claims *authDto.TokenClaimsDto,
+	) (*dto.MenuItemDto, error)
 }
 
 // menuService implements MenuService.
@@ -79,7 +84,7 @@ func (s *menuService) AddMenuItem(
 	}
 
 	if reqDto.FileHeader != nil {
-		reqDto.ImagePath, err = s.storage.StoreMenuItemImage(reqDto.FileHeader)
+		reqDto.ImagePath, err = s.storage.StoreMenuItemImage(ctx, reqDto.FileHeader)
 		if err != nil {
 			return nil, fmt.Errorf("storing menu item image in storage: %w", err)
 		}
@@ -87,7 +92,7 @@ func (s *menuService) AddMenuItem(
 
 	resDto, err := s.menuRepo.AddMenuItem(ctx, reqDto)
 	if err != nil {
-		_ = s.storage.DeleteMenuItemImage(reqDto.ImagePath)
+		_ = s.storage.DeleteMenuItemImage(ctx, reqDto.ImagePath)
 
 		return nil, fmt.Errorf("deleting menu item's image from storage: %w", err)
 	}
@@ -102,6 +107,40 @@ func (s *menuService) GetMenuItems(
 	respDto, err := s.menuRepo.GetMenuItems(ctx, restaurantID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching menu items: %w", err)
+	}
+
+	return respDto, nil
+}
+
+func (s *menuService) UpdateMenuItem(
+	ctx context.Context,
+	reqDto *dto.MenuItemDto,
+	claims *authDto.TokenClaimsDto,
+) (*dto.MenuItemDto, error) {
+	err := isUserRestaurantManager(ctx, claims.UserID, reqDto.RestaurantID, s.restRepo)
+	if err != nil {
+		return nil, err
+	}
+
+	if reqDto.FileHeader != nil {
+		reqDto.ImagePath = "my file is here"
+
+		currentItem, err := s.menuRepo.GetMenuItemByID(ctx, reqDto.ID)
+		if err != nil {
+			return nil, fmt.Errorf("fetching current data for an item: %w", err)
+		}
+
+		_ = s.storage.DeleteMenuItemImage(ctx, currentItem.ImagePath)
+
+		reqDto.ImagePath, err = s.storage.StoreMenuItemImage(ctx, reqDto.FileHeader)
+		if err != nil {
+			return nil, fmt.Errorf("storing menu item image in storage: %w", err)
+		}
+	}
+
+	respDto, err := s.menuRepo.UpdateMenuItem(ctx, reqDto)
+	if err != nil {
+		return nil, fmt.Errorf("updating item: %w", err)
 	}
 
 	return respDto, nil

@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"errors"
+	"fmt"
 	"golang-dining-ordering/pkg/responses"
 	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/management/middleware"
@@ -10,10 +11,12 @@ import (
 	"github.com/labstack/echo/v4"
 )
 
-var (
-	errMissingUser           = errors.New("missing user in context")
-	errIncorrectRestaurantID = errors.New("incorrect restaurant id in url")
+const (
+	restaurantIDParamName = "restaurant_id"
+	menuItemIDParamName   = "item_id"
 )
+
+var errMissingUser = errors.New("missing user in context")
 
 func getUserFromContext(c echo.Context) (*authDto.TokenClaimsDto, error) {
 	user, ok := c.Get(middleware.ContextKeyAuthUser).(*authDto.TokenClaimsDto)
@@ -24,15 +27,15 @@ func getUserFromContext(c echo.Context) (*authDto.TokenClaimsDto, error) {
 	return user, nil
 }
 
-func getRestaurantFromParams(c echo.Context) (uuid.UUID, error) {
-	restaurantID, err := uuid.Parse(c.Param("restaurant_id"))
+func getUUUIDFromParams(c echo.Context, paramName string) (uuid.UUID, error) {
+	id, err := uuid.Parse(c.Param(paramName))
 	if err != nil {
 		return uuid.Nil, responses.JSONError(
 			c,
-			errIncorrectRestaurantID.Error(),
-			errIncorrectRestaurantID,
+			"invalid id in url for "+paramName,
+			fmt.Errorf("parsing uuid from params for %s: %w", paramName, err),
 		)
 	}
 
-	return restaurantID, nil
+	return id, nil
 }

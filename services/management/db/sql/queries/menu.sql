@@ -17,8 +17,29 @@ INSERT INTO management.items (
 )
 RETURNING *;
 
--- name: GetMenuCategoriesWithItems :many
+-- name: UpdateItem :one
+UPDATE management.items
+SET
+    category_id    = $2,
+    name           = $3,
+    description    = $4,
+    price_in_cents = $5,
+    is_available   = $6,
+    image_path     = CASE
+                        WHEN sqlc.narg(image_path)::text IS NULL OR sqlc.narg(image_path) = '' THEN image_path
+                        ELSE sqlc.narg(image_path)
+                     END,
+    updated_at     = NOW()
+WHERE id = $1
+RETURNING *;
 
+-- name: GetItemByID :one
+SELECT
+    *
+FROM management.items
+WHERE id = $1;
+
+-- name: GetMenuCategoriesWithItems :many
 SELECT json_build_object(
     'categories', json_agg(
         json_build_object(
