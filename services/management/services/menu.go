@@ -94,7 +94,7 @@ func (s *menuService) AddMenuItem(
 	if err != nil {
 		_ = s.storage.DeleteMenuItemImage(ctx, reqDto.ImagePath)
 
-		return nil, fmt.Errorf("deleting menu item's image from storage: %w", err)
+		return nil, fmt.Errorf("adding menu item's image from storage: %w", err)
 	}
 
 	return resDto, nil
