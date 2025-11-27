@@ -158,4 +158,26 @@ Karšta, aštri, pikantiška
 
 ### List menu items
 GET {{baseUrl}}/restaurants/{{restaurantId}}/menu/items
+
 Content-Type: application/json
+
+### Add table 01
+POST {{baseUrl}}/restaurants/{{restaurantId}}/tables
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "T01",
+  "capacity": 4
+}
+
+### Add table 02
+POST {{baseUrl}}/restaurants/{{restaurantId}}/tables
+Authorization: {{token}}
+Content-Type: application/json
+
+{
+  "name": "T03",
+  "capacity": 8
+}
+

@@ -28,6 +28,10 @@ type RestaurantRepository interface {
 		ctx context.Context,
 		reqDto *dto.UpdateRestaurantRequestDto,
 	) (*dto.UpdateRestaurantResponseDto, error)
+	CreateTable(
+		ctx context.Context,
+		reqDto *dto.RestaurantTableDto,
+	) (*dto.RestaurantTableDto, error)
 }
 
 // restaurantRepository implements RestaurantRepository using sqlc-generated queries.
@@ -187,6 +191,25 @@ func (r *restaurantRepository) UpdateRestaurant(
 	}
 
 	return respDto, nil
+}
+
+func (r *restaurantRepository) CreateTable(
+	ctx context.Context,
+	reqDto *dto.RestaurantTableDto,
+) (*dto.RestaurantTableDto, error) {
+	row, err := r.q.CreateTable(ctx, db.CreateTableParams{
+		ID:           uuid.New(),
+		RestaurantID: reqDto.RestaurantID,
+		Name:         reqDto.Name,
+		Capacity:     reqDto.Capacity,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("inserting new table to database: %w", err)
+	}
+
+	reqDto.ID = row.ID
+
+	return reqDto, nil
 }
 
 func mapGetRestaurantsRows(rows []db.GetRestaurantsRow) []dto.RestaurantItemDto {

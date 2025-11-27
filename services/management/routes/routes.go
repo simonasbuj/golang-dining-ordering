@@ -25,11 +25,11 @@ func AddRestaurantRoutes(
 	)
 
 	managerAPI.POST("", h.HandleCreateRestaurant)
-	managerAPI.PATCH("/:id", h.HandleUpdateRestaurant)
+	managerAPI.PATCH("/:restaurant_id", h.HandleUpdateRestaurant)
 	publicAPI.GET("", h.HandleGetRestaurants)
-	publicAPI.GET("/:id", h.HandleGetRestaurantByID)
+	publicAPI.GET("/:restaurant_id", h.HandleGetRestaurantByID)
 
-	managerAPI.POST("/:id/tables", h.HandleCreateTable)
+	managerAPI.POST("/:restaurant_id/tables", h.HandleCreateTable)
 }
 
 // AddMenuRoutes registers restaurant menus management related HTTP routes.

@@ -28,6 +28,10 @@ type RestaurantService interface {
 		ctx context.Context,
 		reqDto *dto.UpdateRestaurantRequestDto,
 	) (*dto.UpdateRestaurantResponseDto, error)
+	CreateTable(
+		ctx context.Context,
+		reqDto *dto.RestaurantTableDto,
+	) (*dto.RestaurantTableDto, error)
 }
 
 // restaurantService implements RestaurantService.
@@ -99,6 +103,23 @@ func (s *restaurantService) UpdateRestaurant(
 	respDto, err := s.repo.UpdateRestaurant(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("updating restaurant: %w", err)
+	}
+
+	return respDto, nil
+}
+
+func (s *restaurantService) CreateTable(
+	ctx context.Context,
+	reqDto *dto.RestaurantTableDto,
+) (*dto.RestaurantTableDto, error) {
+	err := isUserRestaurantManager(ctx, reqDto.UserID, reqDto.RestaurantID, s.repo)
+	if err != nil {
+		return nil, err
+	}
+
+	respDto, err := s.repo.CreateTable(ctx, reqDto)
+	if err != nil {
+		return nil, fmt.Errorf("creating new table: %w", err)
 	}
 
 	return respDto, nil

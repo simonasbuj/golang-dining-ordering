@@ -9,5 +9,7 @@ CREATE TABLE management.tables (
 
     CONSTRAINT fk_table_restaurant FOREIGN KEY (restaurant_id)
         REFERENCES management.restaurants (id)
-        ON DELETE SET NULL
+        ON DELETE SET NULL,
+
+    CONSTRAINT uq_table UNIQUE (restaurant_id, name)
 );

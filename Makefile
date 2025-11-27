@@ -1,4 +1,4 @@
-MIGRATIONS_DIR := ./services/auth/db/sql/migrations
+MIGRATIONS_DIR := ./services/management/db/sql/migrations
 DINE_DB_URI := potsgres-uri
 
 # make sure golang dependencies likq 'sqlc' and 'migrations' are in the path
