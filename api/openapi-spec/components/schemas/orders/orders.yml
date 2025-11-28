@@ -1,0 +1,6 @@
+GetCurrentOrderForTableResponse:
+  type: object
+  properties:
+    order_id:
+      type: string
+      example: "order_001"

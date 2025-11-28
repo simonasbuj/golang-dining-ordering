@@ -32,6 +32,7 @@ type RestaurantService interface {
 		ctx context.Context,
 		reqDto *dto.RestaurantTableDto,
 	) (*dto.RestaurantTableDto, error)
+	GetTables(ctx context.Context, restaurantID uuid.UUID) ([]*dto.RestaurantTableDto, error)
 }
 
 // restaurantService implements RestaurantService.
@@ -67,6 +68,14 @@ func (s *restaurantService) GetRestaurants(
 	ctx context.Context,
 	reqDto *dto.GetRestaurantsReqDto,
 ) (*dto.GetRestaurantsRespDto, error) {
+	if reqDto.Page == 0 {
+		reqDto.Page = 1
+	}
+
+	if reqDto.Limit == 0 {
+		reqDto.Limit = 10
+	}
+
 	resDto, err := s.repo.GetRestaurants(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("fetching restaurants: %w", err)
@@ -120,6 +129,18 @@ func (s *restaurantService) CreateTable(
 	respDto, err := s.repo.CreateTable(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("creating new table: %w", err)
+	}
+
+	return respDto, nil
+}
+
+func (s *restaurantService) GetTables(
+	ctx context.Context,
+	restaurantID uuid.UUID,
+) ([]*dto.RestaurantTableDto, error) {
+	respDto, err := s.repo.GetTables(ctx, restaurantID)
+	if err != nil {
+		return nil, fmt.Errorf("error fetching tables: %w", err)
 	}
 
 	return respDto, nil

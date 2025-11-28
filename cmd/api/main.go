@@ -16,6 +16,8 @@ import (
 	mngRoutes "golang-dining-ordering/services/management/routes"
 	mngServices "golang-dining-ordering/services/management/services"
 	mngStorage "golang-dining-ordering/services/management/storage/local"
+	ordersHandler "golang-dining-ordering/services/orders/handler"
+	ordersRoutes "golang-dining-ordering/services/orders/routes"
 	"log"
 	"log/slog"
 	"net/http"
@@ -49,9 +51,11 @@ func main() {
 	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	routes.AddSwaggerRoutes(e)
+	routes.AddFrontendRoutes(e)
 
 	setupAuth(e, &cfg, logger)
 	setupManagement(e, &cfg, logger)
+	setupOrders(e, &cfg, logger)
 
 	logger.Info("starting server on address " + cfg.HTTPAddress)
 
@@ -121,4 +125,9 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	)
 
 	mngRoutes.AddMenuRoutes(e, menuHandler, cfg.AuthorizeEndpoint)
+}
+
+func setupOrders(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
+	handler := ordersHandler.New()
+	ordersRoutes.AddOrdersRoutes(e, handler, cfg.AuthorizeEndpoint)
 }

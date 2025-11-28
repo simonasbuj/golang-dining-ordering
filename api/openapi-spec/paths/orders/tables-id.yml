@@ -1,0 +1,20 @@
+get:
+  tags:
+    - Orders
+  summary: Returns latest open order associated with table.
+  description: Returns latest open order associated with table. If open order doesnt exist, starts new empty order.
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/TableIDParam'
+  responses:
+    '200':
+      description: Table current order fetched succesfuly
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/orders.yml#/GetCurrentOrderForTableResponse'
+    '400':
+      description: Bad request (invalid input)
+    '404':
+      description: Not found (restaurant or table does not exist)
+    '500':
+      description: Internal server error

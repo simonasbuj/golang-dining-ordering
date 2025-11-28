@@ -18,6 +18,7 @@ tags:
     description: Endpoints for restaurant menu management
   - name: Management - Waiters
     description: Endpoints for restaurant waiters management
+  - name: Orders
 
 components:
   securitySchemes:
@@ -59,3 +60,6 @@ paths:
     $ref: './paths/management/waiters.yml' 
   /restaurants/{id}/waiters/{waiter_id}:
     $ref: './paths/management/waiters-id.yml'
+
+  /orders/current?tableId={table_id}:
+    $ref: './paths/orders/tables-id.yml' 

@@ -64,3 +64,8 @@ INSERT INTO management.tables (
     capacity
 ) VALUES ($1, $2, $3, $4)
 RETURNING id, restaurant_id, name, capacity;
+
+-- name: GetTables :many
+SELECT id, name, capacity
+FROM management.tables
+WHERE restaurant_id = $1;
