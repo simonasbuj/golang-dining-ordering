@@ -154,6 +154,7 @@ func (h *RestaurantsHandler) HandleCreateTable(c echo.Context) error {
 	return responses.JSONSuccess(c, "table added to restaurant", respDto)
 }
 
+// HandleGetTables fetches all tables belonging to a restaurant.
 func (h *RestaurantsHandler) HandleGetTables(c echo.Context) error {
 	id, err := getUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {

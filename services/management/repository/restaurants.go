@@ -226,11 +226,11 @@ func (r *restaurantRepository) GetTables(
 
 	for _, r := range rows {
 		respDto = append(respDto, &dto.RestaurantTableDto{
-			ID:       r.ID,
+			ID:           r.ID,
 			RestaurantID: restaurantID,
-			UserID: 	uuid.Nil,
-			Name:     r.Name,
-			Capacity: r.Capacity,
+			UserID:       uuid.Nil,
+			Name:         r.Name,
+			Capacity:     r.Capacity,
 		})
 	}
 

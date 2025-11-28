@@ -7,7 +7,6 @@ import (
 	"golang-dining-ordering/services/management/middleware"
 
 	"github.com/labstack/echo/v4"
-	// echoMiddleware "github.com/labstack/echo/v4/middleware".
 )
 
 // AddRestaurantRoutes registers restaurant management related HTTP routes.
@@ -16,7 +15,6 @@ func AddRestaurantRoutes(
 	h *handler.RestaurantsHandler,
 	authEndpoint string,
 ) {
-	// e.Pre(echoMiddleware.RemoveTrailingSlash())
 	publicAPI := e.Group("/api/v1/restaurants")
 	managerAPI := publicAPI.Group("",
 		middleware.AuthMiddleware(authEndpoint),
