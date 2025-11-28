@@ -18,6 +18,7 @@ import (
 	mngStorage "golang-dining-ordering/services/management/storage/local"
 	ordersHandler "golang-dining-ordering/services/orders/handler"
 	ordersRoutes "golang-dining-ordering/services/orders/routes"
+	ordersService "golang-dining-ordering/services/orders/service"
 	"log"
 	"log/slog"
 	"net/http"
@@ -128,6 +129,7 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 }
 
 func setupOrders(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
-	handler := ordersHandler.New()
+	svc := ordersService.New()
+	handler := ordersHandler.New(svc)
 	ordersRoutes.AddOrdersRoutes(e, handler, cfg.AuthorizeEndpoint)
 }
