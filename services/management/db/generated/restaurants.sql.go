@@ -137,6 +137,41 @@ func (q *Queries) GetRestaurants(ctx context.Context, arg GetRestaurantsParams) 
 	return items, nil
 }
 
+const getTables = `-- name: GetTables :many
+SELECT id, name, capacity
+FROM management.tables
+WHERE restaurant_id = $1
+`
+
+type GetTablesRow struct {
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	Capacity int       `json:"capacity"`
+}
+
+func (q *Queries) GetTables(ctx context.Context, restaurantID uuid.UUID) ([]GetTablesRow, error) {
+	rows, err := q.db.QueryContext(ctx, getTables, restaurantID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTablesRow
+	for rows.Next() {
+		var i GetTablesRow
+		if err := rows.Scan(&i.ID, &i.Name, &i.Capacity); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const insertRestaurant = `-- name: InsertRestaurant :one
 INSERT INTO management.restaurants (id, name, address)
 VALUES ($1, $2, $3)

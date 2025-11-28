@@ -153,3 +153,17 @@ func (h *RestaurantsHandler) HandleCreateTable(c echo.Context) error {
 
 	return responses.JSONSuccess(c, "table added to restaurant", respDto)
 }
+
+func (h *RestaurantsHandler) HandleGetTables(c echo.Context) error {
+	id, err := getUUUIDFromParams(c, restaurantIDParamName)
+	if err != nil {
+		return err
+	}
+
+	respDto, err := h.svc.GetTables(c.Request().Context(), id)
+	if err != nil {
+		return responses.JSONError(c, "failed to fetch restaurant tables", err)
+	}
+
+	return responses.JSONSuccess(c, "tables fetched", respDto)
+}

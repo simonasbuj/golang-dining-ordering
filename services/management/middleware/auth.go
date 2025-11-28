@@ -9,6 +9,7 @@ import (
 	authDto "golang-dining-ordering/services/auth/dto"
 	"io"
 	"net/http"
+	"slices"
 
 	"github.com/labstack/echo/v4"
 )
@@ -98,10 +99,8 @@ func RoleMiddleware(allowedRoles ...authDto.Role) echo.MiddlewareFunc {
 				return echo.NewHTTPError(http.StatusBadRequest, "failed to parse claims into dto")
 			}
 
-			for _, role := range allowedRoles {
-				if claims.Role == role {
-					return next(c)
-				}
+			if slices.Contains(allowedRoles, claims.Role) {
+				return next(c)
 			}
 
 			return echo.NewHTTPError(http.StatusForbidden, "insufficient role")

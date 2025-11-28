@@ -68,3 +68,10 @@ up-all-migrations:
 
 	@echo "Migrate management"
 	migrate -path "./services/management/db/sql/migrations" -database "$(DINE_MANAGEMENT_DB_URI)" up
+
+down-all-migrations:
+	@echo "Migrate down management"
+	migrate -path "./services/management/db/sql/migrations" -database "$(DINE_MANAGEMENT_DB_URI)" down
+
+	@echo "Migrate down auth"
+	migrate -path "./services/auth/db/sql/migrations" -database "$(DINE_AUTH_DB_URI)" down

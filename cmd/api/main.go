@@ -49,6 +49,7 @@ func main() {
 	e.GET("/health", func(c echo.Context) error { return c.String(http.StatusOK, "ok") })
 
 	routes.AddSwaggerRoutes(e)
+	routes.AddFrontendRoutes(e)
 
 	setupAuth(e, &cfg, logger)
 	setupManagement(e, &cfg, logger)
