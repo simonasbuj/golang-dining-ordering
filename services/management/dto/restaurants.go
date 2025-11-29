@@ -45,6 +45,7 @@ type UpdateRestaurantRequestDto struct {
 	UserID     uuid.UUID `json:"user_id"     validate:"required"`
 	Name       *string   `json:"name"`
 	Address    *string   `json:"address"`
+	Currency   *string   `json:"currency"`
 	DeleteFlag *bool     `json:"delete_flag"`
 }
 
@@ -53,6 +54,7 @@ type UpdateRestaurantResponseDto struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
+	Currency  string    `json:"currency"`
 	CreatedAt time.Time `json:"created_at"`
 	UpdatedAt time.Time `json:"updated_at"`
 	DeletedAt time.Time `json:"deleted_at"`

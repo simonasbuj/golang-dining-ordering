@@ -180,6 +180,7 @@ func (r *restaurantRepository) UpdateRestaurant(
 		ID:         reqDto.ID,
 		Name:       nullString(reqDto.Name),
 		Address:    nullString(reqDto.Address),
+		Currency:   nullString(reqDto.Currency),
 		DeleteFlag: nullBool(reqDto.DeleteFlag),
 	})
 	if err != nil {
@@ -190,6 +191,7 @@ func (r *restaurantRepository) UpdateRestaurant(
 		ID:        row.ID,
 		Name:      row.Name,
 		Address:   row.Address,
+		Currency:  row.Currency,
 		CreatedAt: row.CreatedAt,
 		UpdatedAt: row.UpdatedAt,
 		DeletedAt: row.DeletedAt.Time,
