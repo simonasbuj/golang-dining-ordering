@@ -42,5 +42,5 @@ func (h *Handler) HandleGetCurrentTableOrder(c echo.Context) error {
 		)
 	}
 
-	return responses.JSONSuccess(c, "current order my boy from handler", respDto)
+	return responses.JSONSuccess(c, "fetched current order", respDto)
 }

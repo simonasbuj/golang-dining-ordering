@@ -5,6 +5,7 @@
 package db
 
 import (
+	"database/sql"
 	"database/sql/driver"
 	"fmt"
 	"time"
@@ -16,6 +17,7 @@ type OrderStatus string
 
 const (
 	OrderStatusOpen      OrderStatus = "open"
+	OrderStatusLocked    OrderStatus = "locked"
 	OrderStatusCompleted OrderStatus = "completed"
 	OrderStatusCancelled OrderStatus = "cancelled"
 )
@@ -55,10 +57,70 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 	return string(ns.OrderStatus), nil
 }
 
+type ManagementCategory struct {
+	ID          uuid.UUID      `json:"id"`
+	MenuID      uuid.UUID      `json:"menu_id"`
+	Name        string         `json:"name"`
+	Description sql.NullString `json:"description"`
+	CreatedAt   time.Time      `json:"created_at"`
+	UpdatedAt   time.Time      `json:"updated_at"`
+	DeletedAt   sql.NullTime   `json:"deleted_at"`
+}
+
+type ManagementItem struct {
+	ID           uuid.UUID      `json:"id"`
+	CategoryID   uuid.UUID      `json:"category_id"`
+	Name         string         `json:"name"`
+	Description  sql.NullString `json:"description"`
+	PriceInCents int            `json:"price_in_cents"`
+	IsAvailable  bool           `json:"is_available"`
+	ImagePath    sql.NullString `json:"image_path"`
+	CreatedAt    time.Time      `json:"created_at"`
+	UpdatedAt    time.Time      `json:"updated_at"`
+	DeletedAt    sql.NullTime   `json:"deleted_at"`
+}
+
+type ManagementMenu struct {
+	ID           uuid.UUID    `json:"id"`
+	RestaurantID uuid.UUID    `json:"restaurant_id"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
+type ManagementRestaurant struct {
+	ID        uuid.UUID    `json:"id"`
+	Name      string       `json:"name"`
+	Address   string       `json:"address"`
+	Currency  string       `json:"currency"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
+type ManagementRestaurantsManager struct {
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
+type ManagementTable struct {
+	ID           uuid.UUID    `json:"id"`
+	RestaurantID uuid.UUID    `json:"restaurant_id"`
+	Name         string       `json:"name"`
+	Capacity     int          `json:"capacity"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
 type OrdersOrder struct {
 	ID        uuid.UUID   `json:"id"`
 	TableID   uuid.UUID   `json:"table_id"`
 	Status    OrderStatus `json:"status"`
+	Currency  string      `json:"currency"`
 	CreatedAt time.Time   `json:"created_at"`
 	UpdatedAt time.Time   `json:"updated_at"`
 }

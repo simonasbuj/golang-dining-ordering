@@ -17,6 +17,7 @@ import (
 	mngServices "golang-dining-ordering/services/management/services"
 	mngStorage "golang-dining-ordering/services/management/storage/local"
 	ordersHandler "golang-dining-ordering/services/orders/handler"
+	ordersRepo "golang-dining-ordering/services/orders/repository"
 	ordersRoutes "golang-dining-ordering/services/orders/routes"
 	ordersService "golang-dining-ordering/services/orders/service"
 	"log"
@@ -26,6 +27,7 @@ import (
 
 	authDB "golang-dining-ordering/services/auth/db/generated"
 	managementDB "golang-dining-ordering/services/management/db/generated"
+	ordersDB "golang-dining-ordering/services/orders/db/generated"
 
 	"github.com/ilyakaznacheev/cleanenv"
 	"github.com/labstack/echo/v4"
@@ -128,8 +130,25 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	mngRoutes.AddMenuRoutes(e, menuHandler, cfg.AuthorizeEndpoint)
 }
 
-func setupOrders(e *echo.Echo, cfg *config.AppConfig, _ *slog.Logger) {
-	svc := ordersService.New()
+func setupOrders(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
+	db, err := sql.Open("postgres", cfg.ManagementDBURI)
+	if err != nil {
+		logger.Error("failed to prepare orders db connection", "error", err)
+		os.Exit(1)
+	}
+
+	err = db.PingContext(context.Background())
+	if err != nil {
+		logger.Error("failed to connect to orders database", "error", err)
+		os.Exit(1)
+	}
+
+	logger.Info("connected to orders db")
+
+	queries := ordersDB.New(db)
+
+	repo := ordersRepo.New(queries)
+	svc := ordersService.New(repo)
 	handler := ordersHandler.New(svc)
 	ordersRoutes.AddOrdersRoutes(e, handler, cfg.AuthorizeEndpoint)
 }

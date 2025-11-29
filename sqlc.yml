@@ -27,7 +27,9 @@ sql:
           - go_type: "float64"
             db_type: "pg_catalog.numeric"
 
-  - schema: "services/orders/db/sql/migrations"
+  - schema: 
+      - "services/orders/db/sql/migrations"
+      - "services/management/db/sql/migrations"
     queries: "services/orders/db/sql/queries"
     engine: "postgresql"
     gen:

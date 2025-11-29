@@ -11,10 +11,36 @@ import (
 	"github.com/google/uuid"
 )
 
+const createOrder = `-- name: CreateOrder :one
+INSERT INTO orders.orders (
+    id,
+    table_id,
+    currency
+) VALUES ($1, $2, $3)
+RETURNING id
+`
+
+type CreateOrderParams struct {
+	ID       uuid.UUID `json:"id"`
+	TableID  uuid.UUID `json:"table_id"`
+	Currency string    `json:"currency"`
+}
+
+func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, createOrder, arg.ID, arg.TableID, arg.Currency)
+	var id uuid.UUID
+	err := row.Scan(&id)
+	return id, err
+}
+
 const getCurrentOrder = `-- name: GetCurrentOrder :one
 SELECT id
 FROM orders.orders
-WHERE table_id = $1
+WHERE 
+    table_id = $1 
+    and status in ('open', 'locked')
+ORDER BY created_at DESC
+LIMIT 1
 `
 
 func (q *Queries) GetCurrentOrder(ctx context.Context, tableID uuid.UUID) (uuid.UUID, error) {
@@ -22,4 +48,17 @@ func (q *Queries) GetCurrentOrder(ctx context.Context, tableID uuid.UUID) (uuid.
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getTableCurrency = `-- name: GetTableCurrency :one
+SELECT r.currency
+FROM management.restaurants r
+WHERE r.id = (select restaurant_id from management.tables t where t.id = $1)
+`
+
+func (q *Queries) GetTableCurrency(ctx context.Context, id uuid.UUID) (string, error) {
+	row := q.db.QueryRowContext(ctx, getTableCurrency, id)
+	var currency string
+	err := row.Scan(&currency)
+	return currency, err
 }
