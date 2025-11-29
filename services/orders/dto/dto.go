@@ -5,11 +5,11 @@ import "github.com/google/uuid"
 
 // CurrentOrderDto represents the active order for a table.
 type CurrentOrderDto struct {
-	ID uuid.UUID
+	ID uuid.UUID `json:"id"`
 }
 
-// AddItemToOrderRequestDto represents a request to add an item to an order.
-type AddItemToOrderRequestDto struct {
+// OrderItemRequestDto represents a request to add or delete an item from an order.
+type OrderItemRequestDto struct {
 	ItemID uuid.UUID `json:"item_id" validate:"required"`
 }
 
@@ -28,6 +28,7 @@ type OrderDto struct {
 type OrderItemDto struct {
 	ID           uuid.UUID `json:"id"`
 	RestaurantID uuid.UUID `json:"-"`
+	ItemID       uuid.UUID `json:"item_id"`
 	Name         string    `json:"name"`
 	PriceInCents int       `json:"price_in_cents"`
 }

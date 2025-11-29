@@ -35,6 +35,7 @@ type Repo interface {
 	) (uuid.UUID, error)
 	GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error)
 	GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.OrderItemDto, error)
+	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error
 }
 
 type repo struct {
@@ -144,8 +145,9 @@ func (r *repo) GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.Order
 		respDto.TotalPriceInCents += int(row.PriceInCents.Int32)
 
 		item := &dto.OrderItemDto{
-			ID:           row.ID,
+			ID:           row.OrderItemID.UUID,
 			RestaurantID: row.RestaurantID.UUID,
+			ItemID:       row.ID,
 			Name:         row.ItemName.String,
 			PriceInCents: int(row.PriceInCents.Int32),
 		}
@@ -165,9 +167,22 @@ func (r *repo) GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.OrderIte
 	item := &dto.OrderItemDto{
 		ID:           row.ID,
 		RestaurantID: row.RestaurantID.UUID,
+		ItemID:       row.ID,
 		Name:         row.Name,
 		PriceInCents: row.PriceInCents,
 	}
 
 	return item, nil
+}
+
+func (r *repo) DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error {
+	err := r.q.DeleteOrderItem(ctx, db.DeleteOrderItemParams{
+		ID:      orderItemID,
+		OrderID: orderID,
+	})
+	if err != nil {
+		return fmt.Errorf("deleting order item from database: %w", err)
+	}
+
+	return nil
 }

@@ -27,17 +27,22 @@
             <div class="card-body d-flex flex-column justify-content-between">
               <h5 class="card-title fw-bold mb-2" x-text="restaurant.name"></h5>
               <p class="card-text text-muted mb-3" x-text="restaurant.address"></p>
-              <p class="card-subtitle text-secondary mb-0 position-absolute top-0 start-0 m-2">
-                <span class="me-1" x-text="countryCodeToFlagEmoji(restaurant.currency)"></span>
+              <p class="card-subtitle text-secondary mb-0 position-absolute top-0 start-0 m-2 ">
+                <img 
+                  class="me-1 shadow" 
+                  :src="`https://countries-flag-pi.vercel.app/${restaurant.currency.slice(0, 2).toLowerCase()}.svg`" 
+                  alt="" 
+                  style="width: 1.2em; height: auto;"
+                >
                 <span x-text="restaurant.currency"></span>
               </p>
             </div>
-            <div 
+            <!-- <div 
               x-show="selectedRestaurantId === restaurant.id"
               class="position-absolute top-0 end-0 m-2 badge bg-primary"
             >
               Selected
-            </div>
+            </div> -->
           </div>
         </div>
       </template>

@@ -58,7 +58,7 @@ func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
 		return err
 	}
 
-	var reqDto dto.AddItemToOrderRequestDto
+	var reqDto dto.OrderItemRequestDto
 
 	err = validation.ValidateDto(c, &reqDto)
 	if err != nil {
@@ -81,4 +81,26 @@ func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
 	}
 
 	return responses.JSONSuccess(c, "item added to order", respDto)
+}
+
+// HandleDeleteItemFromOrder handles http request to delete an item from an order.
+func (h *Handler) HandleDeleteItemFromOrder(c echo.Context) error {
+	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.OrderItemRequestDto
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	respDto, err := h.svc.DeleteOrderItem(c.Request().Context(), reqDto.ItemID, orderID)
+	if err != nil {
+		return responses.JSONError(c, "failed to delete item from order", err)
+	}
+
+	return responses.JSONSuccess(c, "deleted item from order", respDto)
 }

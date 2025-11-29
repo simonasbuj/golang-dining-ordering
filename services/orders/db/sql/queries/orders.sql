@@ -37,6 +37,7 @@ SELECT
     o.status,
     o.currency,
     o.tip_amount_in_cents,
+    i.id as order_item_id,
     i.item_id,
     i.item_name,
     i.price_in_cents
@@ -56,3 +57,6 @@ FROM management.items i
     LEFT JOIN management.categories c on c.id = i.category_id
     LEFT JOIN management.menus m on m.id = c.menu_id
 WHERE i.id = $1;
+
+-- name: DeleteOrderItem :exec
+DELETE FROM orders.orders_items WHERE id = $1 and order_id = $2;

@@ -26,6 +26,7 @@ type Service interface {
 		tableID uuid.UUID,
 	) (*dto.CurrentOrderDto, error)
 	AddItemToOrder(ctx context.Context, orderID, itemID uuid.UUID) (*dto.OrderDto, error)
+	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) (*dto.OrderDto, error)
 }
 
 type service struct {
@@ -99,6 +100,23 @@ func (s *service) AddItemToOrder(
 	respDto, err := s.repo.GetOrderItems(ctx, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("getting updated order: %w", err)
+	}
+
+	return respDto, nil
+}
+
+func (s *service) DeleteOrderItem(
+	ctx context.Context,
+	orderItemID, orderID uuid.UUID,
+) (*dto.OrderDto, error) {
+	err := s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("deleting order item: %w", err)
+	}
+
+	respDto, err := s.repo.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting updated order items: %w", err)
 	}
 
 	return respDto, nil
