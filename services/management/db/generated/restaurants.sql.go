@@ -178,6 +178,31 @@ func (q *Queries) GetTables(ctx context.Context, restaurantID uuid.UUID) ([]GetT
 	return items, nil
 }
 
+const insertRestauranWaiter = `-- name: InsertRestauranWaiter :one
+INSERT INTO management.restaurants_waiters (id, user_id, restaurant_id)
+VALUES ($1, $2, $3)
+RETURNING id, user_id, restaurant_id, created_at, updated_at
+`
+
+type InsertRestauranWaiterParams struct {
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+}
+
+func (q *Queries) InsertRestauranWaiter(ctx context.Context, arg InsertRestauranWaiterParams) (ManagementRestaurantsWaiter, error) {
+	row := q.db.QueryRowContext(ctx, insertRestauranWaiter, arg.ID, arg.UserID, arg.RestaurantID)
+	var i ManagementRestaurantsWaiter
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RestaurantID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const insertRestaurant = `-- name: InsertRestaurant :one
 INSERT INTO management.restaurants (id, name, address, currency)
 VALUES ($1, $2, $3, $4)

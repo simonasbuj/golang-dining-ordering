@@ -60,6 +60,14 @@ type ManagementRestaurantsManager struct {
 	UpdatedAt    time.Time `json:"updated_at"`
 }
 
+type ManagementRestaurantsWaiter struct {
+	ID           uuid.UUID `json:"id"`
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+	CreatedAt    time.Time `json:"created_at"`
+	UpdatedAt    time.Time `json:"updated_at"`
+}
+
 type ManagementTable struct {
 	ID           uuid.UUID    `json:"id"`
 	RestaurantID uuid.UUID    `json:"restaurant_id"`

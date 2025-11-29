@@ -236,3 +236,28 @@ Content-Type: application/json
 {
   "item_id": "{{orderItemId}}"
 }
+
+### Update Order
+PATCH {{baseUrl}}/orders/{{orderId}}
+Content-Type: application/json
+
+{
+  "tip_amount_in_cents": 222
+}
+
+### Lock Order
+PATCH {{baseUrl}}/orders/{{orderId}}
+Content-Type: application/json
+
+{
+  "status": "locked"
+}
+
+### Only restaurant waiter can edit Order now
+PATCH {{baseUrl}}/orders/{{orderId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "open"
+}

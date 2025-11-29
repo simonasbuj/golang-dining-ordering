@@ -23,6 +23,11 @@ INSERT INTO management.restaurants_managers (id, user_id, restaurant_id)
 VALUES ($1, $2, $3)
 RETURNING id, user_id, restaurant_id, created_at, updated_at;
 
+-- name: InsertRestauranWaiter :one
+INSERT INTO management.restaurants_waiters (id, user_id, restaurant_id)
+VALUES ($1, $2, $3)
+RETURNING id, user_id, restaurant_id, created_at, updated_at;
+
 -- name: InsertRestaurantMenu :one
 INSERT INTO management.menus (id, restaurant_id)
 VALUES ($1, $2)

@@ -203,3 +203,49 @@ func (q *Queries) GetTableCurrency(ctx context.Context, id uuid.UUID) (string, e
 	err := row.Scan(&currency)
 	return currency, err
 }
+
+const isUserRestaurantWaiter = `-- name: IsUserRestaurantWaiter :one
+SELECT id, user_id, restaurant_id, created_at, updated_at
+FROM management.restaurants_waiters
+WHERE user_id = $1
+  AND restaurant_id = $2
+`
+
+type IsUserRestaurantWaiterParams struct {
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+}
+
+// Check if a user is a waiter for a given restaurant
+func (q *Queries) IsUserRestaurantWaiter(ctx context.Context, arg IsUserRestaurantWaiterParams) (ManagementRestaurantsWaiter, error) {
+	row := q.db.QueryRowContext(ctx, isUserRestaurantWaiter, arg.UserID, arg.RestaurantID)
+	var i ManagementRestaurantsWaiter
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RestaurantID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateOrder = `-- name: UpdateOrder :exec
+UPDATE orders.orders
+SET
+    status = COALESCE($2, status),
+    tip_amount_in_cents = COALESCE($3, tip_amount_in_cents),
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateOrderParams struct {
+	ID               uuid.UUID       `json:"id"`
+	Status           NullOrderStatus `json:"status"`
+	TipAmountInCents sql.NullInt32   `json:"tip_amount_in_cents"`
+}
+
+func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) error {
+	_, err := q.db.ExecContext(ctx, updateOrder, arg.ID, arg.Status, arg.TipAmountInCents)
+	return err
+}
