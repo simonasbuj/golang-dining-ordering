@@ -33,10 +33,19 @@ Authorization: {{token}}
 {
   "name": "Viskas Vienam KO",
   "address": "Nemenčinė Lauko g.",
-  "currency": "eur"
+  "currency": "gbp"
 }
 
 @restaurantId = {{postCreateRestaurant.response.body.data.id}}
+
+### Update Restaurant
+PATCH {{baseUrl}}/restaurants/{{restaurantId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "currency": "eur"
+}
 
 ### Create Category 01
 # @name postCreateCategory1

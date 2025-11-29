@@ -297,44 +297,39 @@ UPDATE management.restaurants
 SET
     name = COALESCE($2, name),
     address = COALESCE($3, address),
+    currency = COALESCE($4, currency),
     deleted_at = CASE
-        WHEN $4::boolean IS NULL THEN deleted_at
-        WHEN $4 = TRUE THEN NOW()
-        WHEN $4 = FALSE THEN NULL
+        WHEN $5::boolean IS NULL THEN deleted_at
+        WHEN $5 = TRUE THEN NOW()
+        WHEN $5 = FALSE THEN NULL
     END,
     updated_at = NOW()
 WHERE id = $1
-RETURNING id, name, address, created_at, updated_at, deleted_at
+RETURNING id, name, address, currency, created_at, updated_at, deleted_at
 `
 
 type UpdateRestaurantParams struct {
 	ID         uuid.UUID      `json:"id"`
 	Name       sql.NullString `json:"name"`
 	Address    sql.NullString `json:"address"`
+	Currency   sql.NullString `json:"currency"`
 	DeleteFlag sql.NullBool   `json:"delete_flag"`
 }
 
-type UpdateRestaurantRow struct {
-	ID        uuid.UUID    `json:"id"`
-	Name      string       `json:"name"`
-	Address   string       `json:"address"`
-	CreatedAt time.Time    `json:"created_at"`
-	UpdatedAt time.Time    `json:"updated_at"`
-	DeletedAt sql.NullTime `json:"deleted_at"`
-}
-
-func (q *Queries) UpdateRestaurant(ctx context.Context, arg UpdateRestaurantParams) (UpdateRestaurantRow, error) {
+func (q *Queries) UpdateRestaurant(ctx context.Context, arg UpdateRestaurantParams) (ManagementRestaurant, error) {
 	row := q.db.QueryRowContext(ctx, updateRestaurant,
 		arg.ID,
 		arg.Name,
 		arg.Address,
+		arg.Currency,
 		arg.DeleteFlag,
 	)
-	var i UpdateRestaurantRow
+	var i ManagementRestaurant
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Address,
+		&i.Currency,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
