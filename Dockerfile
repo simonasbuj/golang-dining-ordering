@@ -16,6 +16,7 @@ FROM alpine:latest
 RUN mkdir /app
 
 COPY --from=builder /app/dineApp /app
-COPY --from=builder /app/api/openapi-spec/openapi-spec.yml ./api/openapi-spec/openapi-spec.yml
+COPY --from=builder /app/api/openapi-spec ./api/openapi-spec
+COPY --from=builder /app/frontend ./frontend
 
 CMD ["/app/dineApp"]
