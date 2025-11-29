@@ -1,7 +1,7 @@
 -- name: InsertRestaurant :one
-INSERT INTO management.restaurants (id, name, address)
-VALUES ($1, $2, $3)
-RETURNING id, name, address, created_at, updated_at, deleted_at;
+INSERT INTO management.restaurants (id, name, address, currency)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, address, currency, created_at, updated_at, deleted_at;
 
 -- name: UpdateRestaurant :one
 UPDATE management.restaurants
@@ -33,6 +33,7 @@ SELECT
     id,
     name,
     address,
+    currency,
     created_at
 FROM management.restaurants
 ORDER BY created_at DESC
@@ -45,6 +46,7 @@ SELECT
     id,
     name,
     address,
+    currency,
     created_at
 FROM management.restaurants
 WHERE id = $1;

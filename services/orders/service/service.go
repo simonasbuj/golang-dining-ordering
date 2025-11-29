@@ -1,4 +1,4 @@
-// Package services provides business logic for orders creation and management.
+// Package service provides business logic for orders creation and management.
 package service
 
 import (
@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
+// Service defines business logic methods for orders service.
 type Service interface {
 	GetOrCreateCurrentOrderForTable(
 		ctx context.Context,
@@ -17,12 +18,17 @@ type Service interface {
 
 type service struct{}
 
+// New creates a new orders service instance.
+//
+//revive:disable:unexported-return
 func New() *service {
 	return &service{}
 }
 
+//revive:enable:unexported-return
+
 func (s *service) GetOrCreateCurrentOrderForTable(
-	ctx context.Context,
+	_ context.Context,
 	tableID uuid.UUID,
 ) (*dto.CurrentOrderDto, error) {
 	return &dto.CurrentOrderDto{

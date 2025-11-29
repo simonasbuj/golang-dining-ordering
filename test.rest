@@ -32,7 +32,8 @@ Authorization: {{token}}
 
 {
   "name": "Viskas Vienam KO",
-  "address": "Nemenčinė Lauko g."
+  "address": "Nemenčinė Lauko g.",
+  "currency": "eur"
 }
 
 @restaurantId = {{postCreateRestaurant.response.body.data.id}}

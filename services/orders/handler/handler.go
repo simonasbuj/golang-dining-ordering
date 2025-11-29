@@ -2,7 +2,7 @@
 package handler
 
 import (
-	"errors"
+	"fmt"
 	"golang-dining-ordering/pkg/responses"
 	"golang-dining-ordering/services/orders/service"
 	"net/http"
@@ -37,7 +37,7 @@ func (h *Handler) HandleGetCurrentTableOrder(c echo.Context) error {
 		return responses.JSONError(
 			c,
 			"failed to get current order for table",
-			errors.New("failed to get current order for table"),
+			fmt.Errorf("handling get current table order: %w", err),
 			http.StatusInternalServerError,
 		)
 	}

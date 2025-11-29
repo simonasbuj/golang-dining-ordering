@@ -8,6 +8,7 @@ import (
 	db "golang-dining-ordering/services/management/db/generated"
 	"golang-dining-ordering/services/management/dto"
 	"math"
+	"strings"
 
 	"github.com/google/uuid"
 )
@@ -66,9 +67,10 @@ func (r *restaurantRepository) CreateRestaurant(
 	qtx := r.q.WithTx(tx)
 
 	res, err := qtx.InsertRestaurant(ctx, db.InsertRestaurantParams{
-		ID:      uuid.New(),
-		Name:    reqDto.Name,
-		Address: reqDto.Address,
+		ID:       uuid.New(),
+		Name:     reqDto.Name,
+		Address:  reqDto.Address,
+		Currency: strings.ToLower(reqDto.Currency),
 	})
 	if err != nil {
 		_ = tx.Rollback()
@@ -103,10 +105,11 @@ func (r *restaurantRepository) CreateRestaurant(
 	}
 
 	return &dto.CreateRestaurantDto{
-		ID:      res.ID,
-		UserID:  resMngr.UserID,
-		Name:    res.Name,
-		Address: res.Address,
+		ID:       res.ID,
+		UserID:   resMngr.UserID,
+		Name:     res.Name,
+		Address:  res.Address,
+		Currency: res.Currency,
 	}, nil
 }
 
@@ -148,6 +151,7 @@ func (r *restaurantRepository) GetRestaurantByID(
 		Name:      row.Name,
 		Address:   row.Address,
 		CreatedAt: row.CreatedAt,
+		Currency:  row.Currency,
 	}
 
 	return resDto, nil
@@ -244,6 +248,7 @@ func mapGetRestaurantsRows(rows []db.GetRestaurantsRow) []dto.RestaurantItemDto 
 			ID:        r.ID,
 			Name:      r.Name,
 			Address:   r.Address,
+			Currency:  r.Currency,
 			CreatedAt: r.CreatedAt,
 		}
 	}

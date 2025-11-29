@@ -46,6 +46,7 @@ type ManagementRestaurant struct {
 	ID        uuid.UUID    `json:"id"`
 	Name      string       `json:"name"`
 	Address   string       `json:"address"`
+	Currency  string       `json:"currency"`
 	CreatedAt time.Time    `json:"created_at"`
 	UpdatedAt time.Time    `json:"updated_at"`
 	DeletedAt sql.NullTime `json:"deleted_at"`
