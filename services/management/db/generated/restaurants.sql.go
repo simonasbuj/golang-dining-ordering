@@ -59,6 +59,7 @@ SELECT
     id,
     name,
     address,
+    currency,
     created_at
 FROM management.restaurants
 WHERE id = $1
@@ -68,6 +69,7 @@ type GetRestaurantByIDRow struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
+	Currency  string    `json:"currency"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -79,6 +81,7 @@ func (q *Queries) GetRestaurantByID(ctx context.Context, id uuid.UUID) (GetResta
 		&i.ID,
 		&i.Name,
 		&i.Address,
+		&i.Currency,
 		&i.CreatedAt,
 	)
 	return i, err
@@ -89,6 +92,7 @@ SELECT
     id,
     name,
     address,
+    currency,
     created_at
 FROM management.restaurants
 ORDER BY created_at DESC
@@ -105,6 +109,7 @@ type GetRestaurantsRow struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
+	Currency  string    `json:"currency"`
 	CreatedAt time.Time `json:"created_at"`
 }
 
@@ -122,6 +127,7 @@ func (q *Queries) GetRestaurants(ctx context.Context, arg GetRestaurantsParams) 
 			&i.ID,
 			&i.Name,
 			&i.Address,
+			&i.Currency,
 			&i.CreatedAt,
 		); err != nil {
 			return nil, err
@@ -173,24 +179,31 @@ func (q *Queries) GetTables(ctx context.Context, restaurantID uuid.UUID) ([]GetT
 }
 
 const insertRestaurant = `-- name: InsertRestaurant :one
-INSERT INTO management.restaurants (id, name, address)
-VALUES ($1, $2, $3)
-RETURNING id, name, address, created_at, updated_at, deleted_at
+INSERT INTO management.restaurants (id, name, address, currency)
+VALUES ($1, $2, $3, $4)
+RETURNING id, name, address, currency, created_at, updated_at, deleted_at
 `
 
 type InsertRestaurantParams struct {
-	ID      uuid.UUID `json:"id"`
-	Name    string    `json:"name"`
-	Address string    `json:"address"`
+	ID       uuid.UUID `json:"id"`
+	Name     string    `json:"name"`
+	Address  string    `json:"address"`
+	Currency string    `json:"currency"`
 }
 
 func (q *Queries) InsertRestaurant(ctx context.Context, arg InsertRestaurantParams) (ManagementRestaurant, error) {
-	row := q.db.QueryRowContext(ctx, insertRestaurant, arg.ID, arg.Name, arg.Address)
+	row := q.db.QueryRowContext(ctx, insertRestaurant,
+		arg.ID,
+		arg.Name,
+		arg.Address,
+		arg.Currency,
+	)
 	var i ManagementRestaurant
 	err := row.Scan(
 		&i.ID,
 		&i.Name,
 		&i.Address,
+		&i.Currency,
 		&i.CreatedAt,
 		&i.UpdatedAt,
 		&i.DeletedAt,
@@ -301,14 +314,23 @@ type UpdateRestaurantParams struct {
 	DeleteFlag sql.NullBool   `json:"delete_flag"`
 }
 
-func (q *Queries) UpdateRestaurant(ctx context.Context, arg UpdateRestaurantParams) (ManagementRestaurant, error) {
+type UpdateRestaurantRow struct {
+	ID        uuid.UUID    `json:"id"`
+	Name      string       `json:"name"`
+	Address   string       `json:"address"`
+	CreatedAt time.Time    `json:"created_at"`
+	UpdatedAt time.Time    `json:"updated_at"`
+	DeletedAt sql.NullTime `json:"deleted_at"`
+}
+
+func (q *Queries) UpdateRestaurant(ctx context.Context, arg UpdateRestaurantParams) (UpdateRestaurantRow, error) {
 	row := q.db.QueryRowContext(ctx, updateRestaurant,
 		arg.ID,
 		arg.Name,
 		arg.Address,
 		arg.DeleteFlag,
 	)
-	var i ManagementRestaurant
+	var i UpdateRestaurantRow
 	err := row.Scan(
 		&i.ID,
 		&i.Name,

@@ -9,10 +9,11 @@ import (
 
 // CreateRestaurantDto represents the payload for creating a new restaurant.
 type CreateRestaurantDto struct {
-	ID      uuid.UUID `json:"id"`
-	UserID  uuid.UUID `json:"user_id"`
-	Name    string    `json:"name"    validate:"required"`
-	Address string    `json:"address" validate:"required"`
+	ID       uuid.UUID `json:"id"`
+	UserID   uuid.UUID `json:"user_id"`
+	Name     string    `json:"name"     validate:"required"`
+	Address  string    `json:"address"  validate:"required"`
+	Currency string    `json:"currency" validate:"required,len=3"`
 }
 
 // GetRestaurantsReqDto represents pagination parameters for fetching restaurants.
@@ -26,6 +27,7 @@ type RestaurantItemDto struct {
 	ID        uuid.UUID `json:"id"`
 	Name      string    `json:"name"`
 	Address   string    `json:"address"`
+	Currency  string    `json:"currency"`
 	CreatedAt time.Time `json:"created_at"`
 }
 

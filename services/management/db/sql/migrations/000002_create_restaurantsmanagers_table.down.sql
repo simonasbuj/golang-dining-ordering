@@ -1,1 +1,1 @@
-DROP TABLE IF EXISTS management.restaurant_managers;
+DROP TABLE IF EXISTS management.restaurants_managers;
