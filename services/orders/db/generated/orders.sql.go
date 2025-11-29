@@ -7,9 +7,42 @@ package db
 
 import (
 	"context"
+	"database/sql"
 
 	"github.com/google/uuid"
 )
+
+const addOrderItem = `-- name: AddOrderItem :one
+INSERT INTO orders.orders_items (
+    id,
+    order_id,
+    item_id,
+    item_name,
+    price_in_cents
+) VALUES ($1, $2, $3, $4, $5)
+RETURNING order_id
+`
+
+type AddOrderItemParams struct {
+	ID           uuid.UUID     `json:"id"`
+	OrderID      uuid.UUID     `json:"order_id"`
+	ItemID       uuid.NullUUID `json:"item_id"`
+	ItemName     string        `json:"item_name"`
+	PriceInCents int           `json:"price_in_cents"`
+}
+
+func (q *Queries) AddOrderItem(ctx context.Context, arg AddOrderItemParams) (uuid.UUID, error) {
+	row := q.db.QueryRowContext(ctx, addOrderItem,
+		arg.ID,
+		arg.OrderID,
+		arg.ItemID,
+		arg.ItemName,
+		arg.PriceInCents,
+	)
+	var order_id uuid.UUID
+	err := row.Scan(&order_id)
+	return order_id, err
+}
 
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders.orders (
@@ -48,6 +81,97 @@ func (q *Queries) GetCurrentOrder(ctx context.Context, tableID uuid.UUID) (uuid.
 	var id uuid.UUID
 	err := row.Scan(&id)
 	return id, err
+}
+
+const getMenuItem = `-- name: GetMenuItem :one
+SELECT 
+    i.id,
+    m.id as restaurant_id,
+    i.name,
+    i.price_in_cents
+FROM management.items i 
+    LEFT JOIN management.categories c on c.id = i.category_id
+    LEFT JOIN management.menus m on m.id = c.menu_id
+WHERE i.id = $1
+`
+
+type GetMenuItemRow struct {
+	ID           uuid.UUID     `json:"id"`
+	RestaurantID uuid.NullUUID `json:"restaurant_id"`
+	Name         string        `json:"name"`
+	PriceInCents int           `json:"price_in_cents"`
+}
+
+func (q *Queries) GetMenuItem(ctx context.Context, id uuid.UUID) (GetMenuItemRow, error) {
+	row := q.db.QueryRowContext(ctx, getMenuItem, id)
+	var i GetMenuItemRow
+	err := row.Scan(
+		&i.ID,
+		&i.RestaurantID,
+		&i.Name,
+		&i.PriceInCents,
+	)
+	return i, err
+}
+
+const getOrderItems = `-- name: GetOrderItems :many
+SELECT
+    o.id,
+    r.id as restaurant_id,
+    o.status,
+    o.currency,
+    o.tip_amount_in_cents,
+    i.item_id,
+    i.item_name,
+    i.price_in_cents
+FROM orders.orders o
+    LEFT JOIN orders.orders_items i ON o.id = i.order_id
+    LEFT JOIN management.tables t on t.id = o.table_id
+    LEFT JOIN management.restaurants r on r.id = t.restaurant_id
+WHERE o.id = $1
+`
+
+type GetOrderItemsRow struct {
+	ID               uuid.UUID      `json:"id"`
+	RestaurantID     uuid.NullUUID  `json:"restaurant_id"`
+	Status           OrderStatus    `json:"status"`
+	Currency         string         `json:"currency"`
+	TipAmountInCents sql.NullInt32  `json:"tip_amount_in_cents"`
+	ItemID           uuid.NullUUID  `json:"item_id"`
+	ItemName         sql.NullString `json:"item_name"`
+	PriceInCents     sql.NullInt32  `json:"price_in_cents"`
+}
+
+func (q *Queries) GetOrderItems(ctx context.Context, id uuid.UUID) ([]GetOrderItemsRow, error) {
+	rows, err := q.db.QueryContext(ctx, getOrderItems, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetOrderItemsRow
+	for rows.Next() {
+		var i GetOrderItemsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.RestaurantID,
+			&i.Status,
+			&i.Currency,
+			&i.TipAmountInCents,
+			&i.ItemID,
+			&i.ItemName,
+			&i.PriceInCents,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
 }
 
 const getTableCurrency = `-- name: GetTableCurrency :one

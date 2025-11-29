@@ -117,10 +117,21 @@ type ManagementTable struct {
 }
 
 type OrdersOrder struct {
-	ID        uuid.UUID   `json:"id"`
-	TableID   uuid.UUID   `json:"table_id"`
-	Status    OrderStatus `json:"status"`
-	Currency  string      `json:"currency"`
-	CreatedAt time.Time   `json:"created_at"`
-	UpdatedAt time.Time   `json:"updated_at"`
+	ID               uuid.UUID     `json:"id"`
+	TableID          uuid.UUID     `json:"table_id"`
+	Status           OrderStatus   `json:"status"`
+	Currency         string        `json:"currency"`
+	TipAmountInCents sql.NullInt32 `json:"tip_amount_in_cents"`
+	CreatedAt        time.Time     `json:"created_at"`
+	UpdatedAt        time.Time     `json:"updated_at"`
+}
+
+type OrdersOrdersItem struct {
+	ID           uuid.UUID     `json:"id"`
+	OrderID      uuid.UUID     `json:"order_id"`
+	ItemID       uuid.NullUUID `json:"item_id"`
+	ItemName     string        `json:"item_name"`
+	PriceInCents int           `json:"price_in_cents"`
+	CreatedAt    time.Time     `json:"created_at"`
+	UpdatedAt    time.Time     `json:"updated_at"`
 }

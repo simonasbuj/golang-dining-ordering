@@ -27,4 +27,5 @@ func AddOrdersRoutes(
 		"/secret-route",
 		func(c echo.Context) error { return responses.JSONSuccess(c, "secret route only for employees", nil) },
 	)
+	publicAPI.POST("/:order_id/items", h.HandleAddItemToOrder)
 }
