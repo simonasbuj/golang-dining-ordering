@@ -58,7 +58,7 @@ func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
 		return err
 	}
 
-	var reqDto dto.AddItemToOrderRequestDto
+	var reqDto dto.OrderItemRequestDto
 
 	err = validation.ValidateDto(c, &reqDto)
 	if err != nil {
@@ -81,4 +81,67 @@ func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
 	}
 
 	return responses.JSONSuccess(c, "item added to order", respDto)
+}
+
+// HandleDeleteItemFromOrder handles http request to delete an item from an order.
+func (h *Handler) HandleDeleteItemFromOrder(c echo.Context) error {
+	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.OrderItemRequestDto
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	respDto, err := h.svc.DeleteOrderItem(c.Request().Context(), reqDto.ItemID, orderID)
+	if err != nil {
+		if errors.Is(err, service.ErrOrderIsNotOpen) {
+			return responses.JSONError(c, err.Error(), err)
+		}
+
+		return responses.JSONError(c, "failed to delete item from order", err)
+	}
+
+	return responses.JSONSuccess(c, "deleted item from order", respDto)
+}
+
+// HandleUpdateOrder hanldes http request to update an order.
+func (h *Handler) HandleUpdateOrder(c echo.Context) error {
+	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
+	if err != nil {
+		return err
+	}
+
+	user, err := hndl.GetUserFromContext(c, false)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.UpdateOrderReqDto
+
+	reqDto.OrderID = orderID
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	respDto, err := h.svc.UpdateOrder(c.Request().Context(), &reqDto, user)
+	if err != nil {
+		if errors.Is(err, service.ErrOrderFinalized) ||
+			errors.Is(
+				err,
+				service.ErrUserCannotEditLockedOrder,
+			) || errors.Is(err, service.ErrPayloadEmpty) {
+			return responses.JSONError(c, err.Error(), err)
+		}
+
+		return responses.JSONError(c, "failed to update order", err, http.StatusInternalServerError)
+	}
+
+	return responses.JSONSuccess(c, "going to try to update", respDto)
 }

@@ -66,6 +66,20 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (uuid.
 	return id, err
 }
 
+const deleteOrderItem = `-- name: DeleteOrderItem :exec
+DELETE FROM orders.orders_items WHERE id = $1 and order_id = $2
+`
+
+type DeleteOrderItemParams struct {
+	ID      uuid.UUID `json:"id"`
+	OrderID uuid.UUID `json:"order_id"`
+}
+
+func (q *Queries) DeleteOrderItem(ctx context.Context, arg DeleteOrderItemParams) error {
+	_, err := q.db.ExecContext(ctx, deleteOrderItem, arg.ID, arg.OrderID)
+	return err
+}
+
 const getCurrentOrder = `-- name: GetCurrentOrder :one
 SELECT id
 FROM orders.orders
@@ -121,6 +135,7 @@ SELECT
     o.status,
     o.currency,
     o.tip_amount_in_cents,
+    i.id as order_item_id,
     i.item_id,
     i.item_name,
     i.price_in_cents
@@ -137,6 +152,7 @@ type GetOrderItemsRow struct {
 	Status           OrderStatus    `json:"status"`
 	Currency         string         `json:"currency"`
 	TipAmountInCents sql.NullInt32  `json:"tip_amount_in_cents"`
+	OrderItemID      uuid.NullUUID  `json:"order_item_id"`
 	ItemID           uuid.NullUUID  `json:"item_id"`
 	ItemName         sql.NullString `json:"item_name"`
 	PriceInCents     sql.NullInt32  `json:"price_in_cents"`
@@ -157,6 +173,7 @@ func (q *Queries) GetOrderItems(ctx context.Context, id uuid.UUID) ([]GetOrderIt
 			&i.Status,
 			&i.Currency,
 			&i.TipAmountInCents,
+			&i.OrderItemID,
 			&i.ItemID,
 			&i.ItemName,
 			&i.PriceInCents,
@@ -185,4 +202,50 @@ func (q *Queries) GetTableCurrency(ctx context.Context, id uuid.UUID) (string, e
 	var currency string
 	err := row.Scan(&currency)
 	return currency, err
+}
+
+const isUserRestaurantWaiter = `-- name: IsUserRestaurantWaiter :one
+SELECT id, user_id, restaurant_id, created_at, updated_at
+FROM management.restaurants_waiters
+WHERE user_id = $1
+  AND restaurant_id = $2
+`
+
+type IsUserRestaurantWaiterParams struct {
+	UserID       uuid.UUID `json:"user_id"`
+	RestaurantID uuid.UUID `json:"restaurant_id"`
+}
+
+// Check if a user is a waiter for a given restaurant
+func (q *Queries) IsUserRestaurantWaiter(ctx context.Context, arg IsUserRestaurantWaiterParams) (ManagementRestaurantsWaiter, error) {
+	row := q.db.QueryRowContext(ctx, isUserRestaurantWaiter, arg.UserID, arg.RestaurantID)
+	var i ManagementRestaurantsWaiter
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.RestaurantID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const updateOrder = `-- name: UpdateOrder :exec
+UPDATE orders.orders
+SET
+    status = COALESCE($2, status),
+    tip_amount_in_cents = COALESCE($3, tip_amount_in_cents),
+    updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateOrderParams struct {
+	ID               uuid.UUID       `json:"id"`
+	Status           NullOrderStatus `json:"status"`
+	TipAmountInCents sql.NullInt32   `json:"tip_amount_in_cents"`
+}
+
+func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) error {
+	_, err := q.db.ExecContext(ctx, updateOrder, arg.ID, arg.Status, arg.TipAmountInCents)
+	return err
 }

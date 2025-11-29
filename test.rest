@@ -75,6 +75,7 @@ Authorization: {{token}}
 @catId2 = {{postCreateCategory2.response.body.data.id}}
 
 ### Create Menu Item 01
+# @name postCreateItem01
 POST {{baseUrl}}/restaurants/{{restaurantId}}/menu/items
 Authorization: {{token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -97,7 +98,10 @@ Content-Disposition: form-data; name="description"
 Saldus, didelis
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
+@itemId1 = {{postCreateItem01.response.body.data.id}}
+
 ### Create Menu Item 02
+# @name postCreateItem02
 POST {{baseUrl}}/restaurants/{{restaurantId}}/menu/items
 Authorization: {{token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -120,7 +124,10 @@ Content-Disposition: form-data; name="description"
 Mažas, paprastas
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
 
+@itemId2 = {{postCreateItem02.response.body.data.id}}
+
 ### Create Menu Item 03
+# @name postCreateItem03
 POST {{baseUrl}}/restaurants/{{restaurantId}}/menu/items
 Authorization: {{token}}
 Content-Type: multipart/form-data; boundary=----WebKitFormBoundary7MA4YWxkTrZu0gW
@@ -142,6 +149,8 @@ Content-Disposition: form-data; name="description"
 
 Nežmoniškai daug sūrio
 ------WebKitFormBoundary7MA4YWxkTrZu0gW--
+
+@itemId3 = {{postCreateItem03.response.body.data.id}}
 
 ### Create Menu Item 04
 POST {{baseUrl}}/restaurants/{{restaurantId}}/menu/items
@@ -182,12 +191,73 @@ Content-Type: application/json
 }
 
 ### Add table 02
+# @name postAddTable
 POST {{baseUrl}}/restaurants/{{restaurantId}}/tables
 Authorization: {{token}}
 Content-Type: application/json
 
 {
-  "name": "T03",
+  "name": "T02",
   "capacity": 8
 }
 
+@tableId = {{postAddTable.response.body.data.id}}
+
+### Get Current Table Order
+# @name getCurrentTableOrder
+GET {{baseUrl}}/orders/current?tableId={{tableId}}
+Content-Type: application/json
+
+@orderId = {{getCurrentTableOrder.response.body.data.id}}
+
+### Add Item1 to Order
+POST {{baseUrl}}/orders/{{orderId}}/items
+Content-Type: application/json
+
+{
+  "item_id": "{{itemId1}}"
+}
+
+### Add Item2 to Order
+# @name postAddItemToOrder
+POST {{baseUrl}}/orders/{{orderId}}/items
+Content-Type: application/json
+
+{
+  "item_id": "{{itemId2}}"
+}
+
+@orderItemId = {{postAddItemToOrder.response.body.data.items[0].id}}
+
+### Delete Item from Order
+DELETE {{baseUrl}}/orders/{{orderId}}/items
+Content-Type: application/json
+
+{
+  "item_id": "{{orderItemId}}"
+}
+
+### Update Order
+PATCH {{baseUrl}}/orders/{{orderId}}
+Content-Type: application/json
+
+{
+  "tip_amount_in_cents": 222
+}
+
+### Lock Order
+PATCH {{baseUrl}}/orders/{{orderId}}
+Content-Type: application/json
+
+{
+  "status": "locked"
+}
+
+### Only restaurant waiter can edit Order now
+PATCH {{baseUrl}}/orders/{{orderId}}
+Content-Type: application/json
+Authorization: {{token}}
+
+{
+  "status": "open"
+}

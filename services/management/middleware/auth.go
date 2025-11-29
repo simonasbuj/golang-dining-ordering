@@ -2,10 +2,10 @@
 package middleware
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
-	"golang-dining-ordering/pkg/responses"
 	authDto "golang-dining-ordering/services/auth/dto"
 	"io"
 	"net/http"
@@ -25,36 +25,35 @@ type AuthResponse struct {
 }
 
 // AuthMiddleware validates JWT tokens by delegating to the Auth service.
-func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
+func AuthMiddleware(authServiceURL string, failOnMissingUser ...bool) echo.MiddlewareFunc {
 	return func(next echo.HandlerFunc) echo.HandlerFunc {
 		return func(c echo.Context) error {
-			token := c.Request().Header.Get("Authorization")
-			if token == "" {
-				return c.JSON(http.StatusUnauthorized, map[string]string{
-					"error": "missing Authorization header",
-				})
+			fail := true
+			if len(failOnMissingUser) > 0 {
+				fail = failOnMissingUser[0]
 			}
 
-			req, err := http.NewRequestWithContext(
-				c.Request().Context(),
-				http.MethodPost,
-				authServiceURL,
-				nil,
-			)
-			if err != nil {
-				return c.JSON(
-					http.StatusInternalServerError,
-					map[string]string{"error": "failed to create auth request"},
+			token := c.Request().Header.Get("Authorization")
+			if token == "" {
+				return handleAuthError(
+					c,
+					fail,
+					http.StatusUnauthorized,
+					"missing Authorization header",
+					nil,
+					next,
 				)
 			}
 
-			req.Header.Set("Authorization", token)
-
-			resp, err := http.DefaultClient.Do(req)
+			resp, err := callAuthService(c.Request().Context(), authServiceURL, token)
 			if err != nil {
-				return c.JSON(
+				return handleAuthError(
+					c,
+					fail,
 					http.StatusInternalServerError,
-					map[string]string{"error": "failed to reach auth service"},
+					"failed to reach auth service",
+					nil,
+					next,
 				)
 			}
 			defer resp.Body.Close() //nolint:errcheck
@@ -62,20 +61,18 @@ func AuthMiddleware(authServiceURL string) echo.MiddlewareFunc {
 			if resp.StatusCode != http.StatusOK {
 				body, _ := io.ReadAll(resp.Body)
 
-				c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
-				c.Response().WriteHeader(resp.StatusCode)
-				_, _ = c.Response().Write(body)
-
-				return errUnauthorized
+				return handleAuthError(c, fail, resp.StatusCode, "unauthorized", body, next)
 			}
 
 			err = parseAndStoreAuthResponse(c, resp)
 			if err != nil {
-				return responses.JSONError(
+				return handleAuthError(
 					c,
-					"failed to parse auth-service response",
-					err,
+					fail,
 					http.StatusInternalServerError,
+					"failed to parse auth-service response",
+					nil,
+					next,
 				)
 			}
 
@@ -109,6 +106,22 @@ func RoleMiddleware(allowedRoles ...authDto.Role) echo.MiddlewareFunc {
 }
 
 // parseAndStoreAuthResponse parses the auth service response and stores the claims in context.
+func callAuthService(ctx context.Context, url, token string) (*http.Response, error) {
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, nil)
+	if err != nil {
+		return nil, fmt.Errorf("failed to create auth request: %w", err)
+	}
+
+	req.Header.Set("Authorization", token)
+
+	resp, err := http.DefaultClient.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("calling auth service: %w", err)
+	}
+
+	return resp, nil
+}
+
 func parseAndStoreAuthResponse(c echo.Context, resp *http.Response) error {
 	defer resp.Body.Close() //nolint:errcheck
 
@@ -127,4 +140,31 @@ func parseAndStoreAuthResponse(c echo.Context, resp *http.Response) error {
 	c.Set(ContextKeyAuthUser, &authResp.Data)
 
 	return nil
+}
+
+func handleAuthError(
+	c echo.Context,
+	fail bool,
+	status int,
+	message string,
+	body []byte,
+	next echo.HandlerFunc,
+) error {
+	if !fail {
+		c.Set(ContextKeyAuthUser, &authDto.TokenClaimsDto{}) //nolint:exhaustruct
+
+		return next(c)
+	}
+
+	if body != nil {
+		c.Response().Header().Set(echo.HeaderContentType, echo.MIMEApplicationJSON)
+		c.Response().WriteHeader(status)
+		_, _ = c.Response().Write(body)
+
+		return errUnauthorized
+	}
+
+	err := c.JSON(status, map[string]string{"error": message})
+
+	return fmt.Errorf("sending response to client: %w", err)
 }

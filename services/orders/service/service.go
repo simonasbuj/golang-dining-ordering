@@ -5,18 +5,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	authDto "golang-dining-ordering/services/auth/dto"
 	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
 	"golang-dining-ordering/services/orders/repository"
 
 	"github.com/google/uuid"
-)
-
-var (
-	// ErrItemDoesNotBelongToRestaurant is returned when the item is from a different restaurant.
-	ErrItemDoesNotBelongToRestaurant = errors.New("item does not belong to this restaurant")
-	// ErrOrderIsNotOpen returned when an operation is attempted on a finished or locked order.
-	ErrOrderIsNotOpen = errors.New("order is not open")
 )
 
 // Service defines business logic methods for orders service.
@@ -26,7 +20,26 @@ type Service interface {
 		tableID uuid.UUID,
 	) (*dto.CurrentOrderDto, error)
 	AddItemToOrder(ctx context.Context, orderID, itemID uuid.UUID) (*dto.OrderDto, error)
+	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) (*dto.OrderDto, error)
+	UpdateOrder(
+		ctx context.Context,
+		reqDto *dto.UpdateOrderReqDto,
+		claims *authDto.TokenClaimsDto,
+	) (*dto.OrderDto, error)
 }
+
+var (
+	// ErrItemDoesNotBelongToRestaurant is returned when the item is from a different restaurant.
+	ErrItemDoesNotBelongToRestaurant = errors.New("item does not belong to this restaurant")
+	// ErrOrderIsNotOpen is returned when an operation is attempted on a finished or locked order.
+	ErrOrderIsNotOpen = errors.New("order is not open")
+	// ErrPayloadEmpty is returned when all fields in payload are empty.
+	ErrPayloadEmpty = errors.New("payload is empty")
+	// ErrOrderFinalized is returned when an order cannot be modified because its is completed or canceled.
+	ErrOrderFinalized = errors.New("order cannot be edited anymore since it's finalized")
+	// ErrUserCannotEditLockedOrder is returned when the current user is not allowed to edit an order that is locked.
+	ErrUserCannotEditLockedOrder = errors.New("this user cannot edit locked orders")
+)
 
 type service struct {
 	repo repository.Repo
@@ -87,7 +100,7 @@ func (s *service) AddItemToOrder(
 		return nil, ErrItemDoesNotBelongToRestaurant
 	}
 
-	if currentOrder.Status != string(db.OrderStatusOpen) {
+	if currentOrder.Status != db.OrderStatusOpen {
 		return nil, ErrOrderIsNotOpen
 	}
 
@@ -102,4 +115,76 @@ func (s *service) AddItemToOrder(
 	}
 
 	return respDto, nil
+}
+
+func (s *service) DeleteOrderItem(
+	ctx context.Context,
+	orderItemID, orderID uuid.UUID,
+) (*dto.OrderDto, error) {
+	currentOrder, err := s.repo.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting current order: %w", err)
+	}
+
+	if currentOrder.Status != db.OrderStatusOpen {
+		return nil, ErrOrderIsNotOpen
+	}
+
+	err = s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("deleting order item: %w", err)
+	}
+
+	respDto, err := s.repo.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting updated order items: %w", err)
+	}
+
+	return respDto, nil
+}
+
+func (s *service) UpdateOrder(
+	ctx context.Context,
+	reqDto *dto.UpdateOrderReqDto,
+	claims *authDto.TokenClaimsDto,
+) (*dto.OrderDto, error) {
+	if reqDto.Status == nil && reqDto.TipAmountInCents == nil {
+		return nil, ErrPayloadEmpty
+	}
+
+	currentOrder, err := s.repo.GetOrderItems(ctx, reqDto.OrderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting current order: %w", err)
+	}
+
+	if s.isOrderFinalized(currentOrder) {
+		return nil, ErrOrderFinalized
+	}
+
+	if currentOrder.Status == db.OrderStatusLocked {
+		if claims.UserID == uuid.Nil {
+			return nil, ErrUserCannotEditLockedOrder
+		}
+
+		err = s.repo.IsUserRestaurantWaiter(ctx, claims.UserID, currentOrder.RestaurantID)
+		if err != nil {
+			return nil, ErrUserCannotEditLockedOrder
+		}
+	}
+
+	err = s.repo.UpdateOrder(ctx, reqDto)
+	if err != nil {
+		return nil, fmt.Errorf("updating order: %w", err)
+	}
+
+	updatedOrder, err := s.repo.GetOrderItems(ctx, reqDto.OrderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting updated order: %w", err)
+	}
+
+	return updatedOrder, nil
+}
+
+func (s *service) isOrderFinalized(order *dto.OrderDto) bool {
+	return order.Status == db.OrderStatusCancelled || order.Status == db.OrderStatusCompleted
 }

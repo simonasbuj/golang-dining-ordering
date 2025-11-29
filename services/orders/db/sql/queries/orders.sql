@@ -37,6 +37,7 @@ SELECT
     o.status,
     o.currency,
     o.tip_amount_in_cents,
+    i.id as order_item_id,
     i.item_id,
     i.item_name,
     i.price_in_cents
@@ -56,3 +57,21 @@ FROM management.items i
     LEFT JOIN management.categories c on c.id = i.category_id
     LEFT JOIN management.menus m on m.id = c.menu_id
 WHERE i.id = $1;
+
+-- name: DeleteOrderItem :exec
+DELETE FROM orders.orders_items WHERE id = $1 and order_id = $2;
+
+-- name: UpdateOrder :exec
+UPDATE orders.orders
+SET
+    status = COALESCE(sqlc.narg(status), status),
+    tip_amount_in_cents = COALESCE(sqlc.narg(tip_amount_in_cents), tip_amount_in_cents),
+    updated_at = NOW()
+WHERE id = $1;
+
+-- name: IsUserRestaurantWaiter :one
+-- Check if a user is a waiter for a given restaurant
+SELECT id, user_id, restaurant_id, created_at, updated_at
+FROM management.restaurants_waiters
+WHERE user_id = $1
+  AND restaurant_id = $2;

@@ -18,9 +18,18 @@ const (
 
 var errMissingUser = errors.New("missing user in context")
 
-func getUserFromContext(c echo.Context) (*authDto.TokenClaimsDto, error) {
+// GetUserFromContext parses User dto from echo context.
+func GetUserFromContext(
+	c echo.Context,
+	failOnMissingUser ...bool,
+) (*authDto.TokenClaimsDto, error) {
+	fail := true
+	if len(failOnMissingUser) > 0 {
+		fail = failOnMissingUser[0]
+	}
+
 	user, ok := c.Get(middleware.ContextKeyAuthUser).(*authDto.TokenClaimsDto)
-	if !ok || user.UserID == uuid.Nil {
+	if (!ok || user.UserID == uuid.Nil) && fail {
 		return nil, responses.JSONError(c, "unauthorized", errMissingUser)
 	}
 

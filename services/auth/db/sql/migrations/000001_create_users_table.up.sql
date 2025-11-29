@@ -22,4 +22,4 @@ CREATE TABLE IF NOT EXISTS auth.tokens (
     CONSTRAINT fk_token_user FOREIGN KEY (user_id)
         REFERENCES auth.users (id)
         ON DELETE CASCADE
-)
+);

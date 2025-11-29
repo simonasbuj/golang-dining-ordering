@@ -63,6 +63,7 @@ func (r *restaurantRepository) CreateRestaurant(
 	if err != nil {
 		return nil, fmt.Errorf("starting database transaction: %w", err)
 	}
+	defer tx.Rollback() //nolint:errcheck
 
 	qtx := r.q.WithTx(tx)
 
@@ -73,8 +74,6 @@ func (r *restaurantRepository) CreateRestaurant(
 		Currency: strings.ToLower(reqDto.Currency),
 	})
 	if err != nil {
-		_ = tx.Rollback()
-
 		return nil, fmt.Errorf("inserting new restaurant: %w", err)
 	}
 
@@ -84,9 +83,16 @@ func (r *restaurantRepository) CreateRestaurant(
 		RestaurantID: res.ID,
 	})
 	if err != nil {
-		_ = tx.Rollback()
-
 		return nil, fmt.Errorf("inserting new manager: %w", err)
+	}
+
+	_, err = qtx.InsertRestauranWaiter(ctx, db.InsertRestauranWaiterParams{
+		ID:           uuid.New(),
+		UserID:       reqDto.UserID,
+		RestaurantID: res.ID,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("inserting new waiter: %w", err)
 	}
 
 	_, err = qtx.InsertRestaurantMenu(ctx, db.InsertRestaurantMenuParams{
@@ -94,8 +100,6 @@ func (r *restaurantRepository) CreateRestaurant(
 		RestaurantID: res.ID,
 	})
 	if err != nil {
-		_ = tx.Rollback()
-
 		return nil, fmt.Errorf("inserting restaurant menu: %w", err)
 	}
 
