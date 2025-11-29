@@ -25,7 +25,7 @@ func NewMenuHandler(svc services.MenuService) *MenuHandler {
 
 // HandleAddMenuCategory handles adding a new menu category.
 func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
-	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
+	restaurantID, err := GetUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
 
 // HandleAddMenuItem handles HTTP requests to add a new menu item.
 func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
-	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
+	restaurantID, err := GetUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}
@@ -101,12 +101,12 @@ func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
 
 // HandleUpdateMenuItem updates a menu item for the specified restaurant.
 func (h *MenuHandler) HandleUpdateMenuItem(c echo.Context) error {
-	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
+	restaurantID, err := GetUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}
 
-	itemID, err := getUUUIDFromParams(c, menuItemIDParamName)
+	itemID, err := GetUUUIDFromParams(c, menuItemIDParamName)
 	if err != nil {
 		return err
 	}
@@ -145,7 +145,7 @@ func (h *MenuHandler) HandleUpdateMenuItem(c echo.Context) error {
 
 // HandleGetMenuItems retrieves all menu categories and items for a restaurant.
 func (h *MenuHandler) HandleGetMenuItems(c echo.Context) error {
-	restaurantID, err := getUUUIDFromParams(c, restaurantIDParamName)
+	restaurantID, err := GetUUUIDFromParams(c, restaurantIDParamName)
 	if err != nil {
 		return err
 	}

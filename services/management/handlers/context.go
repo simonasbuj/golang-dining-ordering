@@ -27,7 +27,8 @@ func getUserFromContext(c echo.Context) (*authDto.TokenClaimsDto, error) {
 	return user, nil
 }
 
-func getUUUIDFromParams(c echo.Context, paramName string) (uuid.UUID, error) {
+// GetUUUIDFromParams parses UUID from provided url param.
+func GetUUUIDFromParams(c echo.Context, paramName string) (uuid.UUID, error) {
 	id, err := uuid.Parse(c.Param(paramName))
 	if err != nil {
 		return uuid.Nil, responses.JSONError(
