@@ -109,7 +109,16 @@ func (s *service) DeleteOrderItem(
 	ctx context.Context,
 	orderItemID, orderID uuid.UUID,
 ) (*dto.OrderDto, error) {
-	err := s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
+	currentOrder, err := s.repo.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting current order: %w", err)
+	}
+
+	if currentOrder.Status != string(db.OrderStatusOpen) {
+		return nil, ErrOrderIsNotOpen
+	}
+
+	err = s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("deleting order item: %w", err)
 	}

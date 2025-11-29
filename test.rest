@@ -234,5 +234,5 @@ DELETE {{baseUrl}}/orders/{{orderId}}/items
 Content-Type: application/json
 
 {
-  "item_id": "b3ed3589-0bea-4ad2-a931-89429bb3032b"
+  "item_id": "8289501b-9fc6-43f7-b730-b01b861144ac"
 }
