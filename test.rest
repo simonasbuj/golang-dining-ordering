@@ -197,7 +197,7 @@ Authorization: {{token}}
 Content-Type: application/json
 
 {
-  "name": "T03",
+  "name": "T02",
   "capacity": 8
 }
 
@@ -234,5 +234,5 @@ DELETE {{baseUrl}}/orders/{{orderId}}/items
 Content-Type: application/json
 
 {
-  "item_id": "8289501b-9fc6-43f7-b730-b01b861144ac"
+  "item_id": "{{orderItemId}}"
 }

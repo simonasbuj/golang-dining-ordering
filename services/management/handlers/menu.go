@@ -30,7 +30,7 @@ func (h *MenuHandler) HandleAddMenuCategory(c echo.Context) error {
 		return err
 	}
 
-	user, err := getUserFromContext(c)
+	user, err := GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -68,7 +68,7 @@ func (h *MenuHandler) HandleAddMenuItem(c echo.Context) error {
 		return err
 	}
 
-	user, err := getUserFromContext(c)
+	user, err := GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (h *MenuHandler) HandleUpdateMenuItem(c echo.Context) error {
 		return err
 	}
 
-	user, err := getUserFromContext(c)
+	user, err := GetUserFromContext(c)
 	if err != nil {
 		return err
 	}

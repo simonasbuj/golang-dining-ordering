@@ -29,4 +29,9 @@ func AddOrdersRoutes(
 	)
 	publicAPI.POST("/:order_id/items", h.HandleAddItemToOrder)
 	publicAPI.DELETE("/:order_id/items", h.HandleDeleteItemFromOrder)
+	publicAPI.PATCH(
+		"/:order_id",
+		h.HandleUpdateOrder,
+		middleware.AuthMiddleware(authEndpoint, false),
+	)
 }

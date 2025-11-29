@@ -104,3 +104,13 @@ func (h *Handler) HandleDeleteItemFromOrder(c echo.Context) error {
 
 	return responses.JSONSuccess(c, "deleted item from order", respDto)
 }
+
+// HandleUpdateOrder hanldes http request to update an order.
+func (h *Handler) HandleUpdateOrder(c echo.Context) error {
+	user, err := hndl.GetUserFromContext(c, false)
+	if err != nil {
+		return err
+	}
+
+	return responses.JSONSuccess(c, "going to try to update", user)
+}

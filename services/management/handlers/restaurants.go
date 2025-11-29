@@ -33,7 +33,7 @@ func (h *RestaurantsHandler) HandleCreateRestaurant(c echo.Context) error {
 		return responses.JSONError(c, err.Error(), err)
 	}
 
-	user, err := getUserFromContext(c)
+	user, err := GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (h *RestaurantsHandler) HandleUpdateRestaurant(c echo.Context) error {
 		return err
 	}
 
-	user, err := getUserFromContext(c)
+	user, err := GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
@@ -122,7 +122,7 @@ func (h *RestaurantsHandler) HandleCreateTable(c echo.Context) error {
 		return err
 	}
 
-	user, err := getUserFromContext(c)
+	user, err := GetUserFromContext(c)
 	if err != nil {
 		return err
 	}
