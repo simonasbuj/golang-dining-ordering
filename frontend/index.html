@@ -169,7 +169,8 @@
               <button 
                 class="btn btn-warning btn-sm flex-shrink-0"
                 @click="lockOrder"
-                x-show="order.status === 'open'"
+                x-show="
+                  order.status === 'open'  && order.total_price_in_cents > 0"
               >
                 Notify Waiter
               </button>
@@ -177,7 +178,9 @@
               <button 
                 class="btn btn-success btn-sm flex-shrink-0"
                 @click="console.log('init payment')"
-                x-show="order.status === 'locked'"
+                x-show="
+                  (order.status === 'locked' && (order.tip_amount_in_cents > 0 || order.total_price_in_cents > 0))
+                  || (order.status === 'open' && !order.total_price_in_cents > 0 && order.tip_amount_in_cents > 0)"
               >
                 Pay
               </button>
