@@ -5,7 +5,7 @@ import (
 	// "golang-dining-ordering/pkg/responses"
 	// authDto "golang-dining-ordering/services/auth/dto".
 	"golang-dining-ordering/services/management/middleware"
-	"golang-dining-ordering/services/orders/handler"
+	"golang-dining-ordering/services/orders/handlers"
 
 	"github.com/labstack/echo/v4"
 )
@@ -13,7 +13,8 @@ import (
 // AddOrdersRoutes registers orders related HTTP routes.
 func AddOrdersRoutes(
 	e *echo.Echo,
-	h *handler.Handler,
+	ordersHandler *handlers.OrdersHandler,
+	paymentsHandler *handlers.PaymentsHandler,
 	authEndpoint string,
 ) {
 	publicAPI := e.Group("/api/v1/orders")
@@ -22,13 +23,15 @@ func AddOrdersRoutes(
 	// 	middleware.RoleMiddleware(authDto.RoleManager, authDto.RoleWaiter),
 	// )
 
-	publicAPI.GET("/current", h.HandleGetCurrentTableOrder)
-	publicAPI.GET("/:order_id", h.HandleGetOrder)
-	publicAPI.POST("/:order_id/items", h.HandleAddItemToOrder)
-	publicAPI.DELETE("/:order_id/items", h.HandleDeleteItemFromOrder)
+	publicAPI.GET("/current", ordersHandler.HandleGetCurrentTableOrder)
+	publicAPI.GET("/:order_id", ordersHandler.HandleGetOrder)
+	publicAPI.POST("/:order_id/items", ordersHandler.HandleAddItemToOrder)
+	publicAPI.DELETE("/:order_id/items", ordersHandler.HandleDeleteItemFromOrder)
 	publicAPI.PATCH(
 		"/:order_id",
-		h.HandleUpdateOrder,
+		ordersHandler.HandleUpdateOrder,
 		middleware.AuthMiddleware(authEndpoint, false),
 	)
+
+	publicAPI.POST("/:order_id/payments", paymentsHandler.HandleCreateCheckout)
 }

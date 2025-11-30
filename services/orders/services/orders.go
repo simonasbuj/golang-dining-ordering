@@ -1,5 +1,5 @@
-// Package service provides business logic for orders creation and management.
-package service
+// Package services provides business logic for orders and payments creation and management.
+package services
 
 import (
 	"context"
@@ -13,8 +13,8 @@ import (
 	"github.com/google/uuid"
 )
 
-// Service defines business logic methods for orders service.
-type Service interface {
+// OrdersService defines business logic methods for orders service.
+type OrdersService interface {
 	GetOrCreateCurrentOrderForTable(
 		ctx context.Context,
 		tableID uuid.UUID,
@@ -44,22 +44,22 @@ var (
 	ErrUserCannotEditStatus = errors.New("user cannot edit status of this order")
 )
 
-type service struct {
-	repo repository.Repo
+type ordersService struct {
+	repo repository.OrdersRepo
 }
 
-// New creates a new orders service instance.
+// NewOrdersService creates a new orders service instance.
 //
 //revive:disable:unexported-return
-func New(repo repository.Repo) *service {
-	return &service{
+func NewOrdersService(repo repository.OrdersRepo) *ordersService {
+	return &ordersService{
 		repo: repo,
 	}
 }
 
 //revive:enable:unexported-return
 
-func (s *service) GetOrCreateCurrentOrderForTable(
+func (s *ordersService) GetOrCreateCurrentOrderForTable(
 	ctx context.Context,
 	tableID uuid.UUID,
 ) (*dto.CurrentOrderDto, error) {
@@ -85,7 +85,7 @@ func (s *service) GetOrCreateCurrentOrderForTable(
 	return respDto, nil
 }
 
-func (s *service) GetOrder(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error) {
+func (s *ordersService) GetOrder(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error) {
 	respDto, err := s.repo.GetOrderItems(ctx, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("getting order: %w", err)
@@ -94,7 +94,7 @@ func (s *service) GetOrder(ctx context.Context, orderID uuid.UUID) (*dto.OrderDt
 	return respDto, nil
 }
 
-func (s *service) AddItemToOrder(
+func (s *ordersService) AddItemToOrder(
 	ctx context.Context,
 	orderID, itemID uuid.UUID,
 ) (*dto.OrderDto, error) {
@@ -129,7 +129,7 @@ func (s *service) AddItemToOrder(
 	return respDto, nil
 }
 
-func (s *service) DeleteOrderItem(
+func (s *ordersService) DeleteOrderItem(
 	ctx context.Context,
 	orderItemID, orderID uuid.UUID,
 ) (*dto.OrderDto, error) {
@@ -155,7 +155,7 @@ func (s *service) DeleteOrderItem(
 	return respDto, nil
 }
 
-func (s *service) UpdateOrder(
+func (s *ordersService) UpdateOrder(
 	ctx context.Context,
 	reqDto *dto.UpdateOrderReqDto,
 	claims *authDto.TokenClaimsDto,
@@ -187,7 +187,7 @@ func (s *service) UpdateOrder(
 	return updatedOrder, nil
 }
 
-func (s *service) canUserEditOrder(
+func (s *ordersService) canUserEditOrder(
 	ctx context.Context,
 	order *dto.OrderDto,
 	claims *authDto.TokenClaimsDto,
@@ -208,11 +208,11 @@ func (s *service) canUserEditOrder(
 	return true, nil
 }
 
-func (s *service) isOrderFinalized(order *dto.OrderDto) bool {
+func (s *ordersService) isOrderFinalized(order *dto.OrderDto) bool {
 	return order.Status == db.OrderStatusCancelled || order.Status == db.OrderStatusCompleted
 }
 
-func (s *service) canUserEditLockedOrder(
+func (s *ordersService) canUserEditLockedOrder(
 	ctx context.Context,
 	order *dto.OrderDto,
 	claims *authDto.TokenClaimsDto,
@@ -232,7 +232,7 @@ func (s *service) canUserEditLockedOrder(
 	return true
 }
 
-func (s *service) canUserChangeStatus(
+func (s *ordersService) canUserChangeStatus(
 	reqDto *dto.UpdateOrderReqDto,
 	claims *authDto.TokenClaimsDto,
 ) bool {

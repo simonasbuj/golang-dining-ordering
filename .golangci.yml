@@ -35,6 +35,10 @@ linters:
       linters:
         - wrapcheck
       text: ".*"
+    - path: services/orders/paymentproviders/stripe # there are a bunch of optional fields in stripe that exhauststruct is complaining about
+      linters:
+        - exhaustruct
+      text: ".*"
     generated: lax
 formatters:
   enable:
