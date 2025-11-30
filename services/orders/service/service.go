@@ -39,6 +39,8 @@ var (
 	ErrOrderFinalized = errors.New("order cannot be edited anymore since it's finalized")
 	// ErrUserCannotEditLockedOrder is returned when the current user is not allowed to edit an order that is locked.
 	ErrUserCannotEditLockedOrder = errors.New("this user cannot edit locked orders")
+	// ErrUserCannotEditStatus is returned when the current user is not allowed to edit status of the order.
+	ErrUserCannotEditStatus = errors.New("user cannot edit status of this order")
 )
 
 type service struct {
@@ -157,19 +159,9 @@ func (s *service) UpdateOrder(
 		return nil, fmt.Errorf("getting current order: %w", err)
 	}
 
-	if s.isOrderFinalized(currentOrder) {
-		return nil, ErrOrderFinalized
-	}
-
-	if currentOrder.Status == db.OrderStatusLocked {
-		if claims.UserID == uuid.Nil {
-			return nil, ErrUserCannotEditLockedOrder
-		}
-
-		err = s.repo.IsUserRestaurantWaiter(ctx, claims.UserID, currentOrder.RestaurantID)
-		if err != nil {
-			return nil, ErrUserCannotEditLockedOrder
-		}
+	canEdit, err := s.canUserEditOrder(ctx, currentOrder, claims, reqDto)
+	if !canEdit || err != nil {
+		return nil, err
 	}
 
 	err = s.repo.UpdateOrder(ctx, reqDto)
@@ -185,6 +177,58 @@ func (s *service) UpdateOrder(
 	return updatedOrder, nil
 }
 
+func (s *service) canUserEditOrder(
+	ctx context.Context,
+	order *dto.OrderDto,
+	claims *authDto.TokenClaimsDto,
+	reqDto *dto.UpdateOrderReqDto,
+) (bool, error) {
+	if s.isOrderFinalized(order) {
+		return false, ErrOrderFinalized
+	}
+
+	if !s.canUserChangeStatus(reqDto, claims) {
+		return false, ErrUserCannotEditStatus
+	}
+
+	if !s.canUserEditLockedOrder(ctx, order, claims, reqDto) {
+		return false, ErrUserCannotEditLockedOrder
+	}
+
+	return true, nil
+}
+
 func (s *service) isOrderFinalized(order *dto.OrderDto) bool {
 	return order.Status == db.OrderStatusCancelled || order.Status == db.OrderStatusCompleted
+}
+
+func (s *service) canUserEditLockedOrder(
+	ctx context.Context,
+	order *dto.OrderDto,
+	claims *authDto.TokenClaimsDto,
+	reqDto *dto.UpdateOrderReqDto,
+) bool {
+	if order.Status == db.OrderStatusLocked && reqDto.Status != nil {
+		if claims.UserID == uuid.Nil {
+			return false
+		}
+
+		err := s.repo.IsUserRestaurantWaiter(ctx, claims.UserID, order.RestaurantID)
+		if err != nil {
+			return false
+		}
+	}
+
+	return true
+}
+
+func (s *service) canUserChangeStatus(
+	reqDto *dto.UpdateOrderReqDto,
+	claims *authDto.TokenClaimsDto,
+) bool {
+	if reqDto.Status != nil && *reqDto.Status != db.OrderStatusLocked && claims.UserID == uuid.Nil {
+		return false
+	}
+
+	return true
 }

@@ -136,7 +136,7 @@ func (h *Handler) HandleUpdateOrder(c echo.Context) error {
 			errors.Is(
 				err,
 				service.ErrUserCannotEditLockedOrder,
-			) || errors.Is(err, service.ErrPayloadEmpty) {
+			) || errors.Is(err, service.ErrPayloadEmpty) || errors.Is(err, service.ErrUserCannotEditStatus) {
 			return responses.JSONError(c, err.Error(), err)
 		}
 
