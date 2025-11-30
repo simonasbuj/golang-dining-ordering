@@ -20,7 +20,7 @@ type OrderItemRequestDto struct {
 // OrderDto represents a full order with items and totals.
 type OrderDto struct {
 	ID                uuid.UUID       `json:"id"`
-	RestaurantID      uuid.UUID       `json:"-"`
+	RestaurantID      uuid.UUID       `json:"restaurant_id"`
 	Status            db.OrderStatus  `json:"status"`
 	Currency          string          `json:"currency"`
 	TipAmountInCents  int             `json:"tip_amount_in_cents"`

@@ -2,8 +2,8 @@
 package routes
 
 import (
-	"golang-dining-ordering/pkg/responses"
-	authDto "golang-dining-ordering/services/auth/dto"
+	// "golang-dining-ordering/pkg/responses"
+	// authDto "golang-dining-ordering/services/auth/dto".
 	"golang-dining-ordering/services/management/middleware"
 	"golang-dining-ordering/services/orders/handler"
 
@@ -17,16 +17,13 @@ func AddOrdersRoutes(
 	authEndpoint string,
 ) {
 	publicAPI := e.Group("/api/v1/orders")
-	employeeAPI := publicAPI.Group("",
-		middleware.AuthMiddleware(authEndpoint),
-		middleware.RoleMiddleware(authDto.RoleManager, authDto.RoleWaiter),
-	)
+	// employeeAPI := publicAPI.Group("",
+	// 	middleware.AuthMiddleware(authEndpoint),
+	// 	middleware.RoleMiddleware(authDto.RoleManager, authDto.RoleWaiter),
+	// )
 
 	publicAPI.GET("/current", h.HandleGetCurrentTableOrder)
-	employeeAPI.GET(
-		"/secret-route",
-		func(c echo.Context) error { return responses.JSONSuccess(c, "secret route only for employees", nil) },
-	)
+	publicAPI.GET("/:order_id", h.HandleGetOrder)
 	publicAPI.POST("/:order_id/items", h.HandleAddItemToOrder)
 	publicAPI.DELETE("/:order_id/items", h.HandleDeleteItemFromOrder)
 	publicAPI.PATCH(

@@ -243,7 +243,7 @@ PATCH {{baseUrl}}/orders/{{orderId}}
 Content-Type: application/json
 
 {
-  "tip_amount_in_cents": 222
+  "tip_amount_in_cents": 245
 }
 
 ### Lock Order
