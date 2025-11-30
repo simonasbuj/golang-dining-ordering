@@ -6,6 +6,7 @@ function restaurantApp() {
     selectedRestaurantId: null,
     selectedTableId: null,
     order: null,
+    menu: null,
 
     async init() {
       try {
@@ -30,7 +31,10 @@ function restaurantApp() {
       } catch (err) {
         console.error('Failed to fetch tables:', err);
         this.tables = [];
+        return
       }
+
+      this.fetchMenu(this.selectedRestaurantId)
     },
 
     async selectTable(id) {
@@ -43,9 +47,23 @@ function restaurantApp() {
         const resJson = await res.json()
         orderId = resJson.data.id
         console.log("latest order for table is: ", orderId)
-
       } catch (err) {
         console.error('Failed to fetch current order for table: ', err)
+        return
+      }
+
+      this.fetchOrder(orderId)
+    },
+
+    async fetchMenu(id) {
+      if (id == null) return
+
+      try {
+         const res = await fetch(`/api/v1/restaurants/${this.selectedRestaurantId}/menu/items`)
+         const resJson = await res.json()
+         this.menu = resJson.data
+      } catch(err) {
+        console.error("Failed to fetch menu: ", err)
       }
     },
 
@@ -54,9 +72,69 @@ function restaurantApp() {
 
       try {
         const res = await fetch(`/api/v1/orders/${id}`)
+        const resJson = await res.json()
+        this.order = resJson.data
       } catch(err) {
         console.error('Failed to fetch order data: ', err)
       }
+    },
+
+    async addItemToOrder(itemId) {
+      if (itemId == null) return
+
+      try {
+        const res = await fetch(`/api/v1/orders/${this.order.id}/items`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            item_id: itemId
+          })
+        })
+        await this.raiseForStatus(res)
+
+        const respJson = await res.json()
+        this.order = respJson.data
+      } catch(err) {
+        console.error('Failed to add item to an order: ', err)
+      }
+    },
+
+    async removeItemFromOrder(itemId) {
+      if (itemId == null) return
+
+      try {
+        const res = await fetch(`/api/v1/orders/${this.order.id}/items`, {
+          method: "DELETE",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            item_id: itemId
+          })
+        })
+        await this.raiseForStatus(res)
+
+        const respJson = await res.json()
+        this.order = respJson.data
+      } catch(err) {
+        console.error('Failed to remove item from an order: ', err)
+      }
+    },
+
+    async raiseForStatus(res) {
+      if (!res.ok) {
+        let message;
+        try {
+          const data = await res.json();
+          message = data?.message || JSON.stringify(data);
+        } catch {
+          message = await res.text();
+        }
+        throw new Error(`HTTP ${res.status}: ${message}`);
+      }
+      return res;
     },
 
     countryCodeToFlagEmoji(code) {
