@@ -22,6 +22,10 @@ function restaurantApp() {
     async selectRestaurant(id) {
       if (this.selectedRestaurantId === id) return
 
+      this.order = null
+      this.menu = null
+      this.selectedTableId = null
+
       this.selectedRestaurantId = id;
       this.tables = []; // Clear old tables while loading
 
