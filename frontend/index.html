@@ -84,7 +84,7 @@
               <div class="pe-3">
                 <div class="d-flex align-items-center mb-1">
                   <span class="fs-5 fw-semibold me-2" x-text="item.name"></span>
-                  <span class="badge bg-secondary" x-text="(item.price_in_cents / 100).toFixed(2)"></span>
+                  <span class="badge bg-secondary" x-text="centsToFloat(item.price_in_cents)"></span>
                 </div>
                 <p class="text-muted mb-0" x-text="item.description"></p>
               </div>
@@ -110,11 +110,11 @@
           <div class="d-flex justify-content-between align-items-center p-3 rounded">
             <div class="d-flex flex-column">
               <span class="text-muted small">Total Price</span>
-              <span class="fs-5 fw-bold" x-text="`${(order.total_price_in_cents / 100).toFixed(2)}`"></span>
+              <span class="fs-5 fw-bold" x-text="centsToFloat(order.total_price_in_cents)"></span>
             </div>
             <div class="d-flex flex-column text-end">
               <span class="text-muted small">Tip</span>
-              <span class="fs-5 fw-bold text-success" x-text="`${(order.tip_amount_in_cents / 100).toFixed(2)}`"></span>
+              <span class="fs-5 fw-bold text-success" x-text="centsToFloat(order.tip_amount_in_cents)"></span>
             </div>
 
           </div>
@@ -124,7 +124,7 @@
                 <div class="list-group-item d-flex justify-content-between">
                   <span>
                     <span x-text="orderItem.name"></span>
-                    <span class="text-muted" x-text="(orderItem.price_in_cents / 100).toFixed(2)"></span>
+                    <span class="text-muted" x-text="centsToFloat(orderItem.price_in_cents)"></span>
                   </span>
                   <button 
                     class="btn btn-danger btn-sm align-items-center justify-content-center p-1"
@@ -142,6 +142,46 @@
           <template x-if="!order.items || order.items.length === 0">
             <p class="text-muted">No items yet.</p>
           </template>
+
+          <!-- add tip, lock order, init payment -->
+          <div class="d-flex flex-column flex-md-row gap-3 p-3 rounded border shadow-sm bg-light align-items-center">
+
+            <div class="d-flex align-items-center gap-2 flex-grow-1">
+              <input 
+                type="number" 
+                min="0"
+                step="1"
+                max="20000"
+                x-model.number="tipAmount"
+                class="form-control form-control-sm"
+                placeholder="Tip amount"
+                style="max-width: 120px;"
+              >
+              <button 
+                class="btn btn-primary btn-sm"
+                @click="editTip(tipAmount)"
+              >
+                Tip
+              </button>
+            </div>
+
+            <button 
+              class="btn btn-warning btn-sm flex-shrink-0"
+              @click="lockOrder"
+              x-show="order.status === 'open'"
+            >
+              Notify Waiter
+            </button>
+
+            <button 
+              class="btn btn-success btn-sm flex-shrink-0"
+              @click="console.log('init payment')"
+              x-show="order.status === 'locked'"
+            >
+              Pay
+            </button>
+
+          </div>
         </div>
       </div>
     </div>
