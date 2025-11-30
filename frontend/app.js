@@ -4,6 +4,8 @@ function restaurantApp() {
     restaurants: [],
     tables: [],
     selectedRestaurantId: null,
+    selectedTableId: null,
+    order: null,
 
     async init() {
       try {
@@ -16,9 +18,7 @@ function restaurantApp() {
     },
 
     async selectRestaurant(id) {
-      if (this.selectedRestaurantId === id) {
-        return;
-      }
+      if (this.selectedRestaurantId === id) return
 
       this.selectedRestaurantId = id;
       this.tables = []; // Clear old tables while loading
@@ -30,6 +30,32 @@ function restaurantApp() {
       } catch (err) {
         console.error('Failed to fetch tables:', err);
         this.tables = [];
+      }
+    },
+
+    async selectTable(id) {
+      if (this.selectedTableId === id) return 
+
+      this.selectedTableId = id
+
+      try {
+        const res = await fetch(`/api/v1/orders/current?tableId=${id}`)
+        const resJson = await res.json()
+        orderId = resJson.data.id
+        console.log("latest order for table is: ", orderId)
+
+      } catch (err) {
+        console.error('Failed to fetch current order for table: ', err)
+      }
+    },
+
+    async fetchOrder(id) {
+      if (id == null) return
+
+      try {
+        const res = await fetch(`/api/v1/orders/${id}`)
+      } catch(err) {
+        console.error('Failed to fetch order data: ', err)
       }
     },
 

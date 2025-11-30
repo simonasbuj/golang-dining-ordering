@@ -51,6 +51,21 @@ func (h *Handler) HandleGetCurrentTableOrder(c echo.Context) error {
 	return responses.JSONSuccess(c, "fetched current order", respDto)
 }
 
+// HandleGetOrder handles getting order by id.
+func (h *Handler) HandleGetOrder(c echo.Context) error {
+	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
+	if err != nil {
+		return err
+	}
+
+	respDto, err := h.svc.GetOrder(c.Request().Context(), orderID)
+	if err != nil {
+		return responses.JSONError(c, "failed to fetch order", err, http.StatusInternalServerError)
+	}
+
+	return responses.JSONSuccess(c, "fetched order details", respDto)
+}
+
 // HandleAddItemToOrder handles http request to add item to order.
 func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
 	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)

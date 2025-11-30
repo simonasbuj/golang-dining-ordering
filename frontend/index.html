@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="icon" type="image/png" href="dine-icon-centered.png">
+  <link rel="icon" type="image/png" href="dine-icon.png">
   <title>Restaurants & Tables</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
 
@@ -52,7 +52,11 @@
     <div class="row g-3">
       <template x-for="table in tables" :key="table.id">
         <div class="col-6 col-md-3">
-          <div class="card text-center selectable">
+          <div 
+            class="card text-center selectable"
+            :class="selectedTableId === table.id ? 'selected' : ''"
+            @click="selectTable(table.id)"
+          >
             <div class="card-body">
               <h6 class="card-title" x-text="'Table: ' + table.name"></h6>
               <p class="card-text" x-text="'Seats: ' + table.capacity"></p>

@@ -19,6 +19,7 @@ type Service interface {
 		ctx context.Context,
 		tableID uuid.UUID,
 	) (*dto.CurrentOrderDto, error)
+	GetOrder(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error)
 	AddItemToOrder(ctx context.Context, orderID, itemID uuid.UUID) (*dto.OrderDto, error)
 	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) (*dto.OrderDto, error)
 	UpdateOrder(
@@ -79,6 +80,15 @@ func (s *service) GetOrCreateCurrentOrderForTable(
 	respDto, err = s.repo.CreateOrderForTable(ctx, tableID, currency)
 	if err != nil {
 		return nil, fmt.Errorf("creating new order: %w", err)
+	}
+
+	return respDto, nil
+}
+
+func (s *service) GetOrder(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error) {
+	respDto, err := s.repo.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return nil, fmt.Errorf("getting order: %w", err)
 	}
 
 	return respDto, nil
