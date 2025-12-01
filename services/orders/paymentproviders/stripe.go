@@ -2,26 +2,42 @@ package paymentproviders
 
 import (
 	"context"
+	"encoding/json"
+	"errors"
 	"fmt"
 	"golang-dining-ordering/services/orders/dto"
 
 	"github.com/stripe/stripe-go/v84"
 	"github.com/stripe/stripe-go/v84/checkout/session"
+	"github.com/stripe/stripe-go/v84/webhook"
 )
 
+var (
+	// ErrUnknownWebhookEventType is returned when unknown Stripe webhook event is received.
+	ErrUnknownWebhookEventType = errors.New("unhandled event type")
+	// ErrOrderIDMissingInMetadata is returned when 'order_id' is missing from Stripe payment intent metadata.
+	ErrOrderIDMissingInMetadata = errors.New("order_id missing from payment metadata")
+)
+
+const metadataKeyOrderID = "order_id"
+
 // StripePaymentProvider implements the PaymentProvider interface.
-type StripePaymentProvider struct{}
+type StripePaymentProvider struct {
+	webhookSecret string
+}
 
 // NewStripePaymentProvider creates an instance of stripe payment provider
 // it panics if secretKey is not provided.
-func NewStripePaymentProvider(secretKey string) *StripePaymentProvider {
-	if secretKey == "" {
-		panic("secretKey is required for StripePaymentProvider")
+func NewStripePaymentProvider(secretKey, webhookSecret string) *StripePaymentProvider {
+	if secretKey == "" || webhookSecret == "" {
+		panic("secretKey and webhookSecret is required for StripePaymentProvider")
 	}
 
 	stripe.Key = secretKey
 
-	return &StripePaymentProvider{}
+	return &StripePaymentProvider{
+		webhookSecret: webhookSecret,
+	}
 }
 
 // CreateCheckoutSession creates checkout session for provided order items and returns it's url.
@@ -39,7 +55,7 @@ func (p *StripePaymentProvider) CreateCheckoutSession(
 		CancelURL:  stripe.String(reqDto.CancelURL),
 		PaymentIntentData: &stripe.CheckoutSessionPaymentIntentDataParams{
 			Metadata: map[string]string{
-				"order_id": reqDto.OrderDto.ID.String(),
+				metadataKeyOrderID: reqDto.OrderDto.ID.String(),
 			},
 		},
 		LineItems: lineItems,
@@ -51,6 +67,37 @@ func (p *StripePaymentProvider) CreateCheckoutSession(
 	}
 
 	return s.URL, nil
+}
+
+// HandlePaymentSuccessWebhook handles successful payment webhook request.
+func (p *StripePaymentProvider) HandlePaymentSuccessWebhook(
+	payload []byte,
+	sigHeader string,
+) (*dto.PaymentSuccessWebhookResponseDto, error) {
+	event, err := webhook.ConstructEvent(payload, sigHeader, p.webhookSecret)
+	if err != nil {
+		return nil, fmt.Errorf("veryfing stripe webhook signature: %w", err)
+	}
+
+	if event.Type != "payment_intent.succeeded" {
+		return nil, fmt.Errorf("%w: %s", ErrUnknownWebhookEventType, event.Type)
+	}
+
+	var pi stripe.PaymentIntent
+
+	err = json.Unmarshal(event.Data.Raw, &pi)
+	if err != nil {
+		return nil, fmt.Errorf("unmarhsaling payment_intent: %w", err)
+	}
+
+	orderID, ok := pi.Metadata[metadataKeyOrderID]
+	if !ok || orderID == "" {
+		return nil, ErrOrderIDMissingInMetadata
+	}
+
+	return &dto.PaymentSuccessWebhookResponseDto{
+		OrderID: orderID,
+	}, nil
 }
 
 func (p *StripePaymentProvider) createLineItems(

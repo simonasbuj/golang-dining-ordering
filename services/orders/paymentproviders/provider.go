@@ -12,4 +12,8 @@ type PaymentProvider interface {
 		ctx context.Context,
 		reqDto *dto.CheckoutSessionRequestDto,
 	) (string, error)
+	HandlePaymentSuccessWebhook(
+		payload []byte,
+		sigHeader string,
+	) (*dto.PaymentSuccessWebhookResponseDto, error)
 }

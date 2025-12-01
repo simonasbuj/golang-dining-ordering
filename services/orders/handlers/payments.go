@@ -49,3 +49,5 @@ func (h *PaymentsHandler) HandleCreateCheckout(c echo.Context) error {
 
 	return responses.JSONSuccess(c, "going to create new payment session", respDto)
 }
+
+// func (h *PaymentsHandler) ()

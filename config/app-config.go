@@ -13,4 +13,5 @@ type AppConfig struct {
 	MaxImageSizeBytes        int64  `env:"DINE_MAX_IMAGE_SIZE_BYTES"`
 	UploadsDirectory         string `env:"DINE_UPLOADS_DIRECTORY"`
 	StripeSecretKey          string `env:"STRIPE_SECRET_KEY"`
+	StripeWebhookSecret      string `env:"STRIPE_WEBHOOK_SECRET"`
 }

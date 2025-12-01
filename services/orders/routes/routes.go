@@ -34,4 +34,5 @@ func AddOrdersRoutes(
 	)
 
 	publicAPI.POST("/:order_id/payments", paymentsHandler.HandleCreateCheckout)
+	// publicAPI.POST("/webhooks/stripe/payment-success", paymentsHandler.HandleWebhookSuccess)
 }

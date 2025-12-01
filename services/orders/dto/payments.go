@@ -11,3 +11,8 @@ type CheckoutSessionRequestDto struct {
 type CheckoutSessionResponseDto struct {
 	URL string `json:"url"`
 }
+
+// PaymentSuccessWebhookResponseDto represents the response returned after successful payment webhook is handled.
+type PaymentSuccessWebhookResponseDto struct {
+	OrderID string `json:"order_id"`
+}
