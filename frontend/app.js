@@ -18,7 +18,13 @@ function restaurantApp() {
       this.CANCEL_URL = `${this.getBaseURL()}/frontend/index.html?cancel=true`;
 
       this.checkSuccessParam();
-      this.itemAddedToast = new bootstrap.Toast(document.getElementById('itemAddedToast'));
+      this.itemAddedToast = new bootstrap.Toast(
+        document.getElementById('itemAddedToast'),
+        {
+          autohide: true,
+          delay: 750
+        }
+      );
       try {
         const res = await fetch('/api/v1/restaurants');
         const response = await res.json();
