@@ -197,7 +197,7 @@
       </div>
     </template>
     <!-- TOASTERS :) -->
-    <div 
+      <div 
         id="paymentSuccessToast"
         class="toast align-items-center text-bg-success border-0 position-fixed top-0 start-50 translate-middle-x m-3"
         role="alert" 
@@ -222,6 +222,21 @@
         <div class="d-flex">
           <div class="toast-body">  
             Payment flow was canceled.
+          </div>
+          <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
+        </div>
+      </div>
+
+      <div 
+        id="itemAddedToast"
+        class="toast align-items-center text-bg-success border-0 position-fixed top-0 start-50 translate-middle-x m-3"
+        role="alert" 
+        aria-live="assertive" 
+        aria-atomic="true"
+      >
+        <div class="d-flex">
+          <div class="toast-body">
+            Item added.
           </div>
           <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast"></button>
         </div>

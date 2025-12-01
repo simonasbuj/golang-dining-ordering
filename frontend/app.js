@@ -18,6 +18,7 @@ function restaurantApp() {
       this.CANCEL_URL = `${this.getBaseURL()}/frontend/index.html?cancel=true`;
 
       this.checkSuccessParam();
+      this.itemAddedToast = new bootstrap.Toast(document.getElementById('itemAddedToast'));
       try {
         const res = await fetch('/api/v1/restaurants');
         const response = await res.json();
@@ -113,6 +114,7 @@ function restaurantApp() {
 
         this.order = respJson.data
         this.setTipAmount(this.order.tip_amount_in_cents)
+        this.showItemAddedToast()
       } catch(err) {
         console.error('Failed to add item to an order: ', err)
       }
@@ -241,12 +243,18 @@ function restaurantApp() {
       const toastEl = document.getElementById('paymentSuccessToast');
       const toast = new bootstrap.Toast(toastEl);
       toast.show();
+      toast.show();
+      toast.show();
     },
 
     showCancelToast() {
       const toastEl = document.getElementById('paymentCancelToast');
       const toast = new bootstrap.Toast(toastEl);
       toast.show();
+    },
+
+    showItemAddedToast() {
+      this.itemAddedToast.show();
     },
 
     updateCurrentOrder(updatedOrder) {
