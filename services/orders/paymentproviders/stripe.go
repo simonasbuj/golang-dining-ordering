@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
 	"net/http"
 
@@ -70,7 +71,7 @@ func (p *StripePaymentProvider) CreateCheckoutSession(
 
 	respDto := &dto.CheckoutSessionResponseDto{
 		URL:      s.URL,
-		Provider: "stripe",
+		Provider: db.PaymentProviderStripe,
 	}
 
 	return respDto, nil
@@ -80,7 +81,7 @@ func (p *StripePaymentProvider) CreateCheckoutSession(
 func (p *StripePaymentProvider) VerifySuccessWebhookEvent(
 	payload []byte,
 	header http.Header,
-) (*dto.PaymentSuccessWebhookResponseDto, error) {
+) (*dto.PaymentDto, error) {
 	sigHeader := header.Get("Stripe-Signature")
 
 	event, err := webhook.ConstructEvent(payload, sigHeader, p.webhookSecret)
@@ -109,9 +110,16 @@ func (p *StripePaymentProvider) VerifySuccessWebhookEvent(
 		return nil, fmt.Errorf("parsing orderID from payment intent: %w", err)
 	}
 
-	return &dto.PaymentSuccessWebhookResponseDto{
-		OrderID: orderID,
-	}, nil
+	respDto := &dto.PaymentDto{
+		ID:                uuid.New(),
+		OrderID:           orderID,
+		AmountInCents:     int(pi.AmountReceived),
+		Provider:          db.PaymentProviderStripe,
+		ProviderPaymentID: pi.ID,
+		Currency:          string(pi.Currency),
+	}
+
+	return respDto, nil
 }
 
 func (p *StripePaymentProvider) createLineItems(
