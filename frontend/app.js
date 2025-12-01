@@ -14,13 +14,14 @@ function restaurantApp() {
     loadingPayment: false,
 
     async init() {
+      this.SUCCESS_URL = `${this.getBaseURL()}/frontend/index.html?success=true`;
+      this.CANCEL_URL = `${this.getBaseURL()}/frontend/index.html?cancel=true`;
+
+      this.checkSuccessParam();
       try {
         const res = await fetch('/api/v1/restaurants');
         const response = await res.json();
         this.restaurants = response.data.restaurants;
-
-        this.SUCCESS_URL = `${this.getBaseURL()}/frontend/index.html?success=true`;
-        this.CANCEL_URL = `${this.getBaseURL()}/frontend/index.html?cancel=true`;
       } catch (err) {
         console.error('Failed to fetch restaurants:', err);
       }
@@ -159,7 +160,7 @@ function restaurantApp() {
         const resJson = await res.json()
         this.updateCurrentOrder(resJson.data)
       } catch(err) {
-        console.log("failed to update tip amount: ", err)
+        console.error("failed to update tip amount: ", err)
       }
     },
 
@@ -181,7 +182,7 @@ function restaurantApp() {
         const resJson = await res.json()
         this.updateCurrentOrder(resJson.data)
       } catch(err) {
-        console.log("failed to lock order: ", err)
+        console.error("failed to lock order: ", err)
       }      
     },
 
@@ -203,10 +204,9 @@ function restaurantApp() {
 
         const resJson = await res.json()
         checkoutUrl = resJson.data.url
-        console.log("checkout url: ", checkoutUrl)
         window.location.href = checkoutUrl
       } catch(err) {
-        console.log("failed to create checkout session: ", err)
+        console.error("failed to create checkout session: ", err)
         this.loadingPayment = false
       }
     },
@@ -223,6 +223,30 @@ function restaurantApp() {
         throw new Error(`HTTP ${res.status}: ${message}`);
       }
       return res;
+    },
+
+    checkSuccessParam() {
+      const params = new URLSearchParams(window.location.search);
+
+      if (params.get("success") === "true") {
+        this.showSuccessToast();
+      }
+
+      if (params.get("cancel") === "true") {
+        this.showCancelToast();
+      }
+    },
+
+    showSuccessToast() {
+      const toastEl = document.getElementById('paymentSuccessToast');
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
+    },
+
+    showCancelToast() {
+      const toastEl = document.getElementById('paymentCancelToast');
+      const toast = new bootstrap.Toast(toastEl);
+      toast.show();
     },
 
     updateCurrentOrder(updatedOrder) {

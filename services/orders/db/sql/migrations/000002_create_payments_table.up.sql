@@ -9,7 +9,7 @@ CREATE TABLE orders.payments (
     order_id UUID NOT NULL,
     amount_in_cents INT NOT NULL,
     currency varchar(3) NOT NULL,
-    provider payment_provider NOT NULL,
+    provider orders.payment_provider NOT NULL,
     provider_payment_id varchar(30) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
