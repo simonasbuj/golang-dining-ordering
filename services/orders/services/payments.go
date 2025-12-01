@@ -8,6 +8,7 @@ import (
 	"golang-dining-ordering/services/orders/dto"
 	"golang-dining-ordering/services/orders/paymentproviders"
 	"golang-dining-ordering/services/orders/repository"
+	"net/http"
 
 	"github.com/google/uuid"
 )
@@ -19,6 +20,11 @@ type PaymentsService interface {
 		orderID uuid.UUID,
 		reqDto *dto.CheckoutSessionRequestDto,
 	) (*dto.CheckoutSessionResponseDto, error)
+	HandleWebhookSuccess(
+		ctx context.Context,
+		payload []byte,
+		header http.Header,
+	) (*dto.PaymentSuccessWebhookResponseDto, error)
 }
 
 // ErrOrderPriceIsZero is returned when order's total amount and tip are 0.
@@ -61,12 +67,34 @@ func (s *paymentsService) CreateCheckout(
 
 	reqDto.OrderDto = order
 
-	checkoutURL, err := s.provider.CreateCheckoutSession(ctx, reqDto)
+	respDto, err := s.provider.CreateCheckoutSession(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("creating checkout session: %w", err)
 	}
 
-	respDto := &dto.CheckoutSessionResponseDto{URL: checkoutURL}
+	return respDto, nil
+}
+
+func (s *paymentsService) HandleWebhookSuccess(
+	ctx context.Context,
+	payload []byte,
+	header http.Header,
+) (*dto.PaymentSuccessWebhookResponseDto, error) {
+	respDto, err := s.provider.VerifySuccessWebhookEvent(payload, header)
+	if err != nil {
+		return nil, fmt.Errorf("verifying payment success webhook event: %w", err)
+	}
+
+	status := db.OrderStatusCompleted
+
+	err = s.ordersRepo.UpdateOrder(ctx, &dto.UpdateOrderReqDto{
+		OrderID:          respDto.OrderID,
+		Status:           &status,
+		TipAmountInCents: nil,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("updating order status: %w", err)
+	}
 
 	return respDto, nil
 }

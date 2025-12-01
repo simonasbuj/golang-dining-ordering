@@ -4,6 +4,7 @@ package paymentproviders
 import (
 	"context"
 	"golang-dining-ordering/services/orders/dto"
+	"net/http"
 )
 
 // PaymentProvider is an interface for payment-related operations.
@@ -11,9 +12,9 @@ type PaymentProvider interface {
 	CreateCheckoutSession(
 		ctx context.Context,
 		reqDto *dto.CheckoutSessionRequestDto,
-	) (string, error)
-	HandlePaymentSuccessWebhook(
+	) (*dto.CheckoutSessionResponseDto, error)
+	VerifySuccessWebhookEvent(
 		payload []byte,
-		sigHeader string,
+		header http.Header,
 	) (*dto.PaymentSuccessWebhookResponseDto, error)
 }

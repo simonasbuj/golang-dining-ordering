@@ -6,6 +6,7 @@ import (
 	hndl "golang-dining-ordering/services/management/handlers"
 	"golang-dining-ordering/services/orders/dto"
 	"golang-dining-ordering/services/orders/services"
+	"io"
 	"net/http"
 
 	"github.com/labstack/echo/v4"
@@ -47,7 +48,22 @@ func (h *PaymentsHandler) HandleCreateCheckout(c echo.Context) error {
 		)
 	}
 
-	return responses.JSONSuccess(c, "going to create new payment session", respDto)
+	return responses.JSONSuccess(c, "checkout session created", respDto)
 }
 
-// func (h *PaymentsHandler) ()
+// HandleWebhookSuccess handles webhook events for successful payments.
+func (h *PaymentsHandler) HandleWebhookSuccess(c echo.Context) error {
+	payload, err := io.ReadAll(c.Request().Body)
+	if err != nil {
+		return responses.JSONError(c, "failed to read request payload", err)
+	}
+
+	header := c.Request().Header
+
+	respDto, err := h.svc.HandleWebhookSuccess(c.Request().Context(), payload, header)
+	if err != nil {
+		return responses.JSONError(c, "failed to verify payment", err)
+	}
+
+	return responses.JSONSuccess(c, "payment verified and saved", respDto)
+}

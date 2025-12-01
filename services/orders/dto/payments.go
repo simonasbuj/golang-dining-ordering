@@ -1,5 +1,7 @@
 package dto
 
+import "github.com/google/uuid"
+
 // CheckoutSessionRequestDto represents the data needed to create a checkout session.
 type CheckoutSessionRequestDto struct {
 	OrderDto   *OrderDto `json:"order"`
@@ -9,10 +11,11 @@ type CheckoutSessionRequestDto struct {
 
 // CheckoutSessionResponseDto represents the response returned after creating a checkout session.
 type CheckoutSessionResponseDto struct {
-	URL string `json:"url"`
+	URL      string `json:"url"`
+	Provider string `json:"provider"`
 }
 
 // PaymentSuccessWebhookResponseDto represents the response returned after successful payment webhook is handled.
 type PaymentSuccessWebhookResponseDto struct {
-	OrderID string `json:"order_id"`
+	OrderID uuid.UUID `json:"order_id"`
 }

@@ -6,7 +6,9 @@ import (
 	"errors"
 	"fmt"
 	"golang-dining-ordering/services/orders/dto"
+	"net/http"
 
+	"github.com/google/uuid"
 	"github.com/stripe/stripe-go/v84"
 	"github.com/stripe/stripe-go/v84/checkout/session"
 	"github.com/stripe/stripe-go/v84/webhook"
@@ -44,7 +46,7 @@ func NewStripePaymentProvider(secretKey, webhookSecret string) *StripePaymentPro
 func (p *StripePaymentProvider) CreateCheckoutSession(
 	_ context.Context,
 	reqDto *dto.CheckoutSessionRequestDto,
-) (string, error) {
+) (*dto.CheckoutSessionResponseDto, error) {
 	order := reqDto.OrderDto
 
 	lineItems := p.createLineItems(order)
@@ -63,17 +65,24 @@ func (p *StripePaymentProvider) CreateCheckoutSession(
 
 	s, err := session.New(params)
 	if err != nil {
-		return "", fmt.Errorf("creating stripe checkout session: %w", err)
+		return nil, fmt.Errorf("creating stripe checkout session: %w", err)
 	}
 
-	return s.URL, nil
+	respDto := &dto.CheckoutSessionResponseDto{
+		URL:      s.URL,
+		Provider: "stripe",
+	}
+
+	return respDto, nil
 }
 
-// HandlePaymentSuccessWebhook handles successful payment webhook request.
-func (p *StripePaymentProvider) HandlePaymentSuccessWebhook(
+// VerifySuccessWebhookEvent handles successful payment webhook request.
+func (p *StripePaymentProvider) VerifySuccessWebhookEvent(
 	payload []byte,
-	sigHeader string,
+	header http.Header,
 ) (*dto.PaymentSuccessWebhookResponseDto, error) {
+	sigHeader := header.Get("Stripe-Signature")
+
 	event, err := webhook.ConstructEvent(payload, sigHeader, p.webhookSecret)
 	if err != nil {
 		return nil, fmt.Errorf("veryfing stripe webhook signature: %w", err)
@@ -87,12 +96,17 @@ func (p *StripePaymentProvider) HandlePaymentSuccessWebhook(
 
 	err = json.Unmarshal(event.Data.Raw, &pi)
 	if err != nil {
-		return nil, fmt.Errorf("unmarhsaling payment_intent: %w", err)
+		return nil, fmt.Errorf("unmarhsaling payment intent: %w", err)
 	}
 
-	orderID, ok := pi.Metadata[metadataKeyOrderID]
-	if !ok || orderID == "" {
+	orderIDstr, ok := pi.Metadata[metadataKeyOrderID]
+	if !ok || orderIDstr == "" {
 		return nil, ErrOrderIDMissingInMetadata
+	}
+
+	orderID, err := uuid.Parse(orderIDstr)
+	if err != nil {
+		return nil, fmt.Errorf("parsing orderID from payment intent: %w", err)
 	}
 
 	return &dto.PaymentSuccessWebhookResponseDto{
