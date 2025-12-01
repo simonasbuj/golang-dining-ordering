@@ -57,6 +57,49 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 	return string(ns.OrderStatus), nil
 }
 
+type PaymentProvider string
+
+const (
+	PaymentProviderStripe PaymentProvider = "stripe"
+	PaymentProviderMock   PaymentProvider = "mock"
+	PaymentProviderKlix   PaymentProvider = "klix"
+)
+
+func (e *PaymentProvider) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PaymentProvider(s)
+	case string:
+		*e = PaymentProvider(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PaymentProvider: %T", src)
+	}
+	return nil
+}
+
+type NullPaymentProvider struct {
+	PaymentProvider PaymentProvider `json:"payment_provider"`
+	Valid           bool            `json:"valid"` // Valid is true if PaymentProvider is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPaymentProvider) Scan(value interface{}) error {
+	if value == nil {
+		ns.PaymentProvider, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PaymentProvider.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPaymentProvider) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PaymentProvider), nil
+}
+
 type ManagementCategory struct {
 	ID          uuid.UUID      `json:"id"`
 	MenuID      uuid.UUID      `json:"menu_id"`
@@ -142,4 +185,16 @@ type OrdersOrdersItem struct {
 	PriceInCents int           `json:"price_in_cents"`
 	CreatedAt    time.Time     `json:"created_at"`
 	UpdatedAt    time.Time     `json:"updated_at"`
+}
+
+type OrdersPayment struct {
+	ID                uuid.UUID       `json:"id"`
+	OrderID           uuid.UUID       `json:"order_id"`
+	AmountInCents     int             `json:"amount_in_cents"`
+	Currency          string          `json:"currency"`
+	Provider          PaymentProvider `json:"provider"`
+	ProviderPaymentID string          `json:"provider_payment_id"`
+	CreatedAt         time.Time       `json:"created_at"`
+	UpdatedAt         time.Time       `json:"updated_at"`
+	RefundedAt        sql.NullTime    `json:"refunded_at"`
 }

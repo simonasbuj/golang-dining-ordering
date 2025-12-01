@@ -44,10 +44,10 @@ type ordersRepo struct {
 	q *db.Queries
 }
 
-// New creates a new orders reposiotry instance.
+// NewOrdersRepo creates a new orders reposiotry instance.
 //
 //revive:disable:unexported-return
-func New(q *db.Queries) *ordersRepo {
+func NewOrdersRepo(q *db.Queries) *ordersRepo {
 	return &ordersRepo{
 		q: q,
 	}

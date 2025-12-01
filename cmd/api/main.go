@@ -148,15 +148,16 @@ func setupOrders(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 
 	queries := ordersDB.New(db)
 
-	ordersRepo := ordersRepo.New(queries)
-	ordersSvc := ordersServices.NewOrdersService(ordersRepo)
+	ordRepo := ordersRepo.NewOrdersRepo(queries)
+	paymentsRepo := ordersRepo.NewPaymentsRepo(queries)
+	ordersSvc := ordersServices.NewOrdersService(ordRepo)
 	ordersHandler := ordersHandlers.NewOrdersHandler(ordersSvc)
 
 	paymentsProvider := paymentproviders.NewStripePaymentProvider(
 		cfg.StripeSecretKey,
 		cfg.StripeWebhookSecret,
 	)
-	paymentsSvc := ordersServices.NewPaymentsService(ordersRepo, paymentsProvider)
+	paymentsSvc := ordersServices.NewPaymentsService(ordRepo, paymentsRepo, paymentsProvider)
 	paymentsHandler := ordersHandlers.NewPaymentsHandler(paymentsSvc)
 	ordersRoutes.AddOrdersRoutes(e, ordersHandler, paymentsHandler, cfg.AuthorizeEndpoint)
 }

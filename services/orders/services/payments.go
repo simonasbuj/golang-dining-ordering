@@ -24,15 +24,16 @@ type PaymentsService interface {
 		ctx context.Context,
 		payload []byte,
 		header http.Header,
-	) (*dto.PaymentSuccessWebhookResponseDto, error)
+	) (*dto.PaymentDto, error)
 }
 
 // ErrOrderPriceIsZero is returned when order's total amount and tip are 0.
 var ErrOrderPriceIsZero = errors.New("order total price and tip amount are 0")
 
 type paymentsService struct {
-	ordersRepo repository.OrdersRepo
-	provider   paymentproviders.PaymentProvider
+	ordersRepo   repository.OrdersRepo
+	paymentsRepo repository.PaymentsRepo
+	provider     paymentproviders.PaymentProvider
 }
 
 // NewPaymentsService creates a new payments service instance.
@@ -40,11 +41,13 @@ type paymentsService struct {
 //revive:disable:unexported-return
 func NewPaymentsService(
 	ordersRepo repository.OrdersRepo,
+	paymentsRepo repository.PaymentsRepo,
 	provider paymentproviders.PaymentProvider,
 ) *paymentsService {
 	return &paymentsService{
-		ordersRepo: ordersRepo,
-		provider:   provider,
+		ordersRepo:   ordersRepo,
+		paymentsRepo: paymentsRepo,
+		provider:     provider,
 	}
 }
 
@@ -79,10 +82,15 @@ func (s *paymentsService) HandleWebhookSuccess(
 	ctx context.Context,
 	payload []byte,
 	header http.Header,
-) (*dto.PaymentSuccessWebhookResponseDto, error) {
-	respDto, err := s.provider.VerifySuccessWebhookEvent(payload, header)
+) (*dto.PaymentDto, error) {
+	paymentDto, err := s.provider.VerifySuccessWebhookEvent(payload, header)
 	if err != nil {
 		return nil, fmt.Errorf("verifying payment success webhook event: %w", err)
+	}
+
+	respDto, err := s.paymentsRepo.SavePayment(ctx, paymentDto)
+	if err != nil {
+		return nil, fmt.Errorf("creating payment: %w", err)
 	}
 
 	status := db.OrderStatusCompleted

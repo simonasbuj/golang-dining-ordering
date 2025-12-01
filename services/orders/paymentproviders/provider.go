@@ -16,5 +16,5 @@ type PaymentProvider interface {
 	VerifySuccessWebhookEvent(
 		payload []byte,
 		header http.Header,
-	) (*dto.PaymentSuccessWebhookResponseDto, error)
+	) (*dto.PaymentDto, error)
 }
