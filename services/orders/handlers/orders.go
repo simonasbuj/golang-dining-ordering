@@ -1,5 +1,5 @@
-// Package handler contains HTTP handler functions for the application.
-package handler
+// Package handlers contains HTTP handler functions for the application.
+package handlers
 
 import (
 	"errors"
@@ -8,7 +8,7 @@ import (
 	"golang-dining-ordering/pkg/validation"
 	hndl "golang-dining-ordering/services/management/handlers"
 	"golang-dining-ordering/services/orders/dto"
-	"golang-dining-ordering/services/orders/service"
+	"golang-dining-ordering/services/orders/services"
 	"net/http"
 
 	"github.com/google/uuid"
@@ -17,20 +17,20 @@ import (
 
 const orderIDParamName = "order_id"
 
-// Handler handles orders-related HTTP requests.
-type Handler struct {
-	svc service.Service
+// OrdersHandler handles orders-related HTTP requests.
+type OrdersHandler struct {
+	svc services.OrdersService
 }
 
-// New creates a new Handler for orders.
-func New(svc service.Service) *Handler {
-	return &Handler{
+// NewOrdersHandler creates a new Handler for orders.
+func NewOrdersHandler(svc services.OrdersService) *OrdersHandler {
+	return &OrdersHandler{
 		svc: svc,
 	}
 }
 
 // HandleGetCurrentTableOrder handles getting current order for restaurant table.
-func (h *Handler) HandleGetCurrentTableOrder(c echo.Context) error {
+func (h *OrdersHandler) HandleGetCurrentTableOrder(c echo.Context) error {
 	tableIDString := c.QueryParam("tableId")
 
 	tableID, err := uuid.Parse(tableIDString)
@@ -52,7 +52,7 @@ func (h *Handler) HandleGetCurrentTableOrder(c echo.Context) error {
 }
 
 // HandleGetOrder handles getting order by id.
-func (h *Handler) HandleGetOrder(c echo.Context) error {
+func (h *OrdersHandler) HandleGetOrder(c echo.Context) error {
 	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
 	if err != nil {
 		return err
@@ -67,7 +67,7 @@ func (h *Handler) HandleGetOrder(c echo.Context) error {
 }
 
 // HandleAddItemToOrder handles http request to add item to order.
-func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
+func (h *OrdersHandler) HandleAddItemToOrder(c echo.Context) error {
 	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
 	if err != nil {
 		return err
@@ -82,8 +82,8 @@ func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
 
 	respDto, err := h.svc.AddItemToOrder(c.Request().Context(), orderID, reqDto.ItemID)
 	if err != nil {
-		if errors.Is(err, service.ErrOrderIsNotOpen) ||
-			errors.Is(err, service.ErrItemDoesNotBelongToRestaurant) {
+		if errors.Is(err, services.ErrOrderIsNotOpen) ||
+			errors.Is(err, services.ErrItemDoesNotBelongToRestaurant) {
 			return responses.JSONError(c, err.Error(), err)
 		}
 
@@ -99,7 +99,7 @@ func (h *Handler) HandleAddItemToOrder(c echo.Context) error {
 }
 
 // HandleDeleteItemFromOrder handles http request to delete an item from an order.
-func (h *Handler) HandleDeleteItemFromOrder(c echo.Context) error {
+func (h *OrdersHandler) HandleDeleteItemFromOrder(c echo.Context) error {
 	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
 	if err != nil {
 		return err
@@ -114,7 +114,7 @@ func (h *Handler) HandleDeleteItemFromOrder(c echo.Context) error {
 
 	respDto, err := h.svc.DeleteOrderItem(c.Request().Context(), reqDto.ItemID, orderID)
 	if err != nil {
-		if errors.Is(err, service.ErrOrderIsNotOpen) {
+		if errors.Is(err, services.ErrOrderIsNotOpen) {
 			return responses.JSONError(c, err.Error(), err)
 		}
 
@@ -125,7 +125,7 @@ func (h *Handler) HandleDeleteItemFromOrder(c echo.Context) error {
 }
 
 // HandleUpdateOrder hanldes http request to update an order.
-func (h *Handler) HandleUpdateOrder(c echo.Context) error {
+func (h *OrdersHandler) HandleUpdateOrder(c echo.Context) error {
 	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
 	if err != nil {
 		return err
@@ -147,11 +147,11 @@ func (h *Handler) HandleUpdateOrder(c echo.Context) error {
 
 	respDto, err := h.svc.UpdateOrder(c.Request().Context(), &reqDto, user)
 	if err != nil {
-		if errors.Is(err, service.ErrOrderFinalized) ||
+		if errors.Is(err, services.ErrOrderFinalized) ||
 			errors.Is(
 				err,
-				service.ErrUserCannotEditLockedOrder,
-			) || errors.Is(err, service.ErrPayloadEmpty) || errors.Is(err, service.ErrUserCannotEditStatus) {
+				services.ErrUserCannotEditLockedOrder,
+			) || errors.Is(err, services.ErrPayloadEmpty) || errors.Is(err, services.ErrUserCannotEditStatus) {
 			return responses.JSONError(c, err.Error(), err)
 		}
 

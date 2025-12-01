@@ -1,6 +1,4 @@
-body {
-  font-family: "Segoe UI Emoji", "Noto Color Emoji", "Apple Color Emoji", sans-serif;
-}
+
 
 .selectable:hover {
     transform: scale(1.05);

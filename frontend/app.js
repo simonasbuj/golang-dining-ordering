@@ -9,11 +9,18 @@ function restaurantApp() {
     menu: null,
     tipAmount: 0.00,
 
+    SUCCESS_URL: null,
+    CANCEL_URL: null,
+    loadingPayment: false,
+
     async init() {
       try {
         const res = await fetch('/api/v1/restaurants');
         const response = await res.json();
         this.restaurants = response.data.restaurants;
+
+        this.SUCCESS_URL = `${this.getBaseURL()}/frontend/index.html?success=true`;
+        this.CANCEL_URL = `${this.getBaseURL()}/frontend/index.html?cancel=true`;
       } catch (err) {
         console.error('Failed to fetch restaurants:', err);
       }
@@ -178,6 +185,32 @@ function restaurantApp() {
       }      
     },
 
+    async initPayment() {
+      try {
+        this.loadingPayment = true
+
+        const res = await fetch(`/api/v1/orders/${this.order.id}/payments`, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            "success_url": this.SUCCESS_URL,
+            "cancel_url": this.CANCEL_URL
+          })
+        })
+        await this.raiseForStatus(res)
+
+        const resJson = await res.json()
+        checkoutUrl = resJson.data.url
+        console.log("checkout url: ", checkoutUrl)
+        window.location.href = checkoutUrl
+      } catch(err) {
+        console.log("failed to create checkout session: ", err)
+        this.loadingPayment = false
+      }
+    },
+
     async raiseForStatus(res) {
       if (!res.ok) {
         let message;
@@ -210,6 +243,10 @@ function restaurantApp() {
     floatToCents(amountInFloat) {
       if (amountInFloat == null) return
       return Math.round(amountInFloat * 100)
+    },
+
+    getBaseURL() {
+      return window.location.origin;
     },
 
     countryCodeToFlagEmoji(code) {

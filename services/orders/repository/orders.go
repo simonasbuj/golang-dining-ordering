@@ -19,8 +19,8 @@ var (
 	ErrOrderDoesNotExist = errors.New("order with this id does not exist")
 )
 
-// Repo defines methods for accessing and managing orders data.
-type Repo interface {
+// OrdersRepo defines methods for accessing and managing orders data.
+type OrdersRepo interface {
 	GetCurrentOrderForTable(ctx context.Context, tableID uuid.UUID) (*dto.CurrentOrderDto, error)
 	CreateOrderForTable(
 		ctx context.Context,
@@ -40,22 +40,22 @@ type Repo interface {
 	IsUserRestaurantWaiter(ctx context.Context, userID, restaurantID uuid.UUID) error
 }
 
-type repo struct {
+type ordersRepo struct {
 	q *db.Queries
 }
 
 // New creates a new orders reposiotry instance.
 //
 //revive:disable:unexported-return
-func New(q *db.Queries) *repo {
-	return &repo{
+func New(q *db.Queries) *ordersRepo {
+	return &ordersRepo{
 		q: q,
 	}
 }
 
 //revive:enable:unexported-return
 
-func (r *repo) GetCurrentOrderForTable(
+func (r *ordersRepo) GetCurrentOrderForTable(
 	ctx context.Context,
 	tableID uuid.UUID,
 ) (*dto.CurrentOrderDto, error) {
@@ -71,7 +71,7 @@ func (r *repo) GetCurrentOrderForTable(
 	return &dto.CurrentOrderDto{ID: id}, nil
 }
 
-func (r *repo) CreateOrderForTable(
+func (r *ordersRepo) CreateOrderForTable(
 	ctx context.Context,
 	tableID uuid.UUID,
 	currency string,
@@ -88,7 +88,7 @@ func (r *repo) CreateOrderForTable(
 	return &dto.CurrentOrderDto{ID: id}, nil
 }
 
-func (r *repo) GetTableCurrency(ctx context.Context, tableID uuid.UUID) (string, error) {
+func (r *ordersRepo) GetTableCurrency(ctx context.Context, tableID uuid.UUID) (string, error) {
 	currency, err := r.q.GetTableCurrency(ctx, tableID)
 	if err != nil {
 		return "", fmt.Errorf("fetching table currency from database: %w", err)
@@ -97,7 +97,7 @@ func (r *repo) GetTableCurrency(ctx context.Context, tableID uuid.UUID) (string,
 	return currency, nil
 }
 
-func (r *repo) AddItemToOrder(
+func (r *ordersRepo) AddItemToOrder(
 	ctx context.Context,
 	orderID uuid.UUID,
 	item *dto.OrderItemDto,
@@ -116,7 +116,7 @@ func (r *repo) AddItemToOrder(
 	return id, nil
 }
 
-func (r *repo) GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error) {
+func (r *ordersRepo) GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error) {
 	rows, err := r.q.GetOrderItems(ctx, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("getting order items from database: %w", err)
@@ -160,7 +160,7 @@ func (r *repo) GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.Order
 	return respDto, nil
 }
 
-func (r *repo) GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.OrderItemDto, error) {
+func (r *ordersRepo) GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.OrderItemDto, error) {
 	row, err := r.q.GetMenuItem(ctx, itemID)
 	if err != nil {
 		return nil, fmt.Errorf("fetching menu item from database: %w", err)
@@ -177,7 +177,7 @@ func (r *repo) GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.OrderIte
 	return item, nil
 }
 
-func (r *repo) DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error {
+func (r *ordersRepo) DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error {
 	err := r.q.DeleteOrderItem(ctx, db.DeleteOrderItemParams{
 		ID:      orderItemID,
 		OrderID: orderID,
@@ -189,7 +189,7 @@ func (r *repo) DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UU
 	return nil
 }
 
-func (r *repo) UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) error {
+func (r *ordersRepo) UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) error {
 	var status db.OrderStatus
 	if reqDto.Status != nil {
 		status = *reqDto.Status
@@ -212,7 +212,7 @@ func (r *repo) UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) e
 	return nil
 }
 
-func (r *repo) IsUserRestaurantWaiter(
+func (r *ordersRepo) IsUserRestaurantWaiter(
 	ctx context.Context,
 	userID, restaurantID uuid.UUID,
 ) error {

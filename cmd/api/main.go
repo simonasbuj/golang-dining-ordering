@@ -16,10 +16,11 @@ import (
 	mngRoutes "golang-dining-ordering/services/management/routes"
 	mngServices "golang-dining-ordering/services/management/services"
 	mngStorage "golang-dining-ordering/services/management/storage/local"
-	ordersHandler "golang-dining-ordering/services/orders/handler"
+	ordersHandlers "golang-dining-ordering/services/orders/handlers"
+	"golang-dining-ordering/services/orders/paymentproviders"
 	ordersRepo "golang-dining-ordering/services/orders/repository"
 	ordersRoutes "golang-dining-ordering/services/orders/routes"
-	ordersService "golang-dining-ordering/services/orders/service"
+	ordersServices "golang-dining-ordering/services/orders/services"
 	"log"
 	"log/slog"
 	"net/http"
@@ -147,8 +148,15 @@ func setupOrders(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 
 	queries := ordersDB.New(db)
 
-	repo := ordersRepo.New(queries)
-	svc := ordersService.New(repo)
-	handler := ordersHandler.New(svc)
-	ordersRoutes.AddOrdersRoutes(e, handler, cfg.AuthorizeEndpoint)
+	ordersRepo := ordersRepo.New(queries)
+	ordersSvc := ordersServices.NewOrdersService(ordersRepo)
+	ordersHandler := ordersHandlers.NewOrdersHandler(ordersSvc)
+
+	paymentsProvider := paymentproviders.NewStripePaymentProvider(
+		cfg.StripeSecretKey,
+		cfg.StripeWebhookSecret,
+	)
+	paymentsSvc := ordersServices.NewPaymentsService(ordersRepo, paymentsProvider)
+	paymentsHandler := ordersHandlers.NewPaymentsHandler(paymentsSvc)
+	ordersRoutes.AddOrdersRoutes(e, ordersHandler, paymentsHandler, cfg.AuthorizeEndpoint)
 }

@@ -8,7 +8,6 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
 
-
   <script defer src="app.js"></script>
   <script defer src="https://unpkg.com/alpinejs@3.15.2/dist/cdn.min.js"></script>
   
@@ -169,17 +168,24 @@
               <button 
                 class="btn btn-warning btn-sm flex-shrink-0"
                 @click="lockOrder"
-                x-show="order.status === 'open'"
+                x-show="
+                  order.status === 'open'  && order.total_price_in_cents > 0"
               >
                 Notify Waiter
               </button>
 
               <button 
                 class="btn btn-success btn-sm flex-shrink-0"
-                @click="console.log('init payment')"
-                x-show="order.status === 'locked'"
+                @click="initPayment"
+                x-show="
+                  (order.status === 'locked' && (order.tip_amount_in_cents > 0 || order.total_price_in_cents > 0))
+                  || (order.status === 'open' && !order.total_price_in_cents > 0 && order.tip_amount_in_cents > 0)"
+                :disabled="loadingPayment"
               >
-                Pay
+                <span x-show="loadingPayment" class="inline-flex items-center">
+                  .......
+                </span>
+                <span x-show="!loadingPayment">Pay</span>
               </button>
 
             </div>

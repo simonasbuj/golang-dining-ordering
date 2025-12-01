@@ -262,3 +262,12 @@ Authorization: {{token}}
 {
   "status": "open"
 }
+
+### Get Checkout url
+POST {{baseUrl}}/orders/{{orderId}}/payments
+Content-Type: application/json
+
+{
+  "success_url": "http://localhost:42069/frontend/index.html?success=true",
+  "cancel_url": "http://localhost:42069/frontend/index.html?cancel=true"
+}
