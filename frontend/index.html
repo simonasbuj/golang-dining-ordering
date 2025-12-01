@@ -176,12 +176,16 @@
 
               <button 
                 class="btn btn-success btn-sm flex-shrink-0"
-                @click="console.log('init payment')"
+                @click="initPayment"
                 x-show="
                   (order.status === 'locked' && (order.tip_amount_in_cents > 0 || order.total_price_in_cents > 0))
                   || (order.status === 'open' && !order.total_price_in_cents > 0 && order.tip_amount_in_cents > 0)"
+                :disabled="loadingPayment"
               >
-                Pay
+                <span x-show="loadingPayment" class="inline-flex items-center">
+                  .......
+                </span>
+                <span x-show="!loadingPayment">Pay</span>
               </button>
 
             </div>
