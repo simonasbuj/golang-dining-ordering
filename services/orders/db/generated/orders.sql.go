@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -86,6 +87,7 @@ FROM orders.orders
 WHERE 
     table_id = $1 
     and status in ('open', 'locked')
+    AND created_at >= NOW() - INTERVAL '8 hours'
 ORDER BY created_at DESC
 LIMIT 1
 `
@@ -132,9 +134,11 @@ const getOrderItems = `-- name: GetOrderItems :many
 SELECT
     o.id,
     r.id as restaurant_id,
+    r.name as restaurant_name,
     o.status,
     o.currency,
     o.tip_amount_in_cents,
+    o.updated_at,
     i.id as order_item_id,
     i.item_id,
     i.item_name,
@@ -149,9 +153,11 @@ WHERE o.id = $1
 type GetOrderItemsRow struct {
 	ID               uuid.UUID      `json:"id"`
 	RestaurantID     uuid.NullUUID  `json:"restaurant_id"`
+	RestaurantName   sql.NullString `json:"restaurant_name"`
 	Status           OrderStatus    `json:"status"`
 	Currency         string         `json:"currency"`
 	TipAmountInCents sql.NullInt32  `json:"tip_amount_in_cents"`
+	UpdatedAt        time.Time      `json:"updated_at"`
 	OrderItemID      uuid.NullUUID  `json:"order_item_id"`
 	ItemID           uuid.NullUUID  `json:"item_id"`
 	ItemName         sql.NullString `json:"item_name"`
@@ -170,9 +176,11 @@ func (q *Queries) GetOrderItems(ctx context.Context, id uuid.UUID) ([]GetOrderIt
 		if err := rows.Scan(
 			&i.ID,
 			&i.RestaurantID,
+			&i.RestaurantName,
 			&i.Status,
 			&i.Currency,
 			&i.TipAmountInCents,
+			&i.UpdatedAt,
 			&i.OrderItemID,
 			&i.ItemID,
 			&i.ItemName,

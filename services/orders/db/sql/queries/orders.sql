@@ -4,6 +4,7 @@ FROM orders.orders
 WHERE 
     table_id = $1 
     and status in ('open', 'locked')
+    AND created_at >= NOW() - INTERVAL '8 hours'
 ORDER BY created_at DESC
 LIMIT 1;
 
@@ -34,9 +35,11 @@ RETURNING order_id;
 SELECT
     o.id,
     r.id as restaurant_id,
+    r.name as restaurant_name,
     o.status,
     o.currency,
     o.tip_amount_in_cents,
+    o.updated_at,
     i.id as order_item_id,
     i.item_id,
     i.item_name,
