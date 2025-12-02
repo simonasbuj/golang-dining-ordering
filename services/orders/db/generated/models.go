@@ -57,47 +57,47 @@ func (ns NullOrderStatus) Value() (driver.Value, error) {
 	return string(ns.OrderStatus), nil
 }
 
-type PaymentProvider string
+type OrdersPaymentProvider string
 
 const (
-	PaymentProviderStripe PaymentProvider = "stripe"
-	PaymentProviderMock   PaymentProvider = "mock"
-	PaymentProviderKlix   PaymentProvider = "klix"
+	OrdersPaymentProviderStripe OrdersPaymentProvider = "stripe"
+	OrdersPaymentProviderMock   OrdersPaymentProvider = "mock"
+	OrdersPaymentProviderKlix   OrdersPaymentProvider = "klix"
 )
 
-func (e *PaymentProvider) Scan(src interface{}) error {
+func (e *OrdersPaymentProvider) Scan(src interface{}) error {
 	switch s := src.(type) {
 	case []byte:
-		*e = PaymentProvider(s)
+		*e = OrdersPaymentProvider(s)
 	case string:
-		*e = PaymentProvider(s)
+		*e = OrdersPaymentProvider(s)
 	default:
-		return fmt.Errorf("unsupported scan type for PaymentProvider: %T", src)
+		return fmt.Errorf("unsupported scan type for OrdersPaymentProvider: %T", src)
 	}
 	return nil
 }
 
-type NullPaymentProvider struct {
-	PaymentProvider PaymentProvider `json:"payment_provider"`
-	Valid           bool            `json:"valid"` // Valid is true if PaymentProvider is not NULL
+type NullOrdersPaymentProvider struct {
+	OrdersPaymentProvider OrdersPaymentProvider `json:"orders_payment_provider"`
+	Valid                 bool                  `json:"valid"` // Valid is true if OrdersPaymentProvider is not NULL
 }
 
 // Scan implements the Scanner interface.
-func (ns *NullPaymentProvider) Scan(value interface{}) error {
+func (ns *NullOrdersPaymentProvider) Scan(value interface{}) error {
 	if value == nil {
-		ns.PaymentProvider, ns.Valid = "", false
+		ns.OrdersPaymentProvider, ns.Valid = "", false
 		return nil
 	}
 	ns.Valid = true
-	return ns.PaymentProvider.Scan(value)
+	return ns.OrdersPaymentProvider.Scan(value)
 }
 
 // Value implements the driver Valuer interface.
-func (ns NullPaymentProvider) Value() (driver.Value, error) {
+func (ns NullOrdersPaymentProvider) Value() (driver.Value, error) {
 	if !ns.Valid {
 		return nil, nil
 	}
-	return string(ns.PaymentProvider), nil
+	return string(ns.OrdersPaymentProvider), nil
 }
 
 type ManagementCategory struct {
@@ -188,13 +188,13 @@ type OrdersOrdersItem struct {
 }
 
 type OrdersPayment struct {
-	ID                uuid.UUID       `json:"id"`
-	OrderID           uuid.UUID       `json:"order_id"`
-	AmountInCents     int             `json:"amount_in_cents"`
-	Currency          string          `json:"currency"`
-	Provider          PaymentProvider `json:"provider"`
-	ProviderPaymentID string          `json:"provider_payment_id"`
-	CreatedAt         time.Time       `json:"created_at"`
-	UpdatedAt         time.Time       `json:"updated_at"`
-	RefundedAt        sql.NullTime    `json:"refunded_at"`
+	ID                uuid.UUID             `json:"id"`
+	OrderID           uuid.UUID             `json:"order_id"`
+	AmountInCents     int                   `json:"amount_in_cents"`
+	Currency          string                `json:"currency"`
+	Provider          OrdersPaymentProvider `json:"provider"`
+	ProviderPaymentID string                `json:"provider_payment_id"`
+	CreatedAt         time.Time             `json:"created_at"`
+	UpdatedAt         time.Time             `json:"updated_at"`
+	RefundedAt        sql.NullTime          `json:"refunded_at"`
 }

@@ -14,7 +14,7 @@ function restaurantApp() {
     loadingPayment: false,
 
     async init() {
-      this.SUCCESS_URL = `${this.getBaseURL()}/frontend/index.html?success=true`;
+      this.SUCCESS_URL = `${this.getBaseURL()}/frontend/order.html?success=true&orderId=`;
       this.CANCEL_URL = `${this.getBaseURL()}/frontend/index.html?cancel=true`;
 
       this.checkSuccessParam();
@@ -117,10 +117,9 @@ function restaurantApp() {
         await this.raiseForStatus(res)
 
         const respJson = await res.json()
-
+        this.showItemAddedToast()
         this.order = respJson.data
         this.setTipAmount(this.order.tip_amount_in_cents)
-        this.showItemAddedToast()
       } catch(err) {
         console.error('Failed to add item to an order: ', err)
       }
@@ -204,7 +203,7 @@ function restaurantApp() {
             "Content-Type": "application/json"
           },
           body: JSON.stringify({
-            "success_url": this.SUCCESS_URL,
+            "success_url": this.SUCCESS_URL + this.order.id,
             "cancel_url": this.CANCEL_URL
           })
         })

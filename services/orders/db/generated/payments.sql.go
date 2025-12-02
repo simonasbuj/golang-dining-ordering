@@ -24,12 +24,12 @@ RETURNING id, order_id, amount_in_cents, currency, provider, provider_payment_id
 `
 
 type SavePaymentParams struct {
-	ID                uuid.UUID       `json:"id"`
-	OrderID           uuid.UUID       `json:"order_id"`
-	AmountInCents     int             `json:"amount_in_cents"`
-	Currency          string          `json:"currency"`
-	Provider          PaymentProvider `json:"provider"`
-	ProviderPaymentID string          `json:"provider_payment_id"`
+	ID                uuid.UUID             `json:"id"`
+	OrderID           uuid.UUID             `json:"order_id"`
+	AmountInCents     int                   `json:"amount_in_cents"`
+	Currency          string                `json:"currency"`
+	Provider          OrdersPaymentProvider `json:"provider"`
+	ProviderPaymentID string                `json:"provider_payment_id"`
 }
 
 func (q *Queries) SavePayment(ctx context.Context, arg SavePaymentParams) (OrdersPayment, error) {

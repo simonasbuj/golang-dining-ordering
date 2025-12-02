@@ -3,6 +3,7 @@ package dto
 
 import (
 	db "golang-dining-ordering/services/orders/db/generated"
+	"time"
 
 	"github.com/google/uuid"
 )
@@ -21,10 +22,12 @@ type OrderItemRequestDto struct {
 type OrderDto struct {
 	ID                uuid.UUID       `json:"id"`
 	RestaurantID      uuid.UUID       `json:"restaurant_id"`
+	RestaurantName    string          `json:"restaurant_name"`
 	Status            db.OrderStatus  `json:"status"`
 	Currency          string          `json:"currency"`
 	TipAmountInCents  int             `json:"tip_amount_in_cents"`
 	TotalPriceInCents int             `json:"total_price_in_cents"`
+	UpdatedAt         time.Time       `json:"updated_at"`
 	Items             []*OrderItemDto `json:"items"`
 }
 

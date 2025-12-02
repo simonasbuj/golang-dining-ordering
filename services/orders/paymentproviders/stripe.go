@@ -71,7 +71,7 @@ func (p *StripePaymentProvider) CreateCheckoutSession(
 
 	respDto := &dto.CheckoutSessionResponseDto{
 		URL:      s.URL,
-		Provider: db.PaymentProviderStripe,
+		Provider: db.OrdersPaymentProviderStripe,
 	}
 
 	return respDto, nil
@@ -114,7 +114,7 @@ func (p *StripePaymentProvider) VerifySuccessWebhookEvent(
 		ID:                uuid.New(),
 		OrderID:           orderID,
 		AmountInCents:     int(pi.AmountReceived),
-		Provider:          db.PaymentProviderStripe,
+		Provider:          db.OrdersPaymentProviderStripe,
 		ProviderPaymentID: pi.ID,
 		Currency:          string(pi.Currency),
 	}

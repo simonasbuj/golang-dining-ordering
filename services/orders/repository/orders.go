@@ -131,10 +131,12 @@ func (r *ordersRepo) GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto
 	respDto := &dto.OrderDto{
 		ID:                firstRow.ID,
 		RestaurantID:      firstRow.RestaurantID.UUID,
+		RestaurantName:    firstRow.RestaurantName.String,
 		Status:            firstRow.Status,
 		Currency:          firstRow.Currency,
 		TipAmountInCents:  int(firstRow.TipAmountInCents.Int32),
 		TotalPriceInCents: 0,
+		UpdatedAt:         firstRow.UpdatedAt,
 		Items:             make([]*dto.OrderItemDto, 0, len(rows)),
 	}
 

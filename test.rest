@@ -1,5 +1,5 @@
-# @baseUrl = http://localhost:42069/api/v1
-@baseUrl = https://golang-dining-ordering-staging.up.railway.app/api/v1
+@baseUrl = http://localhost:42069/api/v1
+# @baseUrl = https://golang-dining-ordering-staging.up.railway.app/api/v1
 
 ### Singup manager
 POST {{baseUrl}}/auth/signup
@@ -188,7 +188,7 @@ Content-Type: application/json
 
 {
   "name": "T01",
-  "capacity": 4
+  "capacity": 2
 }
 
 ### Add table 02

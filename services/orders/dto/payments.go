@@ -15,16 +15,16 @@ type CheckoutSessionRequestDto struct {
 
 // CheckoutSessionResponseDto represents the response returned after creating a checkout session.
 type CheckoutSessionResponseDto struct {
-	URL      string             `json:"url"`
-	Provider db.PaymentProvider `json:"provider"`
+	URL      string                   `json:"url"`
+	Provider db.OrdersPaymentProvider `json:"provider"`
 }
 
 // PaymentDto represents save payment request and response.
 type PaymentDto struct {
-	ID                uuid.UUID          `json:"id"`
-	OrderID           uuid.UUID          `json:"order_id"`
-	AmountInCents     int                `json:"amount_in_cents"`
-	Provider          db.PaymentProvider `json:"provider"`
-	ProviderPaymentID string             `json:"provider_payment_id"`
-	Currency          string             `json:"currency"`
+	ID                uuid.UUID                `json:"id"`
+	OrderID           uuid.UUID                `json:"order_id"`
+	AmountInCents     int                      `json:"amount_in_cents"`
+	Provider          db.OrdersPaymentProvider `json:"provider"`
+	ProviderPaymentID string                   `json:"provider_payment_id"`
+	Currency          string                   `json:"currency"`
 }
