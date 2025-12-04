@@ -83,4 +83,9 @@ down-all-migrations:
 	@echo "Migrate down auth"
 	migrate -path "./services/auth/db/sql/migrations" -database "$(DINE_AUTH_DB_URI)" down
 
-	
+# s3 storage
+start-minio:
+	docker-compose -f infra/docker/minio-docker-compose.yml up -d
+
+stop-minio:
+	docker-compose -f infra/docker/minio-docker-compose.yml stop
