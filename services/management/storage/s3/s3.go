@@ -81,7 +81,7 @@ func (s *s3Storage) DeleteMenuItemImage(ctx context.Context, fullURL string) err
 		Key:    &key,
 	})
 	if err != nil {
-		return fmt.Errorf("deleting previous mene item image from s3: %w", err)
+		return fmt.Errorf("deleting previous menu item image from s3: %w", err)
 	}
 
 	return nil

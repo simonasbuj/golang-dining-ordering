@@ -1,5 +1,7 @@
 # golang-dining-ordering
-heygreet clone - backend for ordering at the restaurant
+heygreet clone - backend for ordering at the restaurant.   
+It's deployed here: https://go-dine-staging.up.railway.app/frontend
+
 
 [![Go CI](https://github.com/simonasbuj/golang-dining-ordering/actions/workflows/ci.yml/badge.svg)](https://github.com/simonasbuj/golang-dining-ordering/actions/workflows/ci.yml)
 [![codecov](https://codecov.io/github/simonasbuj/golang-dining-ordering/graph/badge.svg?token=0Z1QP6KJYZ)](https://codecov.io/github/simonasbuj/golang-dining-ordering)

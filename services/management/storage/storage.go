@@ -16,6 +16,8 @@ type Storage interface {
 }
 
 // GetStorage returns the appropriate Storage implementation (S3 or local) based on storageType.
+//
+//nolint:ireturn
 func GetStorage(ctx context.Context, storageType string, cfg *config.AppConfig) Storage {
 	switch storageType {
 	case "s3":
