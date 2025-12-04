@@ -12,6 +12,7 @@ type AppConfig struct {
 	AuthorizeEndpoint        string `env:"DINE_AUTHORIZE_ENDPOINT"`
 	MaxImageSizeBytes        int64  `env:"DINE_MAX_IMAGE_SIZE_BYTES"`
 	UploadsDirectory         string `env:"DINE_UPLOADS_DIRECTORY"`
+	StorageType              string `env:"DINE_STORAGE_TYPE"`
 	StripeSecretKey          string `env:"STRIPE_SECRET_KEY"`
 	StripeWebhookSecret      string `env:"STRIPE_WEBHOOK_SECRET"`
 	S3Config                 S3Config

@@ -5,6 +5,7 @@ import (
 	"context"
 	"fmt"
 	"mime/multipart"
+	"strings"
 
 	"github.com/aws/aws-sdk-go-v2/aws"
 	"github.com/aws/aws-sdk-go-v2/config"
@@ -71,6 +72,17 @@ func (s *s3Storage) StoreMenuItemImage(
 	return fmt.Sprintf("%s/%s/%s", s.url, s.bucket, fileName), nil
 }
 
-func (s *s3Storage) DeleteMenuItemImage(ctx context.Context, path string) error {
+func (s *s3Storage) DeleteMenuItemImage(ctx context.Context, fullURL string) error {
+	prefix := strings.TrimRight(s.url, "/") + "/" + strings.TrimRight(s.bucket, "/") + "/"
+	key := strings.TrimPrefix(fullURL, prefix)
+
+	_, err := s.s3Client.DeleteObject(ctx, &s3.DeleteObjectInput{
+		Bucket: &s.bucket,
+		Key:    &key,
+	})
+	if err != nil {
+		return fmt.Errorf("deleting previous mene item image from s3: %w", err)
+	}
+
 	return nil
 }
