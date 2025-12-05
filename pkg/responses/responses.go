@@ -13,6 +13,12 @@ type ErrorResponse struct {
 	Error string `json:"error"`
 }
 
+// SuccessResponse represents a JSON success response.
+type SuccessResponse struct {
+	Message string `json:"message"`
+	Data    any    `json:"data"`
+}
+
 // JSONError sends a JSON error response with an optional status code.
 func JSONError(c echo.Context, errMsg string, err error, status ...int) error {
 	statusCode := http.StatusBadRequest
@@ -34,8 +40,8 @@ func JSONSuccess(c echo.Context, message string, data any, status ...int) error 
 		statusCode = status[0]
 	}
 
-	return c.JSON(statusCode, map[string]any{
-		"message": message,
-		"data":    data,
+	return c.JSON(statusCode, &SuccessResponse{
+		Message: message,
+		Data:    data,
 	})
 }
