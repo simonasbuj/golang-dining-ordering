@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"golang-dining-ordering/pkg/responses"
 	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
@@ -20,19 +21,22 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	testRestaurantID    = uuid.MustParse("11111111-1111-4111-8111-111111111111")
-	testRestaurantName  = "Test Restaurant"
-	testCurrency        = "eur"
-	testAmount          = 10
-	testPaymentID       = uuid.MustParse("67676767-6767-4676-8767-676767676767")
-	testOrderID         = uuid.MustParse("99999999-9999-4999-9999-999999999999")
-	testDateTime        = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
-	testItemName        = "Test Menu Item"
-	testOrderItemDto    = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
-	testItemID          = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
-	testCheckoutURL     = "http://fake-checkout-session.com/1"
-	testPaymentProvider = db.OrdersPaymentProviderMock
+	testRestaurantID      = uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	testRestaurantName    = "Test Restaurant"
+	testCurrency          = "eur"
+	testAmount            = 10
+	testPaymentID         = uuid.MustParse("67676767-6767-4676-8767-676767676767")
+	testOrderID           = uuid.MustParse("99999999-9999-4999-9999-999999999999")
+	testDateTime          = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
+	testItemName          = "Test Menu Item"
+	testOrderItemDto      = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	testItemID            = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
+	testCheckoutURL       = "http://fake-checkout-session.com/1"
+	testPaymentProvider   = db.OrdersPaymentProviderMock
+	testProviderPaymentID = "pi_123456"
 )
+
+var ErrService = errors.New("service failed")
 
 type paymentsHandlerTestSuite struct {
 	suite.Suite
@@ -54,14 +58,16 @@ func TestPaymentsHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(paymentsHandlerTestSuite))
 }
 
-func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout() {
+func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_Success() {
 	e := echo.New()
 
-	inputBodyDto := dto.CheckoutSessionRequestDto{
+	reqDto := dto.CheckoutSessionRequestDto{
 		OrderDto:   nil,
 		SuccessURL: "https://fake-website.io?success=true",
 		CancelURL:  "https://fake-website.io?cancel=true",
 	}
+	bodyBytes, err := json.Marshal(reqDto)
+	suite.Require().NoError(err)
 
 	expectedResponseDto := responses.SuccessResponse{
 		Message: "checkout session created",
@@ -73,7 +79,30 @@ func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout() {
 	expectedJSON, err := json.Marshal(expectedResponseDto)
 	suite.Require().NoError(err)
 
-	bodyBytes, err := json.Marshal(inputBodyDto)
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	c.SetParamNames(orderIDParamName)
+	c.SetParamValues(testOrderID.String())
+
+	err = suite.handler.HandleCreateCheckout(c)
+	suite.Require().NoError(err)
+	suite.Equal(http.StatusOK, rec.Code)
+	suite.JSONEq(string(expectedJSON), rec.Body.String())
+}
+
+func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_InvalidDto() {
+	e := echo.New()
+
+	reqDto := dto.CheckoutSessionRequestDto{
+		OrderDto:   nil,
+		SuccessURL: "",
+		CancelURL:  "",
+	}
+	bodyBytes, err := json.Marshal(reqDto)
 	suite.Require().NoError(err)
 
 	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
@@ -82,13 +111,115 @@ func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout() {
 	rec := httptest.NewRecorder()
 	c := e.NewContext(req, rec)
 
-	c.SetParamNames("order_id")
+	c.SetParamNames(orderIDParamName)
 	c.SetParamValues(testOrderID.String())
 
 	err = suite.handler.HandleCreateCheckout(c)
+	suite.Require().Error(err)
+	suite.Equal(http.StatusBadRequest, rec.Code)
+}
+
+func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_InvalidParam() {
+	e := echo.New()
+
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := suite.handler.HandleCreateCheckout(c)
+	suite.Require().Error(err)
+	suite.Equal(http.StatusBadRequest, rec.Code)
+}
+
+func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_ServiceError() {
+	e := echo.New()
+
+	reqDto := dto.CheckoutSessionRequestDto{
+		OrderDto:   nil,
+		SuccessURL: "https://fake-website.io?success=true",
+		CancelURL:  "https://fake-website.io?cancel=true",
+	}
+	bodyBytes, err := json.Marshal(reqDto)
+	suite.Require().NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	c.SetParamNames(orderIDParamName)
+	c.SetParamValues(uuid.Max.String())
+
+	err = suite.handler.HandleCreateCheckout(c)
+	suite.Require().Error(err)
+	suite.Equal(http.StatusInternalServerError, rec.Code)
+}
+
+func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_Success() {
+	e := echo.New()
+
+	payload := []byte(`{"payment_secret": "secret"}`)
+
+	wantDto := responses.SuccessResponse{
+		Message: "payment verified and saved",
+		Data: &dto.PaymentDto{
+			ID:                testPaymentID,
+			OrderID:           testOrderID,
+			AmountInCents:     testAmount,
+			Provider:          testPaymentProvider,
+			ProviderPaymentID: testProviderPaymentID,
+			Currency:          testCurrency,
+		},
+	}
+	wantJSON, err := json.Marshal(wantDto)
+	suite.Require().NoError(err)
+
+	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(payload))
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err = suite.handler.HandleWebhookSuccess(c)
 	suite.Require().NoError(err)
 	suite.Equal(http.StatusOK, rec.Code)
-	suite.JSONEq(string(expectedJSON), rec.Body.String())
+	suite.JSONEq(string(wantJSON), rec.Body.String())
+}
+
+func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_EmptyPayload() {
+	e := echo.New()
+
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := suite.handler.HandleWebhookSuccess(c)
+	suite.Require().Error(err)
+	suite.Equal(http.StatusBadRequest, rec.Code)
+}
+
+type errorReader struct{}
+
+var ErrRead = errors.New("read error")
+
+func (e errorReader) Read(_ []byte) (int, error) {
+	return 0, ErrRead
+}
+
+func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_InvalidPayload() {
+	e := echo.New()
+
+	req := httptest.NewRequest(http.MethodPost, "/", errorReader{})
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	err := suite.handler.HandleWebhookSuccess(c)
+	suite.Require().Error(err)
+	suite.Equal(http.StatusBadRequest, rec.Code)
 }
 
 type mockPaymentsProvider struct {
@@ -112,16 +243,20 @@ func (p *mockPaymentsProvider) CreateCheckoutSession(
 }
 
 func (p *mockPaymentsProvider) VerifySuccessWebhookEvent(
-	_ []byte,
+	payload []byte,
 	_ http.Header,
 ) (*dto.PaymentDto, error) {
+	if len(payload) == 0 {
+		return nil, ErrService
+	}
+
 	return &dto.PaymentDto{
 		ID:                testPaymentID,
 		OrderID:           testOrderID,
 		AmountInCents:     10,
 		Provider:          p.provider,
-		ProviderPaymentID: "id",
-		Currency:          "eur",
+		ProviderPaymentID: testProviderPaymentID,
+		Currency:          testCurrency,
 	}, nil
 }
 
@@ -140,8 +275,8 @@ func (r *mockPaymentsRepo) SavePayment(
 		OrderID:           testOrderID,
 		AmountInCents:     10,
 		Provider:          db.OrdersPaymentProviderMock,
-		ProviderPaymentID: "id",
-		Currency:          "eur",
+		ProviderPaymentID: testProviderPaymentID,
+		Currency:          testCurrency,
 	}, nil
 }
 
@@ -206,8 +341,12 @@ func (r *mockOrdersRepo) AddItemToOrder(
 
 func (r *mockOrdersRepo) GetOrderItems(
 	_ context.Context,
-	_ uuid.UUID,
+	orderID uuid.UUID,
 ) (*dto.OrderDto, error) {
+	if orderID != testOrderID {
+		return nil, ErrService
+	}
+
 	return r.orderDto, nil
 }
 

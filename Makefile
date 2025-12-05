@@ -38,9 +38,14 @@ lint-fix:
 test:
 	go test -v -coverprofile=cvr.txt ./... && grep -v -e "/generated/" -e "/repository/" -e "/mock/" cvr.txt > coverage.txt
 
+cov-html:
+	go tool cover -html=coverage.txt -o coverage.html
+
 .PHONY: coverage
 coverage:
 	go tool cover -func=coverage.txt
+
+
 
 # database
 start-postgres:
