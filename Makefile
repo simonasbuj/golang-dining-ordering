@@ -36,7 +36,7 @@ lint-fix:
 
 .PHONY: test
 test:
-	go test -v -coverprofile=coverage_temp.txt ./... && grep -v "/generated/" coverage+temp.txt > coverage.txt
+	go test -v -coverprofile=coverage_temp.txt ./... && grep -v "/generated/" coverage_temp.txt > coverage.txt
 
 .PHONY: coverage
 coverage:
