@@ -18,9 +18,13 @@ type Storage interface {
 // GetStorage returns the appropriate Storage implementation (S3 or local) based on storageType.
 //
 //nolint:ireturn
-func GetStorage(ctx context.Context, storageType string, cfg *config.AppConfig) Storage {
+func GetStorage(
+	ctx context.Context,
+	storageType config.StorageType,
+	cfg *config.AppConfig,
+) Storage {
 	switch storageType {
-	case "s3":
+	case config.StorageTypeS3:
 		return s3.NewS3Storage(
 			ctx,
 			cfg.S3Config.Key,
@@ -28,6 +32,8 @@ func GetStorage(ctx context.Context, storageType string, cfg *config.AppConfig) 
 			cfg.S3Config.URL,
 			cfg.S3Config.Bucket,
 		)
+	case config.StorageTypeLocal:
+		return local.NewLocalStorage(cfg.MaxImageSizeBytes, cfg.UploadsDirectory)
 	default:
 		return local.NewLocalStorage(cfg.MaxImageSizeBytes, cfg.UploadsDirectory)
 	}
