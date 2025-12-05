@@ -105,3 +105,16 @@ func TestValidate_ValidationError(t *testing.T) {
 		assert.True(t, ok, "error should be a validator.ValidationErrors when %s", testCase.desc)
 	}
 }
+
+func TestValidateDto_PassingNonPointerDto(t *testing.T) {
+	e := echo.New()
+	c := e.NewContext(httptest.NewRequest("POST", "/", nil), nil)
+
+	dto := struct {
+		Name string
+	}{}
+
+	err := validation.ValidateDto(c, dto)
+	require.Error(t, err)
+	require.ErrorContains(t, err, "ValidateDto requires a non-nil pointer")
+}
