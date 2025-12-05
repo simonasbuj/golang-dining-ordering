@@ -15,7 +15,7 @@ import (
 	mngRepos "golang-dining-ordering/services/management/repository"
 	mngRoutes "golang-dining-ordering/services/management/routes"
 	mngServices "golang-dining-ordering/services/management/services"
-	mngStorage "golang-dining-ordering/services/management/storage/local"
+	mngStorage "golang-dining-ordering/services/management/storage"
 	ordersHandlers "golang-dining-ordering/services/orders/handlers"
 	"golang-dining-ordering/services/orders/paymentproviders"
 	ordersRepo "golang-dining-ordering/services/orders/repository"
@@ -120,7 +120,8 @@ func setupManagement(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	restHandler := mngHandlers.NewRestaurantsHandler(restService)
 
 	menuRepo := mngRepos.NewMenuRepository(db, queries)
-	storage := mngStorage.NewLocalStorage(cfg.MaxImageSizeBytes, cfg.UploadsDirectory)
+	// storage := mngStorage.NewLocalStorage(cfg.MaxImageSizeBytes, cfg.UploadsDirectory)
+	storage := mngStorage.GetStorage(context.Background(), cfg.StorageType, cfg)
 	menuSvc := mngServices.NewMenuService(menuRepo, restRepo, storage)
 	menuHandler := mngHandlers.NewMenuHandler(menuSvc)
 

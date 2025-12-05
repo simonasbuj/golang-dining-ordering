@@ -1,5 +1,5 @@
-// Package storage handles local storage of menu item images.
-package storage
+// Package local handles local storage of menu item images.
+package local
 
 import (
 	"context"

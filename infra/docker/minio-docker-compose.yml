@@ -1,0 +1,16 @@
+services:
+  dine_minio:
+    image: bitnamilegacy/minio:2023.9.4
+    container_name: dine-minio
+    ports:
+      - '9000:9000'
+      - '9001:9001'
+    environment:
+      MINIO_ROOT_USER: s3_user
+      MINIO_ROOT_PASSWORD: s3_password
+      MINIO_DEFAULT_BUCKETS: dine-public
+    volumes:
+      - minio_master_data:/data
+
+volumes:
+  minio_master_data:
