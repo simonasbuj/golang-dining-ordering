@@ -127,7 +127,7 @@ func (suite *paymentsServiceTestSuite) TestCanPayForOrder_Amount() {
 		{"tip and total", 10, 10, true, nil},
 		{"tip only", 10, 0, true, nil},
 		{"total only", 0, 10, true, nil},
-		{"no tip and total", 0, 0, true, ErrOrderPriceIsZero},
+		{"no tip and total", 0, 0, false, ErrOrderPriceIsZero},
 	}
 	for _, tc := range testCases {
 		suite.T().Run(tc.desc, func(_ *testing.T) {
