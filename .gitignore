@@ -16,7 +16,7 @@
 coverage.*
 *.coverprofile
 profile.cov
-coverage_temp.txt
+cvr.txt
 
 # Dependency directories (remove the comment below to include it)
 # vendor/
