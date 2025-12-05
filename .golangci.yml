@@ -43,6 +43,10 @@ linters:
       linters:
         - exhaustruct
       text: ".*"
+    - path: services/orders/services/payments_test
+      linters:
+        - exhaustruct
+      text: ".*"
     generated: lax
 formatters:
   enable:

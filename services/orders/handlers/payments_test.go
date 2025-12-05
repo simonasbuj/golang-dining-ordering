@@ -41,9 +41,9 @@ type paymentsHandlerTestSuite struct {
 }
 
 func (suite *paymentsHandlerTestSuite) SetupSuite() {
-	mockOrdersRepo := newMockOrdersRepo()
-	mockPaymentsRepo := newMockPaymentsRepo()
-	mockPaymentsProvider := newMockPaymentsProvider()
+	mockOrdersRepo := NewMockOrdersRepo()
+	mockPaymentsRepo := NewMockPaymentsRepo()
+	mockPaymentsProvider := NewMockPaymentsProvider()
 	svc := services.NewPaymentsService(mockOrdersRepo, mockPaymentsRepo, mockPaymentsProvider)
 
 	suite.handler = NewPaymentsHandler(svc)
@@ -95,7 +95,7 @@ type mockPaymentsProvider struct {
 	provider db.OrdersPaymentProvider
 }
 
-func newMockPaymentsProvider() *mockPaymentsProvider {
+func NewMockPaymentsProvider() *mockPaymentsProvider {
 	return &mockPaymentsProvider{
 		provider: testPaymentProvider,
 	}
@@ -127,7 +127,7 @@ func (p *mockPaymentsProvider) VerifySuccessWebhookEvent(
 
 type mockPaymentsRepo struct{}
 
-func newMockPaymentsRepo() *mockPaymentsRepo {
+func NewMockPaymentsRepo() *mockPaymentsRepo {
 	return &mockPaymentsRepo{}
 }
 
@@ -149,7 +149,7 @@ type mockOrdersRepo struct {
 	orderDto *dto.OrderDto
 }
 
-func newMockOrdersRepo() *mockOrdersRepo {
+func NewMockOrdersRepo() *mockOrdersRepo {
 	return &mockOrdersRepo{
 		orderDto: &dto.OrderDto{
 			ID:                testOrderID,
