@@ -107,12 +107,14 @@ func TestValidate_ValidationError(t *testing.T) {
 }
 
 func TestValidateDto_PassingNonPointerDto(t *testing.T) {
+	t.Parallel()
+
 	e := echo.New()
-	c := e.NewContext(httptest.NewRequest("POST", "/", nil), nil)
+	c := e.NewContext(httptest.NewRequest(http.MethodPost, "/", nil), nil)
 
 	dto := struct {
 		Name string
-	}{}
+	}{Name: "this struct is gonna be passed as non pointer"}
 
 	err := validation.ValidateDto(c, dto)
 	require.Error(t, err)
