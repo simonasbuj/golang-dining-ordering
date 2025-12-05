@@ -2,6 +2,7 @@ package services
 
 import (
 	"context"
+	"errors"
 	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
 	"net/http"
@@ -20,6 +21,7 @@ var (
 	testAmount            = 10
 	testPaymentID         = uuid.MustParse("67676767-6767-4676-8767-676767676767")
 	testOrderID           = uuid.MustParse("99999999-9999-4999-9999-999999999999")
+	testCompletedOrderID  = uuid.MustParse("77777777-7777-7777-7777-777777777777")
 	testDateTime          = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
 	testItemName          = "Test Menu Item"
 	testOrderItemDto      = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
@@ -28,6 +30,15 @@ var (
 	testPaymentProvider   = db.OrdersPaymentProviderMock
 	testProviderPaymentID = "pi_123456"
 )
+
+var (
+	ErrRepoFailed            = errors.New("repository failed")
+	ErrPaymentProviderFailed = errors.New("payment provider failed")
+)
+
+type ctxKey string
+
+const ctxFailUpdateOrder ctxKey = "fail-update-order"
 
 type paymentsServiceTestSuite struct {
 	suite.Suite
@@ -47,7 +58,7 @@ func TestPaymentsServiceTestSuite(t *testing.T) {
 	suite.Run(t, new(paymentsServiceTestSuite))
 }
 
-func (suite *paymentsServiceTestSuite) TestCreateCheckout() {
+func (suite *paymentsServiceTestSuite) TestCreateCheckout_Success() {
 	req := &dto.CheckoutSessionRequestDto{
 		OrderDto:   nil,
 		SuccessURL: "https://fake-url.com?success=true",
@@ -64,7 +75,31 @@ func (suite *paymentsServiceTestSuite) TestCreateCheckout() {
 	suite.Equal(want, got)
 }
 
-func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess() {
+func (suite *paymentsServiceTestSuite) TestCreateCheckout_InvalidOrderID() {
+	got, err := suite.svc.CreateCheckout(context.Background(), uuid.Max, nil)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *paymentsServiceTestSuite) TestCreateCheckout_InvalidReqDto() {
+	req := &dto.CheckoutSessionRequestDto{
+		OrderDto:   nil,
+		SuccessURL: "",
+		CancelURL:  "",
+	}
+
+	got, err := suite.svc.CreateCheckout(context.Background(), testOrderID, req)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *paymentsServiceTestSuite) TestCreateCheckout_OrderAlreadyPaid() {
+	got, err := suite.svc.CreateCheckout(context.Background(), testCompletedOrderID, nil)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_Success() {
 	payload := []byte(`{"payment_secret": "secret"}`)
 	header := http.Header{
 		"Payment-Signature": []string{"signature"},
@@ -82,6 +117,31 @@ func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess() {
 	got, err := suite.svc.HandleWebhookSuccess(context.Background(), payload, header)
 	suite.Require().NoError(err)
 	suite.Equal(want, got)
+}
+
+func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_EmptyPayload() {
+	got, err := suite.svc.HandleWebhookSuccess(context.Background(), nil, nil)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_ErrorSavePayment() {
+	payload := []byte("1")
+	got, err := suite.svc.HandleWebhookSuccess(context.Background(), payload, nil)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_ErrorUpdateOrder() {
+	payload := []byte(`{"payment_secret": "secret"}`)
+	header := http.Header{
+		"Payment-Signature": []string{"signature"},
+	}
+
+	ctx := context.WithValue(context.Background(), ctxFailUpdateOrder, true)
+	got, err := suite.svc.HandleWebhookSuccess(ctx, payload, header)
+	suite.Require().Error(err)
+	suite.Nil(got)
 }
 
 func (suite *paymentsServiceTestSuite) TestCanPayForOrder_Status() {
@@ -162,8 +222,12 @@ func newMockPaymentsProvider() *mockPaymentsProvider {
 
 func (p *mockPaymentsProvider) CreateCheckoutSession(
 	_ context.Context,
-	_ *dto.CheckoutSessionRequestDto,
+	req *dto.CheckoutSessionRequestDto,
 ) (*dto.CheckoutSessionResponseDto, error) {
+	if req.SuccessURL == "" {
+		return nil, ErrPaymentProviderFailed
+	}
+
 	return &dto.CheckoutSessionResponseDto{
 		URL:      testCheckoutURL,
 		Provider: p.provider,
@@ -171,9 +235,17 @@ func (p *mockPaymentsProvider) CreateCheckoutSession(
 }
 
 func (p *mockPaymentsProvider) VerifySuccessWebhookEvent(
-	_ []byte,
+	payload []byte,
 	_ http.Header,
 ) (*dto.PaymentDto, error) {
+	if len(payload) == 0 {
+		return nil, ErrPaymentProviderFailed
+	}
+
+	if len(payload) == 1 {
+		return &dto.PaymentDto{}, nil
+	}
+
 	return &dto.PaymentDto{
 		ID:                testPaymentID,
 		OrderID:           testOrderID,
@@ -192,8 +264,12 @@ func newMockPaymentsRepo() *mockPaymentsRepo {
 
 func (r *mockPaymentsRepo) SavePayment(
 	_ context.Context,
-	_ *dto.PaymentDto,
+	reqDto *dto.PaymentDto,
 ) (*dto.PaymentDto, error) {
+	if reqDto.OrderID == uuid.Nil {
+		return nil, ErrRepoFailed
+	}
+
 	return &dto.PaymentDto{
 		ID:                testPaymentID,
 		OrderID:           testOrderID,
@@ -265,8 +341,19 @@ func (r *mockOrdersRepo) AddItemToOrder(
 
 func (r *mockOrdersRepo) GetOrderItems(
 	_ context.Context,
-	_ uuid.UUID,
+	orderID uuid.UUID,
 ) (*dto.OrderDto, error) {
+	if orderID == testCompletedOrderID {
+		completedOrder := *r.orderDto
+		completedOrder.Status = db.OrderStatusCompleted
+
+		return &completedOrder, nil
+	}
+
+	if orderID != testOrderID {
+		return nil, ErrRepoFailed
+	}
+
 	return r.orderDto, nil
 }
 
@@ -284,7 +371,11 @@ func (r *mockOrdersRepo) DeleteOrderItem(
 	return nil
 }
 
-func (r *mockOrdersRepo) UpdateOrder(_ context.Context, _ *dto.UpdateOrderReqDto) error {
+func (r *mockOrdersRepo) UpdateOrder(ctx context.Context, _ *dto.UpdateOrderReqDto) error {
+	if v, ok := ctx.Value(ctxFailUpdateOrder).(bool); ok && v {
+		return ErrRepoFailed
+	}
+
 	return nil
 }
 
