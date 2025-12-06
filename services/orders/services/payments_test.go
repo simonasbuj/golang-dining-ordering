@@ -424,7 +424,11 @@ func (r *mockOrdersRepo) UpdateOrder(ctx context.Context, _ *dto.UpdateOrderReqD
 
 func (r *mockOrdersRepo) IsUserRestaurantWaiter(
 	_ context.Context,
-	_, _ uuid.UUID,
+	userID, _ uuid.UUID,
 ) error {
+	if userID == testUserFromAnotherRestaurantID {
+		return ErrRepoFailed
+	}
+
 	return nil
 }
