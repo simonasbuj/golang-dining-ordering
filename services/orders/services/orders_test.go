@@ -103,3 +103,46 @@ func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedC
 	suite.Require().Error(err)
 	suite.Nil(got)
 }
+
+func (suite *ordersServiceTestSuite) TestAddItemToOrder_Success() {
+	want := suite.orderDto
+
+	got, err := suite.svc.AddItemToOrder(context.Background(), testOrderID, testItemID)
+	suite.Require().NoError(err)
+	suite.Equal(want, got)
+}
+
+func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedGetMenuItems() {
+	got, err := suite.svc.AddItemToOrder(context.Background(), testOrderID, uuid.Max)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedGetOrderItems() {
+	got, err := suite.svc.AddItemToOrder(context.Background(), uuid.Max, testItemID)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestAddItemToOrder_CantAddToCompletedOrder() {
+	got, err := suite.svc.AddItemToOrder(context.Background(), testCompletedOrderID, testItemID)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestAddItemToOrder_TryingToAddItemFromAnotherRestaurant() {
+	got, err := suite.svc.AddItemToOrder(
+		context.Background(),
+		testOrderID,
+		testDifferentRestaurantItemID,
+	)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedRepoAddingItemToOrder() {
+	ctx := context.WithValue(context.Background(), ctxFailAddItemToOrder, true)
+	got, err := suite.svc.AddItemToOrder(ctx, testOrderID, testItemID)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}

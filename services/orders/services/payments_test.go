@@ -16,21 +16,22 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	testRestaurantID      = uuid.MustParse("11111111-1111-4111-8111-111111111111")
-	testRestaurantName    = "Test Restaurant"
-	testCurrency          = "eur"
-	testAmount            = 10
-	testPaymentID         = uuid.MustParse("67676767-6767-4676-8767-676767676767")
-	testOrderID           = uuid.MustParse("99999999-9999-4999-9999-999999999999")
-	testCompletedOrderID  = uuid.MustParse("77777777-7777-7777-7777-777777777777")
-	testTableID           = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
-	testDateTime          = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
-	testItemName          = "Test Menu Item"
-	testOrderItemDto      = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
-	testItemID            = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
-	testCheckoutURL       = "http://fake-checkout-session.com/1"
-	testPaymentProvider   = db.OrdersPaymentProviderMock
-	testProviderPaymentID = "pi_123456"
+	testRestaurantID              = uuid.MustParse("11111111-1111-4111-8111-111111111111")
+	testRestaurantName            = "Test Restaurant"
+	testCurrency                  = "eur"
+	testAmount                    = 10
+	testPaymentID                 = uuid.MustParse("67676767-6767-4676-8767-676767676767")
+	testOrderID                   = uuid.MustParse("99999999-9999-4999-9999-999999999999")
+	testCompletedOrderID          = uuid.MustParse("77777777-7777-7777-7777-777777777777")
+	testTableID                   = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
+	testDateTime                  = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
+	testItemName                  = "Test Menu Item"
+	testOrderItemDto              = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	testItemID                    = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
+	testDifferentRestaurantItemID = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-aaaaaaaaaaaa")
+	testCheckoutURL               = "http://fake-checkout-session.com/1"
+	testPaymentProvider           = db.OrdersPaymentProviderMock
+	testProviderPaymentID         = "pi_123456"
 )
 
 var (
@@ -284,6 +285,7 @@ const (
 	ctxFailUpdateOrder         ctxKey = "fail-UpdateOrder"
 	ctxFailGetTableCurrency    ctxKey = "fail-GetTableCurrency"
 	ctxFailCreateOrderForTable ctxKey = "fail-CreateOrderForTable"
+	ctxFailAddItemToOrder      ctxKey = "fail-AddItemToOrder"
 )
 
 type mockOrdersRepo struct {
@@ -354,10 +356,14 @@ func (r *mockOrdersRepo) GetTableCurrency(ctx context.Context, _ uuid.UUID) (str
 }
 
 func (r *mockOrdersRepo) AddItemToOrder(
-	_ context.Context,
+	ctx context.Context,
 	_ uuid.UUID,
 	_ *dto.OrderItemDto,
 ) (uuid.UUID, error) {
+	if v, ok := ctx.Value(ctxFailAddItemToOrder).(bool); ok && v {
+		return uuid.Nil, ErrRepoFailed
+	}
+
 	return testOrderItemDto, nil
 }
 
@@ -381,8 +387,19 @@ func (r *mockOrdersRepo) GetOrderItems(
 
 func (r *mockOrdersRepo) GetMenuItem(
 	_ context.Context,
-	_ uuid.UUID,
+	itemID uuid.UUID,
 ) (*dto.OrderItemDto, error) {
+	if itemID == testDifferentRestaurantItemID {
+		item := *r.orderDto.Items[0]
+		item.RestaurantID = uuid.Max
+
+		return &item, nil
+	}
+
+	if itemID != testItemID {
+		return nil, ErrRepoFailed
+	}
+
 	return r.orderDto.Items[0], nil
 }
 
