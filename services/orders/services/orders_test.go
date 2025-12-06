@@ -60,3 +60,46 @@ func (suite *ordersServiceTestSuite) TestGetOrder_RepoFailed() {
 	suite.Require().Error(err)
 	suite.Nil(got)
 }
+
+func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_SuccessOrderExists() {
+	want := &dto.CurrentOrderDto{
+		ID: testOrderID,
+	}
+
+	got, err := suite.svc.GetOrCreateCurrentOrderForTable(context.Background(), testTableID)
+	suite.Require().NoError(err)
+	suite.Equal(want, got)
+}
+
+func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_SuccessNewOrderCreated() {
+	want := &dto.CurrentOrderDto{
+		ID: testOrderID,
+	}
+
+	got, err := suite.svc.GetOrCreateCurrentOrderForTable(
+		context.Background(),
+		testCompletedOrderID,
+	)
+	suite.Require().NoError(err)
+	suite.Equal(want, got)
+}
+
+func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_RepoError() {
+	got, err := suite.svc.GetOrCreateCurrentOrderForTable(context.Background(), uuid.Max)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedGettingTableCurrency() {
+	ctx := context.WithValue(context.Background(), ctxFailGetTableCurrency, true)
+	got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, testOrderID)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedCreatingNewOrderForTable() {
+	ctx := context.WithValue(context.Background(), ctxFailCreateOrderForTable, true)
+	got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, testOrderID)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}

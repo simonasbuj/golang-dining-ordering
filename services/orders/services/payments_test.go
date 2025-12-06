@@ -5,6 +5,7 @@ import (
 	"errors"
 	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
+	"golang-dining-ordering/services/orders/repository"
 	"net/http"
 	"testing"
 	"time"
@@ -22,6 +23,7 @@ var (
 	testPaymentID         = uuid.MustParse("67676767-6767-4676-8767-676767676767")
 	testOrderID           = uuid.MustParse("99999999-9999-4999-9999-999999999999")
 	testCompletedOrderID  = uuid.MustParse("77777777-7777-7777-7777-777777777777")
+	testTableID           = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
 	testDateTime          = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
 	testItemName          = "Test Menu Item"
 	testOrderItemDto      = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
@@ -35,10 +37,6 @@ var (
 	ErrRepoFailed            = errors.New("repository failed")
 	ErrPaymentProviderFailed = errors.New("payment provider failed")
 )
-
-type ctxKey string
-
-const ctxFailUpdateOrder ctxKey = "fail-update-order"
 
 type paymentsServiceTestSuite struct {
 	suite.Suite
@@ -280,6 +278,14 @@ func (r *mockPaymentsRepo) SavePayment(
 	}, nil
 }
 
+type ctxKey string
+
+const (
+	ctxFailUpdateOrder         ctxKey = "fail-UpdateOrder"
+	ctxFailGetTableCurrency    ctxKey = "fail-GetTableCurrency"
+	ctxFailCreateOrderForTable ctxKey = "fail-CreateOrderForTable"
+)
+
 type mockOrdersRepo struct {
 	orderDto *dto.OrderDto
 }
@@ -310,24 +316,40 @@ func newMockOrdersRepo() *mockOrdersRepo {
 
 func (r *mockOrdersRepo) GetCurrentOrderForTable(
 	_ context.Context,
-	_ uuid.UUID,
+	tableID uuid.UUID,
 ) (*dto.CurrentOrderDto, error) {
+	if tableID == uuid.Max {
+		return nil, ErrRepoFailed
+	}
+
+	if tableID != testTableID {
+		return nil, repository.ErrNoCurrentOrder
+	}
+
 	return &dto.CurrentOrderDto{
 		ID: testOrderID,
 	}, nil
 }
 
 func (r *mockOrdersRepo) CreateOrderForTable(
-	_ context.Context,
+	ctx context.Context,
 	_ uuid.UUID,
 	_ string,
 ) (*dto.CurrentOrderDto, error) {
+	if v, ok := ctx.Value(ctxFailCreateOrderForTable).(bool); ok && v {
+		return nil, ErrRepoFailed
+	}
+
 	return &dto.CurrentOrderDto{
 		ID: testOrderID,
 	}, nil
 }
 
-func (r *mockOrdersRepo) GetTableCurrency(_ context.Context, _ uuid.UUID) (string, error) {
+func (r *mockOrdersRepo) GetTableCurrency(ctx context.Context, _ uuid.UUID) (string, error) {
+	if v, ok := ctx.Value(ctxFailGetTableCurrency).(bool); ok && v {
+		return "", ErrRepoFailed
+	}
+
 	return testCurrency, nil
 }
 
