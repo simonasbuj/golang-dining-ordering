@@ -26,7 +26,7 @@ var (
 	testTableID                   = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
 	testDateTime                  = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
 	testItemName                  = "Test Menu Item"
-	testOrderItemDto              = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	testOrderItemID               = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
 	testItemID                    = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
 	testDifferentRestaurantItemID = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-aaaaaaaaaaaa")
 	testCheckoutURL               = "http://fake-checkout-session.com/1"
@@ -305,7 +305,7 @@ func newMockOrdersRepo() *mockOrdersRepo {
 			UpdatedAt:         testDateTime,
 			Items: []*dto.OrderItemDto{
 				{
-					ID:           testOrderItemDto,
+					ID:           testOrderItemID,
 					RestaurantID: testRestaurantID,
 					ItemID:       testItemID,
 					Name:         testItemName,
@@ -364,7 +364,7 @@ func (r *mockOrdersRepo) AddItemToOrder(
 		return uuid.Nil, ErrRepoFailed
 	}
 
-	return testOrderItemDto, nil
+	return testOrderItemID, nil
 }
 
 func (r *mockOrdersRepo) GetOrderItems(
@@ -405,8 +405,12 @@ func (r *mockOrdersRepo) GetMenuItem(
 
 func (r *mockOrdersRepo) DeleteOrderItem(
 	_ context.Context,
-	_, _ uuid.UUID,
+	orderItemID, _ uuid.UUID,
 ) error {
+	if orderItemID != testOrderItemID {
+		return ErrRepoFailed
+	}
+
 	return nil
 }
 

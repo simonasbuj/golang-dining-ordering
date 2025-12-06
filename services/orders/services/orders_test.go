@@ -32,7 +32,7 @@ func (suite *ordersServiceTestSuite) SetupSuite() {
 		UpdatedAt:         testDateTime,
 		Items: []*dto.OrderItemDto{
 			{
-				ID:           testOrderItemDto,
+				ID:           testOrderItemID,
 				RestaurantID: testRestaurantID,
 				ItemID:       testItemID,
 				Name:         testItemName,
@@ -127,6 +127,7 @@ func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedGetOrderItems() {
 func (suite *ordersServiceTestSuite) TestAddItemToOrder_CantAddToCompletedOrder() {
 	got, err := suite.svc.AddItemToOrder(context.Background(), testCompletedOrderID, testItemID)
 	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, ErrOrderIsNotOpen)
 	suite.Nil(got)
 }
 
@@ -137,12 +138,43 @@ func (suite *ordersServiceTestSuite) TestAddItemToOrder_TryingToAddItemFromAnoth
 		testDifferentRestaurantItemID,
 	)
 	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, ErrItemDoesNotBelongToRestaurant)
 	suite.Nil(got)
 }
 
 func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedRepoAddingItemToOrder() {
 	ctx := context.WithValue(context.Background(), ctxFailAddItemToOrder, true)
 	got, err := suite.svc.AddItemToOrder(ctx, testOrderID, testItemID)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestDeleteOrderItem_Success() {
+	want := suite.orderDto
+	got, err := suite.svc.DeleteOrderItem(context.Background(), testOrderItemID, testOrderID)
+	suite.Require().NoError(err)
+	suite.Equal(want, got)
+}
+
+func (suite *ordersServiceTestSuite) TestDeleteOrderItem_FailedGetOrderItems() {
+	got, err := suite.svc.DeleteOrderItem(context.Background(), testOrderItemID, uuid.Max)
+	suite.Require().Error(err)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestDeleteOrderItem_CantDeleteFromLockedOrder() {
+	got, err := suite.svc.DeleteOrderItem(
+		context.Background(),
+		testOrderItemID,
+		testCompletedOrderID,
+	)
+	suite.Require().Error(err)
+	suite.Require().ErrorIs(err, ErrOrderIsNotOpen)
+	suite.Nil(got)
+}
+
+func (suite *ordersServiceTestSuite) TestDeleteOrderItem_FailedRepoDeleteOrderItem() {
+	got, err := suite.svc.DeleteOrderItem(context.Background(), uuid.Max, testOrderID)
 	suite.Require().Error(err)
 	suite.Nil(got)
 }
