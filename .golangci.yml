@@ -61,6 +61,9 @@ linters:
     - path: services/management/middleware/auth_test
       linters:
         - exhaustruct
+    - path: services/management/handlers/context_test
+      linters:
+        - exhaustruct
     generated: lax
 formatters:
   enable:
