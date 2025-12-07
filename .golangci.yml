@@ -67,6 +67,9 @@ linters:
     - path: services/management/handlers/restaurants_test
       linters:
         - exhaustruct
+    - path: services/management/handlers/menu_test
+      linters:
+        - exhaustruct
     generated: lax
 formatters:
   enable:
