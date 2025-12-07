@@ -33,6 +33,10 @@ func GetUserFromContext(
 		return nil, responses.JSONError(c, "unauthorized", errMissingUser)
 	}
 
+	if !ok || user == nil {
+		return &authDto.TokenClaimsDto{}, nil //nolint:exhaustruct
+	}
+
 	return user, nil
 }
 
