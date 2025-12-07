@@ -19,7 +19,7 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	testUserID = uuid.MustParse("67676767-6767-4676-8767-676767676767")
+	testUserID = "67676767-6767-4676-8767-676767676767"
 	testToken  = "my-token"
 )
 
@@ -132,7 +132,7 @@ func TestParseAndStoreAuthResponse_Success(t *testing.T) {
 	)
 
 	expectedUser := authDto.TokenClaimsDto{
-		UserID: testUserID,
+		UserID: uuid.MustParse(testUserID),
 	}
 
 	respBody, err := json.Marshal(AuthResponse{Data: expectedUser})
@@ -345,4 +345,130 @@ type roundTripFunc func(req *http.Request) (*http.Response, error)
 
 func (f roundTripFunc) RoundTrip(req *http.Request) (*http.Response, error) {
 	return f(req)
+}
+
+func TestAuthMiddleware(t *testing.T) { //nolint:funlen
+	t.Parallel()
+
+	e := echo.New()
+
+	tests := []struct {
+		name          string
+		authHeader    string
+		serverHandler http.HandlerFunc
+		nextCalled    bool
+	}{
+		{
+			name:       "missing Authorization header",
+			authHeader: "",
+			nextCalled: false,
+		},
+		{
+			name:       "auth service returns non-200",
+			authHeader: testToken,
+			serverHandler: func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusForbidden)
+				_, _ = w.Write([]byte(`{"error":"invalid"}`))
+			},
+			nextCalled: false,
+		},
+		{
+			name:       "parseAndStoreAuthResponse fails",
+			authHeader: testToken,
+			serverHandler: func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+				_, _ = w.Write([]byte(`invalid json`))
+			},
+			nextCalled: false,
+		},
+		{
+			name:       "success path",
+			authHeader: testToken,
+			serverHandler: func(w http.ResponseWriter, _ *http.Request) {
+				w.WriteHeader(http.StatusOK)
+
+				respBody, _ := json.Marshal(AuthResponse{ //nolint:errchkjson
+					Data: authDto.TokenClaimsDto{UserID: uuid.MustParse(testUserID)},
+				})
+
+				_, _ = w.Write(respBody)
+			},
+			nextCalled: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			var authURL string
+
+			if tt.serverHandler != nil {
+				ts := httptest.NewServer(tt.serverHandler)
+				defer ts.Close()
+
+				authURL = ts.URL
+			} else {
+				authURL = "http://example.invalid"
+			}
+
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			if tt.authHeader != "" {
+				req.Header.Set("Authorization", tt.authHeader)
+			}
+
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
+
+			nextCalled := false
+			next := func(_ echo.Context) error {
+				nextCalled = true
+
+				return nil
+			}
+
+			mw := AuthMiddleware(authURL, true) // failOnMissingUser = true
+			err := mw(next)(c)
+
+			if !tt.nextCalled {
+				require.Error(t, err)
+				require.False(t, nextCalled)
+			} else {
+				require.NoError(t, err)
+				require.True(t, nextCalled)
+
+				user := c.Get(ContextKeyAuthUser)
+				require.NotNil(t, user)
+				claims, ok := user.(*authDto.TokenClaimsDto)
+				require.True(t, ok)
+				require.Equal(t, uuid.MustParse(testUserID), claims.UserID)
+			}
+		})
+	}
+}
+
+func TestAuthMiddleware_AuthServiceUnreachable(t *testing.T) {
+	t.Parallel()
+
+	e := echo.New()
+
+	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	req.Header.Set("Authorization", testToken)
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	nextCalled := false
+	next := func(_ echo.Context) error {
+		nextCalled = true
+
+		return nil
+	}
+
+	mw := AuthMiddleware("http://invalid-unreachable-url.eu", true)
+
+	err := mw(next)(c)
+
+	require.Error(t, err)
+	require.False(t, nextCalled)
 }
