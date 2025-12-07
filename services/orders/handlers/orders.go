@@ -118,7 +118,12 @@ func (h *OrdersHandler) HandleDeleteItemFromOrder(c echo.Context) error {
 			return responses.JSONError(c, err.Error(), err)
 		}
 
-		return responses.JSONError(c, "failed to delete item from order", err)
+		return responses.JSONError(
+			c,
+			"failed to delete item from order",
+			err,
+			http.StatusInternalServerError,
+		)
 	}
 
 	return responses.JSONSuccess(c, "deleted item from order", respDto)
@@ -158,5 +163,5 @@ func (h *OrdersHandler) HandleUpdateOrder(c echo.Context) error {
 		return responses.JSONError(c, "failed to update order", err, http.StatusInternalServerError)
 	}
 
-	return responses.JSONSuccess(c, "going to try to update", respDto)
+	return responses.JSONSuccess(c, "updated order", respDto)
 }

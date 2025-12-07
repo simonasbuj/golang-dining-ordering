@@ -21,12 +21,15 @@ import (
 
 //nolint:gochecknoglobals
 var (
+	testUserID            = uuid.MustParse("00000000-0000-0000-0000-000000000000")
 	testRestaurantID      = uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	testRestaurantName    = "Test Restaurant"
 	testCurrency          = "eur"
 	testAmount            = 10
 	testPaymentID         = uuid.MustParse("67676767-6767-4676-8767-676767676767")
 	testOrderID           = uuid.MustParse("99999999-9999-4999-9999-999999999999")
+	testCompletedOrderID  = uuid.MustParse("77777777-7777-7777-7777-777777777777")
+	testTableID           = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
 	testDateTime          = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
 	testItemName          = "Test Menu Item"
 	testOrderItemDto      = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
@@ -36,7 +39,10 @@ var (
 	testProviderPaymentID = "pi_123456"
 )
 
-var ErrService = errors.New("service failed")
+var (
+	ErrService    = errors.New("service failed")
+	ErrRepoFailed = errors.New("repository failed")
+)
 
 type paymentsHandlerTestSuite struct {
 	suite.Suite
@@ -310,8 +316,12 @@ func NewMockOrdersRepo() *mockOrdersRepo {
 
 func (r *mockOrdersRepo) GetCurrentOrderForTable(
 	_ context.Context,
-	_ uuid.UUID,
+	tableID uuid.UUID,
 ) (*dto.CurrentOrderDto, error) {
+	if tableID != testTableID {
+		return nil, ErrRepoFailed
+	}
+
 	return &dto.CurrentOrderDto{
 		ID: testOrderID,
 	}, nil
@@ -343,6 +353,13 @@ func (r *mockOrdersRepo) GetOrderItems(
 	_ context.Context,
 	orderID uuid.UUID,
 ) (*dto.OrderDto, error) {
+	if orderID == testCompletedOrderID {
+		completedOrder := *r.orderDto
+		completedOrder.Status = db.OrderStatusCompleted
+
+		return &completedOrder, nil
+	}
+
 	if orderID != testOrderID {
 		return nil, ErrService
 	}
