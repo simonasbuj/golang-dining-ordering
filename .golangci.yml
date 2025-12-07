@@ -58,6 +58,9 @@ linters:
     - path: services/orders/handlers/orders_test
       linters:
         - exhaustruct
+    - path: services/management/middleware/auth_test
+      linters:
+        - exhaustruct
     generated: lax
 formatters:
   enable:
