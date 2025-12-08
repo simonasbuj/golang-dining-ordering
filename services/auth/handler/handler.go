@@ -38,7 +38,6 @@ func (h *Handler) HandleSignUp(c echo.Context) error {
 	err := validation.ValidateDto(c, &reqDto)
 	if err != nil {
 		return responses.JSONError(c, err.Error(), err)
-
 	}
 
 	_, err = h.svc.SignUpUser(c.Request().Context(), &reqDto)
@@ -89,7 +88,12 @@ func (h *Handler) HandleRefreshToken(c echo.Context) error {
 			return responses.JSONError(c, "invalid token data", err)
 		}
 
-		return responses.JSONError(c, "failed to refresh token", err, http.StatusInternalServerError)
+		return responses.JSONError(
+			c,
+			"failed to refresh token",
+			err,
+			http.StatusInternalServerError,
+		)
 	}
 
 	return responses.JSONSuccess(c, "refreshed token successfully", resDto)
