@@ -41,7 +41,7 @@ func (suite *restaurantsServiceTestSuite) SetupSuite() {
 	}
 }
 
-func TestOrdersHandlerTestSuite(t *testing.T) {
+func TestRestaurantsServiceTestSuite(t *testing.T) {
 	t.Parallel()
 	suite.Run(t, new(restaurantsServiceTestSuite))
 }
