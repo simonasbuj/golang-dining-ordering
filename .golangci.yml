@@ -76,6 +76,10 @@ linters:
     - path: services/management/services/menu_test
       linters:
         - exhaustruct
+    - path: services/orders/handlers/websockets
+      linters:
+        - errcheck
+        - exhaustive
     generated: lax
 formatters:
   enable:

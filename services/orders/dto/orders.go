@@ -2,6 +2,7 @@
 package dto
 
 import (
+	"encoding/json"
 	db "golang-dining-ordering/services/orders/db/generated"
 	"time"
 
@@ -45,4 +46,30 @@ type UpdateOrderReqDto struct {
 	OrderID          uuid.UUID       `json:"order_id"            validate:"required"`
 	TipAmountInCents *int32          `json:"tip_amount_in_cents" validate:"omitempty,gte=0,lt=20000"`
 	Status           *db.OrderStatus `json:"status"`
+}
+
+// WSMessageType represents the type of a WebSocket message.
+type WSMessageType string
+
+const (
+	// MsgUpdateOrder to update an order.
+	MsgUpdateOrder WSMessageType = "update_order"
+	// MsgAddItem to add an item to an order.
+	MsgAddItem WSMessageType = "add_item"
+	// MsgDeleteItem to delete an item from an order.
+	MsgDeleteItem WSMessageType = "delete_item"
+	// MsgError indicating an error.
+	MsgError WSMessageType = "error"
+)
+
+// WSReqMessage is the envelope for messages received from the client.
+type WSReqMessage struct {
+	Type WSMessageType   `json:"type" validate:"required"`
+	Data json.RawMessage `json:"data" validate:"required"`
+}
+
+// WSRespMessage is the envelope for messages sent back to the client.
+type WSRespMessage struct {
+	Type WSMessageType `json:"type"`
+	Data any           `json:"data"`
 }

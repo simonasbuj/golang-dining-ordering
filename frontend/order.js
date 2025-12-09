@@ -6,6 +6,8 @@ function orderApp() {
         order: null,
         isSuccess: false,
 
+        CURRENCIES_WITH_NO_CENTS: ['sek'],
+
         async init () {
             console.log("order.js is LOADED")
             orderId = this.getOrderIdFromParam()
@@ -55,6 +57,7 @@ function orderApp() {
         },
 
         centsToFloat(amountInCents) {
+            if (this.CURRENCIES_WITH_NO_CENTS.includes(this.order.currency)) return amountInCents
             if (amountInCents == null) return
             return (amountInCents / 100).toFixed(2)
         },
