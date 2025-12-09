@@ -80,6 +80,9 @@ linters:
       linters:
         - errcheck
         - exhaustive
+    - path: services/orders/handlers/websockets_test
+      linters:
+        - exhaustruct
     generated: lax
 formatters:
   enable:
