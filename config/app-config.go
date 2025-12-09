@@ -26,6 +26,7 @@ type AppConfig struct {
 	StripeSecretKey          string      `env:"STRIPE_SECRET_KEY"`
 	StripeWebhookSecret      string      `env:"STRIPE_WEBHOOK_SECRET"`
 	S3Config                 S3Config
+	WebsocketConfig          WebsocketConfig
 }
 
 // S3Config holds credentials and connection info for S3/MinIO storage.
@@ -34,4 +35,11 @@ type S3Config struct {
 	Secret string `env:"S3_SECRET"`
 	URL    string `env:"S3_URL"`
 	Bucket string `env:"S3_BUCKET"`
+}
+
+// WebsocketConfig holds settings for websocket connections.
+type WebsocketConfig struct {
+	HandshakeTimeout int `env:"CHAT_HANDSHAKE_TIMEOUT" env-default:"5"`
+	ReadBufferSize   int `env:"CHAT_READ_BUFFER_SIZE"  env-default:"1024"`
+	WriteBufferSize  int `env:"CHAT_WRITE_BUFFER_SIZE" env-default:"1024"`
 }

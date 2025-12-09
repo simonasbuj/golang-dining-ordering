@@ -15,6 +15,7 @@ func AddOrdersRoutes(
 	e *echo.Echo,
 	ordersHandler *handlers.OrdersHandler,
 	paymentsHandler *handlers.PaymentsHandler,
+	websocketHandler *handlers.WebsocketHandler,
 	authEndpoint string,
 ) {
 	publicAPI := e.Group("/api/v1/orders")
@@ -35,4 +36,5 @@ func AddOrdersRoutes(
 
 	publicAPI.POST("/:order_id/payments", paymentsHandler.HandleCreateCheckout)
 	publicAPI.POST("/webhooks/payment-success", paymentsHandler.HandleWebhookSuccess)
+	publicAPI.GET("/:order_id/ws", websocketHandler.HandleOrderWebsocket)
 }

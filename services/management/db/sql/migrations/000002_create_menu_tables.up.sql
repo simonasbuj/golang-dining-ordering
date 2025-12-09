@@ -15,7 +15,7 @@ CREATE TABLE management.menus (
 CREATE TABLE management.categories (
     id UUID PRIMARY KEY,
     menu_id UUID NOT NULL,
-    name VARCHAR(40) NOT NULL,
+    name VARCHAR(100) NOT NULL,
     description VARCHAR(200),
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
@@ -31,7 +31,7 @@ CREATE TABLE management.categories (
 CREATE TABLE management.items (
     id UUID PRIMARY KEY,
     category_id UUID NOT NULL,
-    name VARCHAR(40) NOT NULL,
+    name VARCHAR(100) NOT NULL,
     description VARCHAR(200),
     price_in_cents INTEGER NOT NULL,
     is_available BOOLEAN NOT NULL DEFAULT True,

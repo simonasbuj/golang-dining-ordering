@@ -153,6 +153,7 @@ func setupOrders(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	paymentsRepo := ordersRepo.NewPaymentsRepo(queries)
 	ordersSvc := ordersServices.NewOrdersService(ordRepo)
 	ordersHandler := ordersHandlers.NewOrdersHandler(ordersSvc)
+	websocketHandler := ordersHandlers.NewWebsocketHandler(ordersSvc, &cfg.WebsocketConfig, logger)
 
 	paymentsProvider := paymentproviders.NewStripePaymentProvider(
 		cfg.StripeSecretKey,
@@ -160,5 +161,12 @@ func setupOrders(e *echo.Echo, cfg *config.AppConfig, logger *slog.Logger) {
 	)
 	paymentsSvc := ordersServices.NewPaymentsService(ordRepo, paymentsRepo, paymentsProvider)
 	paymentsHandler := ordersHandlers.NewPaymentsHandler(paymentsSvc)
-	ordersRoutes.AddOrdersRoutes(e, ordersHandler, paymentsHandler, cfg.AuthorizeEndpoint)
+
+	ordersRoutes.AddOrdersRoutes(
+		e,
+		ordersHandler,
+		paymentsHandler,
+		websocketHandler,
+		cfg.AuthorizeEndpoint,
+	)
 }

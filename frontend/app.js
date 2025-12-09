@@ -12,6 +12,7 @@ function restaurantApp() {
     SUCCESS_URL: null,
     CANCEL_URL: null,
     loadingPayment: false,
+    CURRENCIES_WITH_NO_CENTS: ['sek'],
 
     async init() {
       this.SUCCESS_URL = `${this.getBaseURL()}/frontend/order.html?success=true&orderId=`;
@@ -273,11 +274,14 @@ function restaurantApp() {
     },
 
     centsToFloat(amountInCents) {
+      if (this.CURRENCIES_WITH_NO_CENTS.includes(this.order.currency)) return amountInCents
+
       if (amountInCents == null) return
       return (amountInCents / 100).toFixed(2)
     },
 
     floatToCents(amountInFloat) {
+      if (this.CURRENCIES_WITH_NO_CENTS.includes(this.order.currency)) return amountInFloat
       if (amountInFloat == null) return
       return Math.round(amountInFloat * 100)
     },
