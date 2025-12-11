@@ -19,10 +19,6 @@ func AddOrdersRoutes(
 	authEndpoint string,
 ) {
 	publicAPI := e.Group("/api/v1/orders")
-	// employeeAPI := publicAPI.Group("",
-	// 	middleware.AuthMiddleware(authEndpoint),
-	// 	middleware.RoleMiddleware(authDto.RoleManager, authDto.RoleWaiter),
-	// )
 
 	publicAPI.GET("/current", ordersHandler.HandleGetCurrentTableOrder)
 	publicAPI.GET("/:order_id", ordersHandler.HandleGetOrder)
@@ -36,5 +32,9 @@ func AddOrdersRoutes(
 
 	publicAPI.POST("/:order_id/payments", paymentsHandler.HandleCreateCheckout)
 	publicAPI.POST("/webhooks/payment-success", paymentsHandler.HandleWebhookSuccess)
-	publicAPI.GET("/:order_id/ws", websocketHandler.HandleOrderWebsocket)
+	publicAPI.GET(
+		"/:order_id/ws",
+		websocketHandler.HandleOrderWebsocket,
+		middleware.AuthMiddleware(authEndpoint, false),
+	)
 }

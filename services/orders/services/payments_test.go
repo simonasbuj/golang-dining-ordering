@@ -359,12 +359,20 @@ func (r *mockOrdersRepo) AddItemToOrder(
 	ctx context.Context,
 	_ uuid.UUID,
 	_ *dto.OrderItemDto,
-) (uuid.UUID, error) {
+) (*dto.OrderItemDto, error) {
 	if v, ok := ctx.Value(ctxFailAddItemToOrder).(bool); ok && v {
-		return uuid.Nil, ErrRepoFailed
+		return nil, ErrRepoFailed
 	}
 
-	return testOrderItemID, nil
+	orderItemDto := &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}
+
+	return orderItemDto, nil
 }
 
 func (r *mockOrdersRepo) GetOrderItems(
@@ -382,7 +390,9 @@ func (r *mockOrdersRepo) GetOrderItems(
 		return nil, ErrRepoFailed
 	}
 
-	return r.orderDto, nil
+	respDto := *r.orderDto
+
+	return &respDto, nil
 }
 
 func (r *mockOrdersRepo) GetMenuItem(
@@ -406,20 +416,43 @@ func (r *mockOrdersRepo) GetMenuItem(
 func (r *mockOrdersRepo) DeleteOrderItem(
 	_ context.Context,
 	orderItemID, _ uuid.UUID,
-) error {
+) (*dto.OrderItemDto, error) {
 	if orderItemID != testOrderItemID {
-		return ErrRepoFailed
+		return nil, ErrRepoFailed
 	}
 
-	return nil
+	return &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}, nil
 }
 
-func (r *mockOrdersRepo) UpdateOrder(ctx context.Context, _ *dto.UpdateOrderReqDto) error {
+func (r *mockOrdersRepo) UpdateOrder(
+	ctx context.Context,
+	req *dto.UpdateOrderReqDto,
+) (*dto.OrderDto, error) {
 	if v, ok := ctx.Value(ctxFailUpdateOrder).(bool); ok && v {
-		return ErrRepoFailed
+		return nil, ErrRepoFailed
 	}
 
-	return nil
+	status := db.OrderStatusOpen
+	if req.Status != nil {
+		status = *req.Status
+	}
+
+	tip := testAmount
+	if req.TipAmountInCents != nil {
+		tip = int(*req.TipAmountInCents)
+	}
+
+	return &dto.OrderDto{
+		ID:               req.OrderID,
+		Status:           status,
+		TipAmountInCents: tip,
+	}, nil
 }
 
 func (r *mockOrdersRepo) IsUserRestaurantWaiter(

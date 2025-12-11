@@ -22,7 +22,7 @@ type ordersHandlerTestSuite struct {
 	suite.Suite
 
 	handler *OrdersHandler
-	order   *dto.OrderDto
+	order   dto.OrderDto
 }
 
 func (suite *ordersHandlerTestSuite) SetupSuite() {
@@ -31,7 +31,7 @@ func (suite *ordersHandlerTestSuite) SetupSuite() {
 
 	suite.handler = NewOrdersHandler(svc)
 
-	suite.order = &dto.OrderDto{
+	suite.order = dto.OrderDto{
 		ID:                testOrderID,
 		RestaurantID:      testRestaurantID,
 		RestaurantName:    testRestaurantName,
@@ -42,7 +42,7 @@ func (suite *ordersHandlerTestSuite) SetupSuite() {
 		UpdatedAt:         testDateTime,
 		Items: []*dto.OrderItemDto{
 			{
-				ID:           testOrderItemDto,
+				ID:           testOrderItemID,
 				RestaurantID: testRestaurantID,
 				ItemID:       testItemID,
 				Name:         testItemName,
@@ -123,7 +123,7 @@ func (suite *ordersHandlerTestSuite) TestHandleGetOrder_Success() {
 
 	want := responses.SuccessResponse{
 		Message: "fetched order details",
-		Data:    suite.order,
+		Data:    &suite.order,
 	}
 	wantJSON, err := json.Marshal(want)
 	suite.Require().NoError(err)
@@ -185,9 +185,18 @@ func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_Success() {
 	c.SetParamNames(orderIDParamName)
 	c.SetParamValues(testOrderID.String())
 
+	updatedOrder := suite.order
+	updatedOrder.Items = append(updatedOrder.Items, &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	})
+	updatedOrder.TotalPriceInCents += 10
 	want := &responses.SuccessResponse{
 		Message: "item added to order",
-		Data:    suite.order,
+		Data:    &updatedOrder,
 	}
 	wantJSON, err := json.Marshal(want)
 	suite.Require().NoError(err)
@@ -300,9 +309,12 @@ func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_Success() {
 	c.SetParamNames(orderIDParamName)
 	c.SetParamValues(testOrderID.String())
 
+	updatedOrder := suite.order
+	updatedOrder.Items = []*dto.OrderItemDto{}
+	updatedOrder.TotalPriceInCents = 0
 	want := &responses.SuccessResponse{
 		Message: "deleted item from order",
-		Data:    suite.order,
+		Data:    &updatedOrder,
 	}
 	wantJSON, err := json.Marshal(want)
 	suite.Require().NoError(err)
@@ -423,9 +435,11 @@ func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_Success() {
 		UserID: testUserID,
 	})
 
+	udpatedOrder := &suite.order
+	udpatedOrder.Status = db.OrderStatusLocked
 	want := &responses.SuccessResponse{
 		Message: "updated order",
-		Data:    suite.order,
+		Data:    udpatedOrder,
 	}
 	wantJSON, err := json.Marshal(want)
 	suite.Require().NoError(err)

@@ -29,7 +29,7 @@ INSERT INTO orders.orders_items (
     item_name,
     price_in_cents
 ) VALUES ($1, $2, $3, $4, $5)
-RETURNING order_id;
+RETURNING *;
 
 -- name: GetOrderItems :many
 SELECT
@@ -61,16 +61,19 @@ FROM management.items i
     LEFT JOIN management.menus m on m.id = c.menu_id
 WHERE i.id = $1;
 
--- name: DeleteOrderItem :exec
-DELETE FROM orders.orders_items WHERE id = $1 and order_id = $2;
+-- name: DeleteOrderItem :one
+DELETE FROM orders.orders_items 
+WHERE id = $1 and order_id = $2
+RETURNING *;
 
--- name: UpdateOrder :exec
+-- name: UpdateOrder :one
 UPDATE orders.orders
 SET
     status = COALESCE(sqlc.narg(status), status),
     tip_amount_in_cents = COALESCE(sqlc.narg(tip_amount_in_cents), tip_amount_in_cents),
     updated_at = NOW()
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;
 
 -- name: IsUserRestaurantWaiter :one
 -- Check if a user is a waiter for a given restaurant

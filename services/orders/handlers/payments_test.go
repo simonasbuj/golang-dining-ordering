@@ -32,7 +32,7 @@ var (
 	testTableID           = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
 	testDateTime          = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
 	testItemName          = "Test Menu Item"
-	testOrderItemDto      = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	testOrderItemID       = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
 	testItemID            = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
 	testCheckoutURL       = "http://fake-checkout-session.com/1"
 	testPaymentProvider   = db.OrdersPaymentProviderMock
@@ -303,7 +303,7 @@ func NewMockOrdersRepo() *mockOrdersRepo {
 			UpdatedAt:         testDateTime,
 			Items: []*dto.OrderItemDto{
 				{
-					ID:           testOrderItemDto,
+					ID:           testOrderItemID,
 					RestaurantID: testRestaurantID,
 					ItemID:       testItemID,
 					Name:         testItemName,
@@ -345,8 +345,14 @@ func (r *mockOrdersRepo) AddItemToOrder(
 	_ context.Context,
 	_ uuid.UUID,
 	_ *dto.OrderItemDto,
-) (uuid.UUID, error) {
-	return testOrderItemDto, nil
+) (*dto.OrderItemDto, error) {
+	return &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}, nil
 }
 
 func (r *mockOrdersRepo) GetOrderItems(
@@ -364,7 +370,9 @@ func (r *mockOrdersRepo) GetOrderItems(
 		return nil, ErrService
 	}
 
-	return r.orderDto, nil
+	respDto := *r.orderDto
+
+	return &respDto, nil
 }
 
 func (r *mockOrdersRepo) GetMenuItem(
@@ -377,12 +385,35 @@ func (r *mockOrdersRepo) GetMenuItem(
 func (r *mockOrdersRepo) DeleteOrderItem(
 	_ context.Context,
 	_, _ uuid.UUID,
-) error {
-	return nil
+) (*dto.OrderItemDto, error) {
+	return &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}, nil
 }
 
-func (r *mockOrdersRepo) UpdateOrder(_ context.Context, _ *dto.UpdateOrderReqDto) error {
-	return nil
+func (r *mockOrdersRepo) UpdateOrder(
+	_ context.Context,
+	req *dto.UpdateOrderReqDto,
+) (*dto.OrderDto, error) {
+	status := db.OrderStatusOpen
+	if req.Status != nil {
+		status = *req.Status
+	}
+
+	tip := testAmount
+	if req.TipAmountInCents != nil {
+		tip = int(*req.TipAmountInCents)
+	}
+
+	return &dto.OrderDto{
+		ID:               req.OrderID,
+		Status:           status,
+		TipAmountInCents: tip,
+	}, nil
 }
 
 func (r *mockOrdersRepo) IsUserRestaurantWaiter(

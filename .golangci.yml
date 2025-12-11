@@ -83,6 +83,9 @@ linters:
     - path: services/orders/handlers/websockets_test
       linters:
         - exhaustruct
+    - path: services/orders/handlers/payments_test
+      linters:
+        - exhaustruct
     generated: lax
 formatters:
   enable:

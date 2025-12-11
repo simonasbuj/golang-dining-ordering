@@ -1,13 +1,21 @@
 package handlers
 
 import (
+	"bytes"
+	"context"
+	"encoding/json"
+	"fmt"
 	"golang-dining-ordering/config"
+	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/orders/services"
 	"log/slog"
+	"net/http"
+	"net/http/httptest"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
+	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
 )
 
@@ -26,7 +34,9 @@ func (suite *websocketsHandlerTestSuite) SetupSuite() {
 		ReadBufferSize:   1024,
 		WriteBufferSize:  1024,
 	}
-	noopHandler := slog.NewTextHandler(nil, nil)
+
+	buf := &bytes.Buffer{}
+	noopHandler := slog.NewTextHandler(buf, nil)
 	logger := slog.New(noopHandler)
 
 	suite.handler = NewWebsocketHandler(svc, cfg, logger)
@@ -104,5 +114,108 @@ func (suite *websocketsHandlerTestSuite) TestValidateDto() {
 				suite.Require().NoError(err)
 			}
 		})
+	}
+}
+
+func (suite *websocketsHandlerTestSuite) TestHandleUpdateOrder_Success() {
+	data := json.RawMessage(`{"status":"locked"}`)
+
+	err := suite.handler.handleUpdateOrder(
+		context.Background(),
+		&websocket.Conn{},
+		testOrderID,
+		&authDto.TokenClaimsDto{},
+		data,
+	)
+	suite.Require().NoError(err)
+}
+
+func (suite *websocketsHandlerTestSuite) TestHandleDeleteItemdateOrder_Success() {
+	data := json.RawMessage(fmt.Sprintf(`{"item_id":"%s"}`, testOrderItemID))
+
+	err := suite.handler.handleDeleteItem(
+		context.Background(),
+		&websocket.Conn{},
+		testOrderID,
+		data,
+	)
+	suite.Require().NoError(err)
+}
+
+func (suite *websocketsHandlerTestSuite) TestHandleAddItem_Success() {
+	data := json.RawMessage(fmt.Sprintf(`{"item_id":"%s"}`, testOrderItemID))
+
+	err := suite.handler.handleAddItem(
+		context.Background(),
+		&websocket.Conn{},
+		testOrderID,
+		data,
+	)
+	suite.Require().NoError(err)
+}
+
+func (suite *websocketsHandlerTestSuite) TesthandleMessage_Success() {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	rec := httptest.NewRecorder()
+
+	c := e.NewContext(req, rec)
+
+	tests := []struct {
+		name string
+		msg  string
+	}{
+		{"update order", `{"type": "update_order", "data": {"status": "locked"}}`},
+		{
+			"add item to order",
+			fmt.Sprintf(`{"type": "add_item", "data": {"item_id": "%s"}}`, testOrderItemID),
+		},
+		{
+			"delete item from order",
+			fmt.Sprintf(`{"type": "delete_item", "data": {"item_id": "%s"}}`, testOrderItemID),
+		},
+	}
+
+	for _, tt := range tests {
+		msg := []byte(tt.msg)
+
+		err := suite.handler.handleMessage(
+			c,
+			&websocket.Conn{},
+			testOrderID,
+			&authDto.TokenClaimsDto{},
+			msg,
+		)
+		suite.Require().NoError(err)
+	}
+}
+
+func (suite *websocketsHandlerTestSuite) TestHandleOrderWebsocket_BadRequest() {
+	e := echo.New()
+	req := httptest.NewRequest(http.MethodGet, "/ws", nil)
+	rec := httptest.NewRecorder()
+
+	c := e.NewContext(req, rec)
+
+	tests := []struct {
+		name          string
+		orderID       string
+		expectedError string
+	}{
+		{"invalid order id param", "invalid-id", "parsing uuid from params"},
+		{
+			"cant establish connection",
+			testOrderID.String(),
+			"'upgrade' token not found in 'Connection'",
+		},
+	}
+
+	for _, tt := range tests {
+		c.SetParamNames(orderIDParamName)
+		c.SetParamValues(tt.orderID)
+
+		err := suite.handler.HandleOrderWebsocket(c)
+		suite.Require().Error(err)
+		suite.Contains(err.Error(), tt.expectedError)
 	}
 }

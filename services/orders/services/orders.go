@@ -116,17 +116,15 @@ func (s *ordersService) AddItemToOrder(
 		return nil, ErrOrderIsNotOpen
 	}
 
-	_, err = s.repo.AddItemToOrder(ctx, orderID, item)
+	addedOrderItem, err := s.repo.AddItemToOrder(ctx, orderID, item)
 	if err != nil {
 		return nil, fmt.Errorf("adding item to order: %w", err)
 	}
 
-	respDto, err := s.repo.GetOrderItems(ctx, orderID)
-	if err != nil {
-		return nil, fmt.Errorf("getting updated order: %w", err)
-	}
+	currentOrder.Items = append(currentOrder.Items, addedOrderItem)
+	currentOrder.TotalPriceInCents += addedOrderItem.PriceInCents
 
-	return respDto, nil
+	return currentOrder, nil
 }
 
 func (s *ordersService) DeleteOrderItem(
@@ -142,17 +140,25 @@ func (s *ordersService) DeleteOrderItem(
 		return nil, ErrOrderIsNotOpen
 	}
 
-	err = s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
+	deletedItem, err := s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("deleting order item: %w", err)
 	}
 
-	respDto, err := s.repo.GetOrderItems(ctx, orderID)
-	if err != nil {
-		return nil, fmt.Errorf("getting updated order items: %w", err)
+	for i, item := range currentOrder.Items {
+		if item.ID == deletedItem.ID {
+			currentOrder.Items = append(
+				currentOrder.Items[:i],
+				currentOrder.Items[i+1:]...,
+			)
+
+			break
+		}
 	}
 
-	return respDto, nil
+	currentOrder.TotalPriceInCents -= deletedItem.PriceInCents
+
+	return currentOrder, nil
 }
 
 func (s *ordersService) UpdateOrder(
@@ -174,17 +180,15 @@ func (s *ordersService) UpdateOrder(
 		return nil, err
 	}
 
-	err = s.repo.UpdateOrder(ctx, reqDto)
+	respDto, err := s.repo.UpdateOrder(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("updating order: %w", err)
 	}
 
-	updatedOrder, err := s.repo.GetOrderItems(ctx, reqDto.OrderID)
-	if err != nil {
-		return nil, fmt.Errorf("getting updated order: %w", err)
-	}
+	currentOrder.Status = respDto.Status
+	currentOrder.TipAmountInCents = respDto.TipAmountInCents
 
-	return updatedOrder, nil
+	return currentOrder, nil
 }
 
 func (s *ordersService) canUserEditOrder(

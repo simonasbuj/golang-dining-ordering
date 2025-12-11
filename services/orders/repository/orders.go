@@ -32,11 +32,11 @@ type OrdersRepo interface {
 		ctx context.Context,
 		orderID uuid.UUID,
 		item *dto.OrderItemDto,
-	) (uuid.UUID, error)
+	) (*dto.OrderItemDto, error)
 	GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error)
 	GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.OrderItemDto, error)
-	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error
-	UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) error
+	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) (*dto.OrderItemDto, error)
+	UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) (*dto.OrderDto, error)
 	IsUserRestaurantWaiter(ctx context.Context, userID, restaurantID uuid.UUID) error
 }
 
@@ -101,8 +101,8 @@ func (r *ordersRepo) AddItemToOrder(
 	ctx context.Context,
 	orderID uuid.UUID,
 	item *dto.OrderItemDto,
-) (uuid.UUID, error) {
-	id, err := r.q.AddOrderItem(ctx, db.AddOrderItemParams{
+) (*dto.OrderItemDto, error) {
+	row, err := r.q.AddOrderItem(ctx, db.AddOrderItemParams{
 		ID:           uuid.New(),
 		OrderID:      orderID,
 		ItemID:       uuid.NullUUID{UUID: item.ID, Valid: true},
@@ -110,10 +110,18 @@ func (r *ordersRepo) AddItemToOrder(
 		PriceInCents: item.PriceInCents,
 	})
 	if err != nil {
-		return uuid.Nil, fmt.Errorf("inserting order item into database: %w", err)
+		return nil, fmt.Errorf("inserting order item into database: %w", err)
 	}
 
-	return id, nil
+	respDto := &dto.OrderItemDto{
+		ID:           row.ID,
+		RestaurantID: item.RestaurantID,
+		ItemID:       row.ItemID.UUID,
+		Name:         row.ItemName,
+		PriceInCents: row.PriceInCents,
+	}
+
+	return respDto, nil
 }
 
 func (r *ordersRepo) GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error) {
@@ -179,19 +187,33 @@ func (r *ordersRepo) GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.Or
 	return item, nil
 }
 
-func (r *ordersRepo) DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error {
-	err := r.q.DeleteOrderItem(ctx, db.DeleteOrderItemParams{
+func (r *ordersRepo) DeleteOrderItem(
+	ctx context.Context,
+	orderItemID, orderID uuid.UUID,
+) (*dto.OrderItemDto, error) {
+	row, err := r.q.DeleteOrderItem(ctx, db.DeleteOrderItemParams{
 		ID:      orderItemID,
 		OrderID: orderID,
 	})
 	if err != nil {
-		return fmt.Errorf("deleting order item from database: %w", err)
+		return nil, fmt.Errorf("deleting order item from database: %w", err)
 	}
 
-	return nil
+	deletedItem := &dto.OrderItemDto{
+		ID:           row.ID,
+		RestaurantID: uuid.Nil,
+		ItemID:       row.ItemID.UUID,
+		Name:         row.ItemName,
+		PriceInCents: row.PriceInCents,
+	}
+
+	return deletedItem, nil
 }
 
-func (r *ordersRepo) UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) error {
+func (r *ordersRepo) UpdateOrder(
+	ctx context.Context,
+	reqDto *dto.UpdateOrderReqDto,
+) (*dto.OrderDto, error) {
 	var status db.OrderStatus
 	if reqDto.Status != nil {
 		status = *reqDto.Status
@@ -202,16 +224,22 @@ func (r *ordersRepo) UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReq
 		tip = *reqDto.TipAmountInCents
 	}
 
-	err := r.q.UpdateOrder(ctx, db.UpdateOrderParams{
+	row, err := r.q.UpdateOrder(ctx, db.UpdateOrderParams{
 		ID:               reqDto.OrderID,
 		Status:           db.NullOrderStatus{OrderStatus: status, Valid: reqDto.Status != nil},
 		TipAmountInCents: sql.NullInt32{Int32: tip, Valid: reqDto.TipAmountInCents != nil},
 	})
 	if err != nil {
-		return fmt.Errorf("updating order in database: %w", err)
+		return nil, fmt.Errorf("updating order in database: %w", err)
 	}
 
-	return nil
+	respDto := &dto.OrderDto{ //nolint:exhaustruct
+		ID:               row.ID,
+		Status:           row.Status,
+		TipAmountInCents: int(row.TipAmountInCents.Int32),
+	}
+
+	return respDto, nil
 }
 
 func (r *ordersRepo) IsUserRestaurantWaiter(

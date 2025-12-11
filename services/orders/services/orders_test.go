@@ -54,11 +54,11 @@ func TestOrdersServiceTestSuite(t *testing.T) {
 }
 
 func (suite *ordersServiceTestSuite) TestGetOrder_Success() {
-	want := suite.orderDto
+	want := *suite.orderDto
 
 	got, err := suite.svc.GetOrder(context.Background(), testOrderID)
 	suite.Require().NoError(err)
-	suite.Equal(want, got)
+	suite.Equal(&want, got)
 }
 
 func (suite *ordersServiceTestSuite) TestGetOrder_RepoFailed() {
@@ -111,11 +111,19 @@ func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedC
 }
 
 func (suite *ordersServiceTestSuite) TestAddItemToOrder_Success() {
-	want := suite.orderDto
+	want := *suite.orderDto
+	want.Items = append(want.Items, &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	})
+	want.TotalPriceInCents += 10
 
 	got, err := suite.svc.AddItemToOrder(context.Background(), testOrderID, testItemID)
 	suite.Require().NoError(err)
-	suite.Equal(want, got)
+	suite.Equal(&want, got)
 }
 
 func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedGetMenuItems() {
@@ -156,10 +164,12 @@ func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedRepoAddingItemToOr
 }
 
 func (suite *ordersServiceTestSuite) TestDeleteOrderItem_Success() {
-	want := suite.orderDto
+	want := *suite.orderDto
+	want.Items = []*dto.OrderItemDto{}
+	want.TotalPriceInCents = 0
 	got, err := suite.svc.DeleteOrderItem(context.Background(), testOrderItemID, testOrderID)
 	suite.Require().NoError(err)
-	suite.Equal(want, got)
+	suite.Equal(&want, got)
 }
 
 func (suite *ordersServiceTestSuite) TestDeleteOrderItem_FailedGetOrderItems() {
@@ -194,10 +204,11 @@ func (suite *ordersServiceTestSuite) TestUpdateOrder_Success() {
 		Status:           &status,
 	}
 
-	want := suite.orderDto
+	want := *suite.orderDto
+	want.Status = status
 	got, err := suite.svc.UpdateOrder(context.Background(), reqDto, nil)
 	suite.Require().NoError(err)
-	suite.Equal(want, got)
+	suite.Equal(&want, got)
 }
 
 func (suite *ordersServiceTestSuite) TestUpdateOrder_EmptyPayload() {
