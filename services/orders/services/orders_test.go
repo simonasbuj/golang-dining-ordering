@@ -112,6 +112,13 @@ func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedC
 
 func (suite *ordersServiceTestSuite) TestAddItemToOrder_Success() {
 	want := suite.orderDto
+	want.Items = append(want.Items, &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	})
 
 	got, err := suite.svc.AddItemToOrder(context.Background(), testOrderID, testItemID)
 	suite.Require().NoError(err)

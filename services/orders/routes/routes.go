@@ -19,10 +19,6 @@ func AddOrdersRoutes(
 	authEndpoint string,
 ) {
 	publicAPI := e.Group("/api/v1/orders")
-	// employeeAPI := publicAPI.Group("",
-	// 	middleware.AuthMiddleware(authEndpoint),
-	// 	middleware.RoleMiddleware(authDto.RoleManager, authDto.RoleWaiter),
-	// )
 
 	publicAPI.GET("/current", ordersHandler.HandleGetCurrentTableOrder)
 	publicAPI.GET("/:order_id", ordersHandler.HandleGetOrder)

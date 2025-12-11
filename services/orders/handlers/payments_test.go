@@ -345,8 +345,14 @@ func (r *mockOrdersRepo) AddItemToOrder(
 	_ context.Context,
 	_ uuid.UUID,
 	_ *dto.OrderItemDto,
-) (uuid.UUID, error) {
-	return testOrderItemDto, nil
+) (*dto.OrderItemDto, error) {
+	return &dto.OrderItemDto{
+		ID:           testOrderItemDto,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}, nil
 }
 
 func (r *mockOrdersRepo) GetOrderItems(

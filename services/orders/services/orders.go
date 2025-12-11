@@ -116,17 +116,14 @@ func (s *ordersService) AddItemToOrder(
 		return nil, ErrOrderIsNotOpen
 	}
 
-	_, err = s.repo.AddItemToOrder(ctx, orderID, item)
+	addedOrderItem, err := s.repo.AddItemToOrder(ctx, orderID, item)
 	if err != nil {
 		return nil, fmt.Errorf("adding item to order: %w", err)
 	}
 
-	respDto, err := s.repo.GetOrderItems(ctx, orderID)
-	if err != nil {
-		return nil, fmt.Errorf("getting updated order: %w", err)
-	}
+	currentOrder.Items = append(currentOrder.Items, addedOrderItem)
 
-	return respDto, nil
+	return currentOrder, nil
 }
 
 func (s *ordersService) DeleteOrderItem(

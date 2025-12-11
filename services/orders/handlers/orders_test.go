@@ -185,6 +185,14 @@ func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_Success() {
 	c.SetParamNames(orderIDParamName)
 	c.SetParamValues(testOrderID.String())
 
+	updatedOrder := suite.order
+	updatedOrder.Items = append(updatedOrder.Items, &dto.OrderItemDto{
+		ID:           testOrderItemDto,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	})
 	want := &responses.SuccessResponse{
 		Message: "item added to order",
 		Data:    suite.order,

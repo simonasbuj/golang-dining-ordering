@@ -29,7 +29,7 @@ INSERT INTO orders.orders_items (
     item_name,
     price_in_cents
 ) VALUES ($1, $2, $3, $4, $5)
-RETURNING order_id;
+RETURNING *;
 
 -- name: GetOrderItems :many
 SELECT

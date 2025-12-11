@@ -21,7 +21,7 @@ INSERT INTO orders.orders_items (
     item_name,
     price_in_cents
 ) VALUES ($1, $2, $3, $4, $5)
-RETURNING order_id
+RETURNING id, order_id, item_id, item_name, price_in_cents, created_at, updated_at
 `
 
 type AddOrderItemParams struct {
@@ -32,7 +32,7 @@ type AddOrderItemParams struct {
 	PriceInCents int           `json:"price_in_cents"`
 }
 
-func (q *Queries) AddOrderItem(ctx context.Context, arg AddOrderItemParams) (uuid.UUID, error) {
+func (q *Queries) AddOrderItem(ctx context.Context, arg AddOrderItemParams) (OrdersOrdersItem, error) {
 	row := q.db.QueryRowContext(ctx, addOrderItem,
 		arg.ID,
 		arg.OrderID,
@@ -40,9 +40,17 @@ func (q *Queries) AddOrderItem(ctx context.Context, arg AddOrderItemParams) (uui
 		arg.ItemName,
 		arg.PriceInCents,
 	)
-	var order_id uuid.UUID
-	err := row.Scan(&order_id)
-	return order_id, err
+	var i OrdersOrdersItem
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.ItemID,
+		&i.ItemName,
+		&i.PriceInCents,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const createOrder = `-- name: CreateOrder :one

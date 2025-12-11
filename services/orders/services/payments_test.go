@@ -359,12 +359,20 @@ func (r *mockOrdersRepo) AddItemToOrder(
 	ctx context.Context,
 	_ uuid.UUID,
 	_ *dto.OrderItemDto,
-) (uuid.UUID, error) {
+) (*dto.OrderItemDto, error) {
 	if v, ok := ctx.Value(ctxFailAddItemToOrder).(bool); ok && v {
-		return uuid.Nil, ErrRepoFailed
+		return nil, ErrRepoFailed
 	}
 
-	return testOrderItemID, nil
+	orderItemDto := &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}
+
+	return orderItemDto, nil
 }
 
 func (r *mockOrdersRepo) GetOrderItems(
