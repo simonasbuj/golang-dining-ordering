@@ -108,18 +108,16 @@ func (h *WebsocketHandler) readMessages(
 		if err != nil {
 			h.logger.Error("failed to read message", "error", err)
 
-			break
+			return err
 		}
 
 		err = h.handleMessage(c, conn, orderID, user, msg)
 		if err != nil {
 			h.logger.Error("failed to handle message", "error", err)
 
-			return err
+			continue
 		}
 	}
-
-	return nil
 }
 
 func (h *WebsocketHandler) handleMessage(
