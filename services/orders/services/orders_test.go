@@ -205,6 +205,7 @@ func (suite *ordersServiceTestSuite) TestUpdateOrder_Success() {
 	}
 
 	want := *suite.orderDto
+	want.Status = status
 	got, err := suite.svc.UpdateOrder(context.Background(), reqDto, nil)
 	suite.Require().NoError(err)
 	suite.Equal(&want, got)

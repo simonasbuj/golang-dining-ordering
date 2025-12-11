@@ -395,8 +395,25 @@ func (r *mockOrdersRepo) DeleteOrderItem(
 	}, nil
 }
 
-func (r *mockOrdersRepo) UpdateOrder(_ context.Context, _ *dto.UpdateOrderReqDto) error {
-	return nil
+func (r *mockOrdersRepo) UpdateOrder(
+	_ context.Context,
+	req *dto.UpdateOrderReqDto,
+) (*dto.OrderDto, error) {
+	status := db.OrderStatusOpen
+	if req.Status != nil {
+		status = *req.Status
+	}
+
+	tip := testAmount
+	if req.TipAmountInCents != nil {
+		tip = int(*req.TipAmountInCents)
+	}
+
+	return &dto.OrderDto{
+		ID:               req.OrderID,
+		Status:           status,
+		TipAmountInCents: tip,
+	}, nil
 }
 
 func (r *mockOrdersRepo) IsUserRestaurantWaiter(

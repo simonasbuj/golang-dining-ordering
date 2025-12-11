@@ -435,9 +435,11 @@ func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_Success() {
 		UserID: testUserID,
 	})
 
+	udpatedOrder := &suite.order
+	udpatedOrder.Status = db.OrderStatusLocked
 	want := &responses.SuccessResponse{
 		Message: "updated order",
-		Data:    &suite.order,
+		Data:    udpatedOrder,
 	}
 	wantJSON, err := json.Marshal(want)
 	suite.Require().NoError(err)

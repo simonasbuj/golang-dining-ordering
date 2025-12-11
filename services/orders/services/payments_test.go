@@ -430,12 +430,29 @@ func (r *mockOrdersRepo) DeleteOrderItem(
 	}, nil
 }
 
-func (r *mockOrdersRepo) UpdateOrder(ctx context.Context, _ *dto.UpdateOrderReqDto) error {
+func (r *mockOrdersRepo) UpdateOrder(
+	ctx context.Context,
+	req *dto.UpdateOrderReqDto,
+) (*dto.OrderDto, error) {
 	if v, ok := ctx.Value(ctxFailUpdateOrder).(bool); ok && v {
-		return ErrRepoFailed
+		return nil, ErrRepoFailed
 	}
 
-	return nil
+	status := db.OrderStatusOpen
+	if req.Status != nil {
+		status = *req.Status
+	}
+
+	tip := testAmount
+	if req.TipAmountInCents != nil {
+		tip = int(*req.TipAmountInCents)
+	}
+
+	return &dto.OrderDto{
+		ID:               req.OrderID,
+		Status:           status,
+		TipAmountInCents: tip,
+	}, nil
 }
 
 func (r *mockOrdersRepo) IsUserRestaurantWaiter(

@@ -95,7 +95,7 @@ func (s *paymentsService) HandleWebhookSuccess(
 
 	status := db.OrderStatusCompleted
 
-	err = s.ordersRepo.UpdateOrder(ctx, &dto.UpdateOrderReqDto{
+	_, err = s.ordersRepo.UpdateOrder(ctx, &dto.UpdateOrderReqDto{
 		OrderID:          respDto.OrderID,
 		Status:           &status,
 		TipAmountInCents: nil,

@@ -66,13 +66,14 @@ DELETE FROM orders.orders_items
 WHERE id = $1 and order_id = $2
 RETURNING *;
 
--- name: UpdateOrder :exec
+-- name: UpdateOrder :one
 UPDATE orders.orders
 SET
     status = COALESCE(sqlc.narg(status), status),
     tip_amount_in_cents = COALESCE(sqlc.narg(tip_amount_in_cents), tip_amount_in_cents),
     updated_at = NOW()
-WHERE id = $1;
+WHERE id = $1
+RETURNING *;
 
 -- name: IsUserRestaurantWaiter :one
 -- Check if a user is a waiter for a given restaurant

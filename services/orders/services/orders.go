@@ -180,17 +180,15 @@ func (s *ordersService) UpdateOrder(
 		return nil, err
 	}
 
-	err = s.repo.UpdateOrder(ctx, reqDto)
+	respDto, err := s.repo.UpdateOrder(ctx, reqDto)
 	if err != nil {
 		return nil, fmt.Errorf("updating order: %w", err)
 	}
 
-	updatedOrder, err := s.repo.GetOrderItems(ctx, reqDto.OrderID)
-	if err != nil {
-		return nil, fmt.Errorf("getting updated order: %w", err)
-	}
+	currentOrder.Status = respDto.Status
+	currentOrder.TipAmountInCents = respDto.TipAmountInCents
 
-	return updatedOrder, nil
+	return currentOrder, nil
 }
 
 func (s *ordersService) canUserEditOrder(

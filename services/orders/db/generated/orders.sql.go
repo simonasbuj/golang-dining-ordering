@@ -258,13 +258,14 @@ func (q *Queries) IsUserRestaurantWaiter(ctx context.Context, arg IsUserRestaura
 	return i, err
 }
 
-const updateOrder = `-- name: UpdateOrder :exec
+const updateOrder = `-- name: UpdateOrder :one
 UPDATE orders.orders
 SET
     status = COALESCE($2, status),
     tip_amount_in_cents = COALESCE($3, tip_amount_in_cents),
     updated_at = NOW()
 WHERE id = $1
+RETURNING id, table_id, status, currency, tip_amount_in_cents, created_at, updated_at
 `
 
 type UpdateOrderParams struct {
@@ -273,7 +274,17 @@ type UpdateOrderParams struct {
 	TipAmountInCents sql.NullInt32   `json:"tip_amount_in_cents"`
 }
 
-func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) error {
-	_, err := q.db.ExecContext(ctx, updateOrder, arg.ID, arg.Status, arg.TipAmountInCents)
-	return err
+func (q *Queries) UpdateOrder(ctx context.Context, arg UpdateOrderParams) (OrdersOrder, error) {
+	row := q.db.QueryRowContext(ctx, updateOrder, arg.ID, arg.Status, arg.TipAmountInCents)
+	var i OrdersOrder
+	err := row.Scan(
+		&i.ID,
+		&i.TableID,
+		&i.Status,
+		&i.Currency,
+		&i.TipAmountInCents,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
