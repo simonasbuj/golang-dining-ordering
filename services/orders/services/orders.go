@@ -122,6 +122,7 @@ func (s *ordersService) AddItemToOrder(
 	}
 
 	currentOrder.Items = append(currentOrder.Items, addedOrderItem)
+	currentOrder.TotalPriceInCents += addedOrderItem.PriceInCents
 
 	return currentOrder, nil
 }
@@ -139,17 +140,25 @@ func (s *ordersService) DeleteOrderItem(
 		return nil, ErrOrderIsNotOpen
 	}
 
-	err = s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
+	deletedItem, err := s.repo.DeleteOrderItem(ctx, orderItemID, orderID)
 	if err != nil {
 		return nil, fmt.Errorf("deleting order item: %w", err)
 	}
 
-	respDto, err := s.repo.GetOrderItems(ctx, orderID)
-	if err != nil {
-		return nil, fmt.Errorf("getting updated order items: %w", err)
+	for i, item := range currentOrder.Items {
+		if item.ID == deletedItem.ID {
+			currentOrder.Items = append(
+				currentOrder.Items[:i],
+				currentOrder.Items[i+1:]...,
+			)
+
+			break
+		}
 	}
 
-	return respDto, nil
+	currentOrder.TotalPriceInCents -= deletedItem.PriceInCents
+
+	return currentOrder, nil
 }
 
 func (s *ordersService) UpdateOrder(

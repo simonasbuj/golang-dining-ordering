@@ -61,8 +61,10 @@ FROM management.items i
     LEFT JOIN management.menus m on m.id = c.menu_id
 WHERE i.id = $1;
 
--- name: DeleteOrderItem :exec
-DELETE FROM orders.orders_items WHERE id = $1 and order_id = $2;
+-- name: DeleteOrderItem :one
+DELETE FROM orders.orders_items 
+WHERE id = $1 and order_id = $2
+RETURNING *;
 
 -- name: UpdateOrder :exec
 UPDATE orders.orders

@@ -390,7 +390,9 @@ func (r *mockOrdersRepo) GetOrderItems(
 		return nil, ErrRepoFailed
 	}
 
-	return r.orderDto, nil
+	respDto := *r.orderDto
+
+	return &respDto, nil
 }
 
 func (r *mockOrdersRepo) GetMenuItem(
@@ -414,12 +416,18 @@ func (r *mockOrdersRepo) GetMenuItem(
 func (r *mockOrdersRepo) DeleteOrderItem(
 	_ context.Context,
 	orderItemID, _ uuid.UUID,
-) error {
+) (*dto.OrderItemDto, error) {
 	if orderItemID != testOrderItemID {
-		return ErrRepoFailed
+		return nil, ErrRepoFailed
 	}
 
-	return nil
+	return &dto.OrderItemDto{
+		ID:           testOrderItemID,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}, nil
 }
 
 func (r *mockOrdersRepo) UpdateOrder(ctx context.Context, _ *dto.UpdateOrderReqDto) error {

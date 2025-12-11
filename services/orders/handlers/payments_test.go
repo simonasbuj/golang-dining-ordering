@@ -370,7 +370,9 @@ func (r *mockOrdersRepo) GetOrderItems(
 		return nil, ErrService
 	}
 
-	return r.orderDto, nil
+	respDto := *r.orderDto
+
+	return &respDto, nil
 }
 
 func (r *mockOrdersRepo) GetMenuItem(
@@ -383,8 +385,14 @@ func (r *mockOrdersRepo) GetMenuItem(
 func (r *mockOrdersRepo) DeleteOrderItem(
 	_ context.Context,
 	_, _ uuid.UUID,
-) error {
-	return nil
+) (*dto.OrderItemDto, error) {
+	return &dto.OrderItemDto{
+		ID:           testOrderItemDto,
+		RestaurantID: testRestaurantID,
+		ItemID:       testItemID,
+		Name:         testItemName,
+		PriceInCents: testAmount,
+	}, nil
 }
 
 func (r *mockOrdersRepo) UpdateOrder(_ context.Context, _ *dto.UpdateOrderReqDto) error {

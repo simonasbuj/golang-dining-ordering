@@ -35,7 +35,7 @@ type OrdersRepo interface {
 	) (*dto.OrderItemDto, error)
 	GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto.OrderDto, error)
 	GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.OrderItemDto, error)
-	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error
+	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) (*dto.OrderItemDto, error)
 	UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) error
 	IsUserRestaurantWaiter(ctx context.Context, userID, restaurantID uuid.UUID) error
 }
@@ -187,16 +187,27 @@ func (r *ordersRepo) GetMenuItem(ctx context.Context, itemID uuid.UUID) (*dto.Or
 	return item, nil
 }
 
-func (r *ordersRepo) DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) error {
-	err := r.q.DeleteOrderItem(ctx, db.DeleteOrderItemParams{
+func (r *ordersRepo) DeleteOrderItem(
+	ctx context.Context,
+	orderItemID, orderID uuid.UUID,
+) (*dto.OrderItemDto, error) {
+	row, err := r.q.DeleteOrderItem(ctx, db.DeleteOrderItemParams{
 		ID:      orderItemID,
 		OrderID: orderID,
 	})
 	if err != nil {
-		return fmt.Errorf("deleting order item from database: %w", err)
+		return nil, fmt.Errorf("deleting order item from database: %w", err)
 	}
 
-	return nil
+	deletedItem := &dto.OrderItemDto{
+		ID:           row.ID,
+		RestaurantID: uuid.Nil,
+		ItemID:       row.ItemID.UUID,
+		Name:         row.ItemName,
+		PriceInCents: row.PriceInCents,
+	}
+
+	return deletedItem, nil
 }
 
 func (r *ordersRepo) UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) error {

@@ -75,8 +75,10 @@ func (q *Queries) CreateOrder(ctx context.Context, arg CreateOrderParams) (uuid.
 	return id, err
 }
 
-const deleteOrderItem = `-- name: DeleteOrderItem :exec
-DELETE FROM orders.orders_items WHERE id = $1 and order_id = $2
+const deleteOrderItem = `-- name: DeleteOrderItem :one
+DELETE FROM orders.orders_items 
+WHERE id = $1 and order_id = $2
+RETURNING id, order_id, item_id, item_name, price_in_cents, created_at, updated_at
 `
 
 type DeleteOrderItemParams struct {
@@ -84,9 +86,19 @@ type DeleteOrderItemParams struct {
 	OrderID uuid.UUID `json:"order_id"`
 }
 
-func (q *Queries) DeleteOrderItem(ctx context.Context, arg DeleteOrderItemParams) error {
-	_, err := q.db.ExecContext(ctx, deleteOrderItem, arg.ID, arg.OrderID)
-	return err
+func (q *Queries) DeleteOrderItem(ctx context.Context, arg DeleteOrderItemParams) (OrdersOrdersItem, error) {
+	row := q.db.QueryRowContext(ctx, deleteOrderItem, arg.ID, arg.OrderID)
+	var i OrdersOrdersItem
+	err := row.Scan(
+		&i.ID,
+		&i.OrderID,
+		&i.ItemID,
+		&i.ItemName,
+		&i.PriceInCents,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const getCurrentOrder = `-- name: GetCurrentOrder :one
