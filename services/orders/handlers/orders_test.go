@@ -42,7 +42,7 @@ func (suite *ordersHandlerTestSuite) SetupSuite() {
 		UpdatedAt:         testDateTime,
 		Items: []*dto.OrderItemDto{
 			{
-				ID:           testOrderItemDto,
+				ID:           testOrderItemID,
 				RestaurantID: testRestaurantID,
 				ItemID:       testItemID,
 				Name:         testItemName,
@@ -187,7 +187,7 @@ func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_Success() {
 
 	updatedOrder := suite.order
 	updatedOrder.Items = append(updatedOrder.Items, &dto.OrderItemDto{
-		ID:           testOrderItemDto,
+		ID:           testOrderItemID,
 		RestaurantID: testRestaurantID,
 		ItemID:       testItemID,
 		Name:         testItemName,

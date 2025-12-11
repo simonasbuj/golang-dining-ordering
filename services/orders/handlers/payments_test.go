@@ -32,7 +32,7 @@ var (
 	testTableID           = uuid.MustParse("aaaaaaaa-aaaa-aaaa-aaaa-aaaaaaaaaaaa")
 	testDateTime          = time.Date(2025, time.December, 5, 19, 0, 0, 0, &time.Location{})
 	testItemName          = "Test Menu Item"
-	testOrderItemDto      = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
+	testOrderItemID       = uuid.MustParse("aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa")
 	testItemID            = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
 	testCheckoutURL       = "http://fake-checkout-session.com/1"
 	testPaymentProvider   = db.OrdersPaymentProviderMock
@@ -303,7 +303,7 @@ func NewMockOrdersRepo() *mockOrdersRepo {
 			UpdatedAt:         testDateTime,
 			Items: []*dto.OrderItemDto{
 				{
-					ID:           testOrderItemDto,
+					ID:           testOrderItemID,
 					RestaurantID: testRestaurantID,
 					ItemID:       testItemID,
 					Name:         testItemName,
@@ -347,7 +347,7 @@ func (r *mockOrdersRepo) AddItemToOrder(
 	_ *dto.OrderItemDto,
 ) (*dto.OrderItemDto, error) {
 	return &dto.OrderItemDto{
-		ID:           testOrderItemDto,
+		ID:           testOrderItemID,
 		RestaurantID: testRestaurantID,
 		ItemID:       testItemID,
 		Name:         testItemName,
@@ -387,7 +387,7 @@ func (r *mockOrdersRepo) DeleteOrderItem(
 	_, _ uuid.UUID,
 ) (*dto.OrderItemDto, error) {
 	return &dto.OrderItemDto{
-		ID:           testOrderItemDto,
+		ID:           testOrderItemID,
 		RestaurantID: testRestaurantID,
 		ItemID:       testItemID,
 		Name:         testItemName,

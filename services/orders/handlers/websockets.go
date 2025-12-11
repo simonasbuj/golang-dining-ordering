@@ -138,16 +138,14 @@ func (h *WebsocketHandler) handleMessage(
 
 	switch wsDto.Type {
 	case dto.MsgAddItem:
-		h.handleAddItem(c.Request().Context(), conn, orderID, wsDto.Data)
+		return h.handleAddItem(c.Request().Context(), conn, orderID, wsDto.Data)
 	case dto.MsgDeleteItem:
-		h.handleDeleteItem(c.Request().Context(), conn, orderID, wsDto.Data)
+		return h.handleDeleteItem(c.Request().Context(), conn, orderID, wsDto.Data)
 	case dto.MsgUpdateOrder:
-		h.handleUpdateOrder(c.Request().Context(), conn, orderID, user, wsDto.Data)
+		return h.handleUpdateOrder(c.Request().Context(), conn, orderID, user, wsDto.Data)
 	default:
 		return h.sendMsg(conn, dto.MsgError, "unknown request type")
 	}
-
-	return nil
 }
 
 func (h *WebsocketHandler) handleAddItem(
@@ -155,7 +153,7 @@ func (h *WebsocketHandler) handleAddItem(
 	conn *websocket.Conn,
 	orderID uuid.UUID,
 	data json.RawMessage,
-) {
+) error {
 	h.logger.Info("Order", "orderid", orderID)
 
 	var reqDto dto.OrderItemRequestDto
@@ -165,7 +163,7 @@ func (h *WebsocketHandler) handleAddItem(
 		h.logger.Error("dto validation failed", "error", err)
 		_ = h.sendMsg(conn, dto.MsgError, err.Error())
 
-		return
+		return err
 	}
 
 	respDto, err := h.svc.AddItemToOrder(ctx, orderID, reqDto.ItemID)
@@ -173,10 +171,12 @@ func (h *WebsocketHandler) handleAddItem(
 		h.logger.Error("failed to add item to order", "error", err)
 		_ = h.sendMsg(conn, dto.MsgError, "failed to add item to order")
 
-		return
+		return err
 	}
 
 	h.broadcastMessage(orderID, dto.MsgAddItem, respDto)
+
+	return nil
 }
 
 func (h *WebsocketHandler) handleDeleteItem(
@@ -184,7 +184,7 @@ func (h *WebsocketHandler) handleDeleteItem(
 	conn *websocket.Conn,
 	orderID uuid.UUID,
 	data json.RawMessage,
-) {
+) error {
 	var reqDto dto.OrderItemRequestDto
 
 	err := h.validateDto(data, &reqDto)
@@ -192,7 +192,7 @@ func (h *WebsocketHandler) handleDeleteItem(
 		h.logger.Error("dto validation failed", "error", err)
 		_ = h.sendMsg(conn, dto.MsgError, err.Error())
 
-		return
+		return err
 	}
 
 	respDto, err := h.svc.DeleteOrderItem(ctx, reqDto.ItemID, orderID)
@@ -200,10 +200,12 @@ func (h *WebsocketHandler) handleDeleteItem(
 		h.logger.Error("failed to delete item from an order", "error", err)
 		_ = h.sendMsg(conn, dto.MsgError, "failed to delete item from an order")
 
-		return
+		return err
 	}
 
 	h.broadcastMessage(orderID, dto.MsgDeleteItem, respDto)
+
+	return nil
 }
 
 func (h *WebsocketHandler) handleUpdateOrder(
@@ -212,7 +214,7 @@ func (h *WebsocketHandler) handleUpdateOrder(
 	orderID uuid.UUID,
 	user *authDto.TokenClaimsDto,
 	data json.RawMessage,
-) {
+) error {
 	var reqDto dto.UpdateOrderReqDto
 
 	reqDto.OrderID = orderID
@@ -222,7 +224,7 @@ func (h *WebsocketHandler) handleUpdateOrder(
 		h.logger.Error("dto validation failed", "error", err)
 		_ = h.sendMsg(conn, dto.MsgError, err.Error())
 
-		return
+		return err
 	}
 
 	respDto, err := h.svc.UpdateOrder(ctx, &reqDto, user)
@@ -230,10 +232,12 @@ func (h *WebsocketHandler) handleUpdateOrder(
 		h.logger.Error("failed to update order", "error", err)
 		_ = h.sendMsg(conn, dto.MsgError, "failed to update an order")
 
-		return
+		return err
 	}
 
 	h.broadcastMessage(orderID, dto.MsgUpdateOrder, respDto)
+
+	return nil
 }
 
 func (h *WebsocketHandler) joinOrder(orderID uuid.UUID, conn *websocket.Conn) {
