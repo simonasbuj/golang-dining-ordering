@@ -32,5 +32,9 @@ func AddOrdersRoutes(
 
 	publicAPI.POST("/:order_id/payments", paymentsHandler.HandleCreateCheckout)
 	publicAPI.POST("/webhooks/payment-success", paymentsHandler.HandleWebhookSuccess)
-	publicAPI.GET("/:order_id/ws", websocketHandler.HandleOrderWebsocket)
+	publicAPI.GET(
+		"/:order_id/ws",
+		websocketHandler.HandleOrderWebsocket,
+		middleware.AuthMiddleware(authEndpoint, false),
+	)
 }
