@@ -81,3 +81,16 @@ SELECT id, user_id, restaurant_id, created_at, updated_at
 FROM management.restaurants_waiters
 WHERE user_id = $1
   AND restaurant_id = $2;
+
+-- name: AssignWaiterToOrder :one
+INSERT INTO orders.orders_waiters (
+    id,
+    user_id,
+    order_id
+) VALUES ($1, $2, $3)
+RETURNING *;
+
+-- name: RemoveWaiterFromOrder :one
+DELETE FROM orders.orders_waiters 
+WHERE id = $1 and order_id = $2 and user_id = $3
+RETURNING *;

@@ -38,6 +38,8 @@ type OrdersRepo interface {
 	DeleteOrderItem(ctx context.Context, orderItemID, orderID uuid.UUID) (*dto.OrderItemDto, error)
 	UpdateOrder(ctx context.Context, reqDto *dto.UpdateOrderReqDto) (*dto.OrderDto, error)
 	IsUserRestaurantWaiter(ctx context.Context, userID, restaurantID uuid.UUID) error
+	AssignWaiter(ctx context.Context, orderID, userID uuid.UUID) error
+	RemoveWaiter(ctx context.Context, orderID, userID, assignID uuid.UUID) error
 }
 
 type ordersRepo struct {
@@ -240,6 +242,32 @@ func (r *ordersRepo) UpdateOrder(
 	}
 
 	return respDto, nil
+}
+
+func (r *ordersRepo) AssignWaiter(ctx context.Context, orderID, userID uuid.UUID) error {
+	_, err := r.q.AssignWaiterToOrder(ctx, db.AssignWaiterToOrderParams{
+		ID:      uuid.New(),
+		UserID:  userID,
+		OrderID: orderID,
+	})
+	if err != nil {
+		return fmt.Errorf("inserting new order waiter to database: %w", err)
+	}
+
+	return nil
+}
+
+func (r *ordersRepo) RemoveWaiter(ctx context.Context, orderID, userID, assignID uuid.UUID) error {
+	_, err := r.q.RemoveWaiterFromOrder(ctx, db.RemoveWaiterFromOrderParams{
+		ID:      assignID,
+		UserID:  userID,
+		OrderID: orderID,
+	})
+	if err != nil {
+		return fmt.Errorf("deleting order waiter from database: %w", err)
+	}
+
+	return nil
 }
 
 func (r *ordersRepo) IsUserRestaurantWaiter(

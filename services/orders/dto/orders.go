@@ -48,6 +48,11 @@ type UpdateOrderReqDto struct {
 	Status           *db.OrderStatus `json:"status"`
 }
 
+// RemoveWaiterReqDto represents request payload to unassing waiter from order.
+type RemoveWaiterReqDto struct {
+	ID uuid.UUID `json:"assign_id" validate:"required"`
+}
+
 // WSMessageType represents the type of a WebSocket message.
 type WSMessageType string
 

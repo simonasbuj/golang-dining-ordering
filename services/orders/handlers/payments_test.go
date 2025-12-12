@@ -422,3 +422,11 @@ func (r *mockOrdersRepo) IsUserRestaurantWaiter(
 ) error {
 	return nil
 }
+
+func (r *mockOrdersRepo) AssignWaiter(_ context.Context, _, _ uuid.UUID) error {
+	return nil
+}
+
+func (r *mockOrdersRepo) RemoveWaiter(_ context.Context, _, _, _ uuid.UUID) error {
+	return nil
+}

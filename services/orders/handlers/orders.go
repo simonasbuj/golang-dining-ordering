@@ -165,3 +165,50 @@ func (h *OrdersHandler) HandleUpdateOrder(c echo.Context) error {
 
 	return responses.JSONSuccess(c, "updated order", respDto)
 }
+
+// HandleAddWaiter hanldes http request to assign waiter to an order.
+func (h *OrdersHandler) HandleAddWaiter(c echo.Context) error {
+	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
+	if err != nil {
+		return err
+	}
+
+	user, err := hndl.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	err = h.svc.AssignWaiter(c.Request().Context(), orderID, user.UserID)
+	if err != nil {
+		return responses.JSONError(c, "failed to assign waiter", err)
+	}
+
+	return responses.JSONSuccess(c, "waiter assigned to order", nil)
+}
+
+// HandleRemoveWaiter hanldes http request to remove waiter from an order.
+func (h *OrdersHandler) HandleRemoveWaiter(c echo.Context) error {
+	orderID, err := hndl.GetUUUIDFromParams(c, orderIDParamName)
+	if err != nil {
+		return err
+	}
+
+	user, err := hndl.GetUserFromContext(c)
+	if err != nil {
+		return err
+	}
+
+	var reqDto dto.RemoveWaiterReqDto
+
+	err = validation.ValidateDto(c, &reqDto)
+	if err != nil {
+		return responses.JSONError(c, err.Error(), err)
+	}
+
+	err = h.svc.RemoveWaiter(c.Request().Context(), orderID, user.UserID, reqDto.ID)
+	if err != nil {
+		return responses.JSONError(c, "failed to remove waiter", err)
+	}
+
+	return responses.JSONSuccess(c, "waiter removed from order", nil)
+}
