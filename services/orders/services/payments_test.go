@@ -466,10 +466,18 @@ func (r *mockOrdersRepo) IsUserRestaurantWaiter(
 	return nil
 }
 
-func (r *mockOrdersRepo) AssignWaiter(_ context.Context, _, _ uuid.UUID) error {
+func (r *mockOrdersRepo) AssignWaiter(_ context.Context, orderID, _ uuid.UUID) error {
+	if orderID != testOrderID {
+		return ErrRepoFailed
+	}
+
 	return nil
 }
 
-func (r *mockOrdersRepo) RemoveWaiter(_ context.Context, _, _, _ uuid.UUID) error {
+func (r *mockOrdersRepo) RemoveWaiter(_ context.Context, orderID, _, _ uuid.UUID) error {
+	if orderID != testOrderID {
+		return ErrRepoFailed
+	}
+
 	return nil
 }
