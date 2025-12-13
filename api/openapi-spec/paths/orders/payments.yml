@@ -1,0 +1,26 @@
+post:
+  tags:
+    - Payments
+  summary: Create checkout session for an order.
+  description: Creates checkout session for an order.
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/OrderIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/orders/payments.yml#/CreateCheckoutSessionRequest'
+  responses:
+    '200':
+      description: Payment checkout session created
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/payments.yml#/CreateCheckoutSessionResponse'
+    '400':
+      description: Bad request, invalid id in params or invalid request body.
+    '404':
+      description: Not found (order does not exist)
+    '500':
+      description: Internal server error

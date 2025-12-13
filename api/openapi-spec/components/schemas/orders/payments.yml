@@ -1,0 +1,19 @@
+CreateCheckoutSessionRequest:
+  type: object
+  properties:
+    success_url:
+      type: string
+      example: "http://localhost:42069/frontend?success=true"
+    cancel_url:
+      type: string
+      example: "http://localhost:42069/frontend?cancel=true"
+
+CreateCheckoutSessionResponse:
+  type: object
+  properties:
+    url:
+      type: string
+      example: "https://checkout.stripe.com/c/pay/cs_test_b1RUENp26Mws"
+    provider:
+      type: string
+      example: "stripe"

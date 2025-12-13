@@ -1,0 +1,47 @@
+get:
+  tags:
+    - Orders
+  summary: Returns order details including order items.
+  description: Returns order details including order items.
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/OrderIDParam'
+  responses:
+    '200':
+      description: Order details fetched succesfuly
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/orders.yml#/OrderDetails'
+    '400':
+      description: Bad request, invalid id in params
+    '404':
+      description: Not found (order does not exist)
+    '500':
+      description: Internal server error
+
+patch:
+  tags:
+    - Orders
+  summary: Updates order by changing status and/or tip amount.
+  description: Updates order by changing status and/or tip amount
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/OrderIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/orders/orders.yml#/UpdateOrderRequest'
+  responses:
+    '200':
+      description: Order details udpated succesfuly.
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/orders.yml#/OrderDetails'
+    '400':
+      description: Bad request, invalid id in params or invalid request body
+    '404':
+      description: Not found (order does not exist)
+    '500':
+      description: Internal server error

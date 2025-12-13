@@ -1,0 +1,55 @@
+post:
+  tags:
+    - Orders
+  summary: Assign waiter to an order.
+  description: Assigns waiter to an order.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/OrderIDParam'
+  responses:
+    '200':
+      description: Waiter assigned to order succesfully.
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/orders.yml#/WaiterResponse'
+    '400':
+      description: Bad request, invalid id in params.
+    '401':
+      description: User unauthorzied.
+    '404':
+      description: Not found (order does not exist)
+    '500':
+      description: Internal server error
+
+delete:
+  tags:
+    - Orders
+  summary: Removes waiter from and an order.
+  description: Removes waiter from and an order.
+  security:
+    - bearerAuth: []
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/OrderIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/orders/orders.yml#/RemoveWaiter'
+  responses:
+    '200':
+      description: Waiter removed from an order.
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/orders.yml#/WaiterResponse'
+    '400':
+      description: Bad request, invalid id in params or invalid request body.
+    '401':
+      description: User unauthorzied.
+    '404':
+      description: Not found (order does not exist)
+    '500':
+      description: Internal server error
