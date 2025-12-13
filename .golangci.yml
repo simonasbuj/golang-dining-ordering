@@ -18,6 +18,8 @@ linters:
       order:
           - json
           - form
+    interfacebloat:
+      max: 12
   exclusions:
     rules:
     - path: services/auth/handler # ignore for wrapcheck because 'return c.JSON( is echo convention and wrapcheck hates it

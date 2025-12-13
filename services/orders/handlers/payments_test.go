@@ -21,7 +21,7 @@ import (
 
 //nolint:gochecknoglobals
 var (
-	testUserID            = uuid.MustParse("00000000-0000-0000-0000-000000000000")
+	testUserID            = uuid.MustParse("22222222-2222-4222-8222-222222222222")
 	testRestaurantID      = uuid.MustParse("11111111-1111-4111-8111-111111111111")
 	testRestaurantName    = "Test Restaurant"
 	testCurrency          = "eur"
@@ -420,5 +420,13 @@ func (r *mockOrdersRepo) IsUserRestaurantWaiter(
 	_ context.Context,
 	_, _ uuid.UUID,
 ) error {
+	return nil
+}
+
+func (r *mockOrdersRepo) AssignWaiter(_ context.Context, _, _ uuid.UUID) error {
+	return nil
+}
+
+func (r *mockOrdersRepo) RemoveWaiter(_ context.Context, _, _, _ uuid.UUID) error {
 	return nil
 }

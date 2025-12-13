@@ -29,6 +29,16 @@ func AddOrdersRoutes(
 		ordersHandler.HandleUpdateOrder,
 		middleware.AuthMiddleware(authEndpoint, false),
 	)
+	publicAPI.POST(
+		"/:order_id/waiters",
+		ordersHandler.HandleAddWaiter,
+		middleware.AuthMiddleware(authEndpoint),
+	)
+	publicAPI.DELETE(
+		"/:order_id/waiters",
+		ordersHandler.HandleRemoveWaiter,
+		middleware.AuthMiddleware(authEndpoint),
+	)
 
 	publicAPI.POST("/:order_id/payments", paymentsHandler.HandleCreateCheckout)
 	publicAPI.POST("/webhooks/payment-success", paymentsHandler.HandleWebhookSuccess)

@@ -27,6 +27,8 @@ type OrdersService interface {
 		reqDto *dto.UpdateOrderReqDto,
 		claims *authDto.TokenClaimsDto,
 	) (*dto.OrderDto, error)
+	AssignWaiter(ctx context.Context, orderID, userID uuid.UUID) error
+	RemoveWaiter(ctx context.Context, orderID, userID, assignID uuid.UUID) error
 }
 
 var (
@@ -189,6 +191,47 @@ func (s *ordersService) UpdateOrder(
 	currentOrder.TipAmountInCents = respDto.TipAmountInCents
 
 	return currentOrder, nil
+}
+
+func (s *ordersService) AssignWaiter(ctx context.Context, orderID, userID uuid.UUID) error {
+	order, err := s.repo.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("fetching order details: %w", err)
+	}
+
+	err = s.repo.IsUserRestaurantWaiter(ctx, userID, order.RestaurantID)
+	if err != nil {
+		return fmt.Errorf("checking if user is restaurant waiter: %w", err)
+	}
+
+	err = s.repo.AssignWaiter(ctx, orderID, userID)
+	if err != nil {
+		return fmt.Errorf("assigning waiter to order: %w", err)
+	}
+
+	return nil
+}
+
+func (s *ordersService) RemoveWaiter(
+	ctx context.Context,
+	orderID, userID, assignID uuid.UUID,
+) error {
+	order, err := s.repo.GetOrderItems(ctx, orderID)
+	if err != nil {
+		return fmt.Errorf("fetching order details: %w", err)
+	}
+
+	err = s.repo.IsUserRestaurantWaiter(ctx, userID, order.RestaurantID)
+	if err != nil {
+		return fmt.Errorf("checking if user is restaurant waiter: %w", err)
+	}
+
+	err = s.repo.RemoveWaiter(ctx, orderID, userID, assignID)
+	if err != nil {
+		return fmt.Errorf("removing waiter from order: %w", err)
+	}
+
+	return nil
 }
 
 func (s *ordersService) canUserEditOrder(

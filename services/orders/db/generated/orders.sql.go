@@ -53,6 +53,35 @@ func (q *Queries) AddOrderItem(ctx context.Context, arg AddOrderItemParams) (Ord
 	return i, err
 }
 
+const assignWaiterToOrder = `-- name: AssignWaiterToOrder :one
+INSERT INTO orders.orders_waiters (
+    id,
+    user_id,
+    order_id
+) VALUES ($1, $2, $3)
+RETURNING id, user_id, order_id, created_at, updated_at, deleted_at
+`
+
+type AssignWaiterToOrderParams struct {
+	ID      uuid.UUID `json:"id"`
+	UserID  uuid.UUID `json:"user_id"`
+	OrderID uuid.UUID `json:"order_id"`
+}
+
+func (q *Queries) AssignWaiterToOrder(ctx context.Context, arg AssignWaiterToOrderParams) (OrdersOrdersWaiter, error) {
+	row := q.db.QueryRowContext(ctx, assignWaiterToOrder, arg.ID, arg.UserID, arg.OrderID)
+	var i OrdersOrdersWaiter
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.OrderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
+	)
+	return i, err
+}
+
 const createOrder = `-- name: CreateOrder :one
 INSERT INTO orders.orders (
     id,
@@ -254,6 +283,32 @@ func (q *Queries) IsUserRestaurantWaiter(ctx context.Context, arg IsUserRestaura
 		&i.RestaurantID,
 		&i.CreatedAt,
 		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const removeWaiterFromOrder = `-- name: RemoveWaiterFromOrder :one
+DELETE FROM orders.orders_waiters 
+WHERE id = $1 and order_id = $2 and user_id = $3
+RETURNING id, user_id, order_id, created_at, updated_at, deleted_at
+`
+
+type RemoveWaiterFromOrderParams struct {
+	ID      uuid.UUID `json:"id"`
+	OrderID uuid.UUID `json:"order_id"`
+	UserID  uuid.UUID `json:"user_id"`
+}
+
+func (q *Queries) RemoveWaiterFromOrder(ctx context.Context, arg RemoveWaiterFromOrderParams) (OrdersOrdersWaiter, error) {
+	row := q.db.QueryRowContext(ctx, removeWaiterFromOrder, arg.ID, arg.OrderID, arg.UserID)
+	var i OrdersOrdersWaiter
+	err := row.Scan(
+		&i.ID,
+		&i.UserID,
+		&i.OrderID,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+		&i.DeletedAt,
 	)
 	return i, err
 }

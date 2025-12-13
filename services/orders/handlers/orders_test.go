@@ -563,3 +563,117 @@ func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_ServiceFailed() {
 	suite.Require().Error(err)
 	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
+
+func (suite *ordersHandlerTestSuite) TestHandleAddWaiter_Success() {
+	e := echo.New()
+
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	c.SetParamNames(orderIDParamName)
+	c.SetParamValues(testOrderID.String())
+
+	c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
+		UserID: testUserID,
+	})
+
+	err := suite.handler.HandleAddWaiter(c)
+	suite.Require().NoError(err)
+	suite.Equal(http.StatusOK, rec.Code)
+}
+
+func (suite *ordersHandlerTestSuite) TestHandleAddWaiter_Error() {
+	e := echo.New()
+
+	req := httptest.NewRequest(http.MethodPost, "/", nil)
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	tests := []struct {
+		name    string
+		orderID string
+		userID  uuid.UUID
+	}{
+		{"invalid order id in param", "invalid-id", testUserID},
+		{"no user in context", testOrderID.String(), uuid.Nil},
+		{"service failed", uuid.Nil.String(), testUserID},
+	}
+
+	for _, tt := range tests {
+		c.SetParamNames(orderIDParamName)
+		c.SetParamValues(tt.orderID)
+
+		c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
+			UserID: tt.userID,
+		})
+
+		err := suite.handler.HandleAddWaiter(c)
+		suite.Require().Error(err)
+		suite.Equal(http.StatusBadRequest, rec.Code)
+	}
+}
+
+func (suite *ordersHandlerTestSuite) TestHandleRemovedWaiter_Success() {
+	e := echo.New()
+
+	body := `{"assign_id": "67676767-6767-4676-8767-676767676767"}`
+
+	req := httptest.NewRequest(http.MethodDelete, "/", bytes.NewReader([]byte(body)))
+	req.Header.Set("Content-Type", "application/json")
+
+	rec := httptest.NewRecorder()
+	c := e.NewContext(req, rec)
+
+	c.SetParamNames(orderIDParamName)
+	c.SetParamValues(testOrderID.String())
+
+	c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
+		UserID: testUserID,
+	})
+
+	err := suite.handler.HandleRemoveWaiter(c)
+	suite.Require().NoError(err)
+	suite.Equal(http.StatusOK, rec.Code)
+}
+
+func (suite *ordersHandlerTestSuite) TestHandleRemoveWaiter_Error() {
+	e := echo.New()
+
+	body := `{"assign_id": "67676767-6767-4676-8767-676767676767"}`
+
+	tests := []struct {
+		name    string
+		orderID string
+		userID  uuid.UUID
+		body    string
+	}{
+		{"invalid order id in param", "invalid-id", testUserID, body},
+		{"no user in context", testOrderID.String(), uuid.Nil, body},
+		{"invalid request body", testOrderID.String(), testUserID, "zzz"},
+		{"service failed", uuid.Nil.String(), testUserID, body},
+	}
+
+	for _, tt := range tests {
+		req := httptest.NewRequest(http.MethodDelete, "/", bytes.NewReader([]byte(tt.body)))
+		req.Header.Set("Content-Type", "application/json")
+
+		rec := httptest.NewRecorder()
+		c := e.NewContext(req, rec)
+
+		c.SetParamNames(orderIDParamName)
+		c.SetParamValues(tt.orderID)
+
+		c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
+			UserID: tt.userID,
+		})
+
+		err := suite.handler.HandleRemoveWaiter(c)
+		suite.Require().Error(err)
+		suite.Equal(http.StatusBadRequest, rec.Code)
+	}
+}

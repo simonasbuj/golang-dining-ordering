@@ -13,6 +13,7 @@ import (
 
 //nolint:gochecknoglobals
 var (
+	testUserID                      = uuid.MustParse("22222222-2222-4222-8222-222222222222")
 	testUserFromAnotherRestaurantID = uuid.MustParse("69696969-6969-6969-6969-696969696969")
 )
 
@@ -349,4 +350,48 @@ func (suite *ordersServiceTestSuite) TestCanUserEditOrder_WaiterCantEditOrder() 
 	suite.Require().Error(err)
 	suite.Require().ErrorIs(err, ErrUserCannotEditLockedOrder)
 	suite.False(got)
+}
+
+func (suite *ordersServiceTestSuite) TestAssignWaiter_Success() {
+	err := suite.svc.AssignWaiter(context.Background(), testOrderID, testUserID)
+	suite.Require().NoError(err)
+}
+
+func (suite *ordersServiceTestSuite) TestAssignWaiter_Error() {
+	tests := []struct {
+		name    string
+		orderID uuid.UUID
+		userID  uuid.UUID
+	}{
+		{"failed to get current order", uuid.Nil, testUserID},
+		{"user is not restaurant waiter", testOrderID, testUserFromAnotherRestaurantID},
+		{"repo failed", testCompletedOrderID, testUserID},
+	}
+
+	for _, tt := range tests {
+		err := suite.svc.AssignWaiter(context.Background(), tt.orderID, tt.userID)
+		suite.Require().Error(err)
+	}
+}
+
+func (suite *ordersServiceTestSuite) TestRemoveWaiter_Success() {
+	err := suite.svc.RemoveWaiter(context.Background(), testOrderID, testUserID, uuid.New())
+	suite.Require().NoError(err)
+}
+
+func (suite *ordersServiceTestSuite) TestRemoveWaiter_Error() {
+	tests := []struct {
+		name    string
+		orderID uuid.UUID
+		userID  uuid.UUID
+	}{
+		{"failed to get current order", uuid.Nil, testUserID},
+		{"user is not restaurant waiter", testOrderID, testUserFromAnotherRestaurantID},
+		{"repo failed", testCompletedOrderID, testUserID},
+	}
+
+	for _, tt := range tests {
+		err := suite.svc.RemoveWaiter(context.Background(), tt.orderID, tt.userID, uuid.New())
+		suite.Require().Error(err)
+	}
 }
