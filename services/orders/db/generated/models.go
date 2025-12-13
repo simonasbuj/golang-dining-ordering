@@ -100,6 +100,26 @@ func (ns NullOrdersPaymentProvider) Value() (driver.Value, error) {
 	return string(ns.OrdersPaymentProvider), nil
 }
 
+type AuthToken struct {
+	ID        string    `json:"id"`
+	UserID    uuid.UUID `json:"user_id"`
+	ExpiresAt time.Time `json:"expires_at"`
+	CreatedAt time.Time `json:"created_at"`
+}
+
+type AuthUser struct {
+	ID           uuid.UUID    `json:"id"`
+	Email        string       `json:"email"`
+	PasswordHash string       `json:"password_hash"`
+	Name         string       `json:"name"`
+	Lastname     string       `json:"lastname"`
+	Role         int          `json:"role"`
+	IsActive     sql.NullBool `json:"is_active"`
+	CreatedAt    time.Time    `json:"created_at"`
+	UpdatedAt    time.Time    `json:"updated_at"`
+	DeletedAt    sql.NullTime `json:"deleted_at"`
+}
+
 type ManagementCategory struct {
 	ID          uuid.UUID      `json:"id"`
 	MenuID      uuid.UUID      `json:"menu_id"`

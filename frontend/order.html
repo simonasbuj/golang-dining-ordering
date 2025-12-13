@@ -55,6 +55,11 @@
                             x-text="order.status"
                         ></span>
                     </div>
+                    
+                    <div class="d-flex justify-content-between py-1 border-bottom">
+                        <span class="text-muted fw-semibold">Waiters:</span>
+                        <span x-text="order.waiters.join(', ')"></span>
+                    </div>
 
                     <div class="d-flex justify-content-between py-1 border-bottom">
                         <span class="text-muted fw-semibold">Time:</span>

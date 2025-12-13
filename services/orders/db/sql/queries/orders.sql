@@ -40,6 +40,7 @@ SELECT
     o.currency,
     o.tip_amount_in_cents,
     o.updated_at,
+    json_agg(DISTINCT u.name) AS waiters,
     i.id as order_item_id,
     i.item_id,
     i.item_name,
@@ -48,7 +49,22 @@ FROM orders.orders o
     LEFT JOIN orders.orders_items i ON o.id = i.order_id
     LEFT JOIN management.tables t on t.id = o.table_id
     LEFT JOIN management.restaurants r on r.id = t.restaurant_id
-WHERE o.id = $1;
+    LEFT JOIN orders.orders_waiters ow on ow.order_id = o.id
+    LEFT JOIN auth.users u on u.id = ow.user_id
+WHERE o.id = $1
+GROUP BY
+    o.id,
+    r.id,
+    r.name,
+    o.status,
+    o.currency,
+    o.tip_amount_in_cents,
+    o.updated_at,
+    i.id,
+    i.item_id,
+    i.item_name,
+    i.price_in_cents
+ORDER BY i.created_at asc;
 
 -- name: GetMenuItem :one
 SELECT 
