@@ -4,3 +4,82 @@ GetCurrentOrderForTableResponse:
     order_id:
       type: string
       example: "order_001"
+
+OrderDetails:
+  type: object
+  properties:
+    id:
+      type: string
+      example: "order_001"
+    restaurant_id:
+      type: string
+      example: "rest_001"
+    restaurant_name:
+      type: string
+      example: "Insiga"
+    status:
+      type: string
+      example: "open"
+    currency:
+      type: string
+      example: eur
+    tip_amount_in_cents:
+      type: integer
+      example: 1000
+    total_price_in_cents:
+      type: integer
+      example: 4500
+    updated_at:
+      type: string
+      format: date-time
+      example: "2025-12-13T13:01:43.372722Z"
+    items:
+      type: array
+      items:
+        type: object
+        properties:
+          id:
+            type: string
+            format: uuid
+            example: "oi_001"
+          item_id:
+            type: string
+            format: uuid
+            example: "item_001"
+          name:
+            type: string
+            example: "Ruonio pelekas"
+          price_in_cents:
+            type: integer
+            example: 450
+
+OrderItem:
+  type: object
+  properties:
+    item_id:
+      type: string
+      example: "item_001"
+
+UpdateOrderRequest:
+  type: object
+  properties:
+    status:
+      type: string
+      example: "open"
+    tip_amount_in_cents:
+      type: integer
+      example: 1000
+
+WaiterResponse:
+  type: object
+  properties:
+    message:
+      type: string
+      example: "success"
+
+RemoveWaiter:
+  type: object
+  properties:
+    assign_id:
+      type: string
+      example: "ow_001"

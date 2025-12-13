@@ -19,6 +19,9 @@ tags:
   - name: Management - Waiters
     description: Endpoints for restaurant waiters management
   - name: Orders
+    description: Endpoints for ordering flow and management.
+  - name: Payments
+    description: Endpoints for creating and processing payments.
 
 components:
   securitySchemes:
@@ -63,3 +66,11 @@ paths:
 
   /orders/current?tableId={table_id}:
     $ref: './paths/orders/tables-id.yml' 
+  /orders/{order_id}:
+    $ref: './paths/orders/orders-id.yml' 
+  /orders/{order_id}/items:
+    $ref: './paths/orders/items.yml'
+  /orders/{order_id}/waiters:
+    $ref: './paths/orders/waiters.yml' 
+  /orders/{order_id}/payments:
+    $ref: './paths/orders/payments.yml' 

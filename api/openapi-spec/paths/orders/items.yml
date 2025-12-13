@@ -1,0 +1,53 @@
+post:
+  tags:
+    - Orders
+  summary: Add item to an order.
+  description: Adds item to an order.
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/OrderIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/orders/orders.yml#/OrderItem'
+  responses:
+    '200':
+      description: Item addedd to order succesfully
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/orders.yml#/OrderDetails'
+    '400':
+      description: Bad request, invalid id in params or order is completed.
+    '404':
+      description: Not found (order does not exist)
+    '500':
+      description: Internal server error
+
+delete:
+  tags:
+    - Orders
+  summary: Delete item from an order.
+  description: Deletes item from an order.
+  parameters:
+    - $ref: '../../components/parameters/ids.yml#/OrderIDParam'
+  requestBody:
+    required: true
+    content:
+      application/json:
+        schema:
+          $ref: '../../components/schemas/orders/orders.yml#/OrderItem'
+  responses:
+    '200':
+      description: Item deleted from succesfuly
+      content:
+        application/json:
+          schema:
+            $ref: '../../components/schemas/orders/orders.yml#/OrderDetails'
+    '400':
+      description: Bad request, invalid id in params or order is completed.
+    '404':
+      description: Not found (order does not exist)
+    '500':
+      description: Internal server error

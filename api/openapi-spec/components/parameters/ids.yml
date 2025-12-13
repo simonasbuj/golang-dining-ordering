@@ -42,3 +42,12 @@ WaiterIDParam:
     type: string
   description: Unique identifier of the waiter
   example: "user_123"
+
+OrderIDParam:
+  name: order_id
+  in: path
+  required: true
+  schema:
+    type: string
+  description: Unique identifier of the order
+  example: "order_001"
