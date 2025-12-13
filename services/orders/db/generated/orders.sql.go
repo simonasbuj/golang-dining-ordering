@@ -8,6 +8,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"time"
 
 	"github.com/google/uuid"
@@ -188,6 +189,7 @@ SELECT
     o.currency,
     o.tip_amount_in_cents,
     o.updated_at,
+    json_agg(DISTINCT u.name) AS waiters,
     i.id as order_item_id,
     i.item_id,
     i.item_name,
@@ -196,21 +198,37 @@ FROM orders.orders o
     LEFT JOIN orders.orders_items i ON o.id = i.order_id
     LEFT JOIN management.tables t on t.id = o.table_id
     LEFT JOIN management.restaurants r on r.id = t.restaurant_id
+    LEFT JOIN orders.orders_waiters ow on ow.order_id = o.id
+    LEFT JOIN auth.users u on u.id = ow.user_id
 WHERE o.id = $1
+GROUP BY
+    o.id,
+    r.id,
+    r.name,
+    o.status,
+    o.currency,
+    o.tip_amount_in_cents,
+    o.updated_at,
+    i.id,
+    i.item_id,
+    i.item_name,
+    i.price_in_cents
+ORDER BY i.created_at asc
 `
 
 type GetOrderItemsRow struct {
-	ID               uuid.UUID      `json:"id"`
-	RestaurantID     uuid.NullUUID  `json:"restaurant_id"`
-	RestaurantName   sql.NullString `json:"restaurant_name"`
-	Status           OrderStatus    `json:"status"`
-	Currency         string         `json:"currency"`
-	TipAmountInCents sql.NullInt32  `json:"tip_amount_in_cents"`
-	UpdatedAt        time.Time      `json:"updated_at"`
-	OrderItemID      uuid.NullUUID  `json:"order_item_id"`
-	ItemID           uuid.NullUUID  `json:"item_id"`
-	ItemName         sql.NullString `json:"item_name"`
-	PriceInCents     sql.NullInt32  `json:"price_in_cents"`
+	ID               uuid.UUID       `json:"id"`
+	RestaurantID     uuid.NullUUID   `json:"restaurant_id"`
+	RestaurantName   sql.NullString  `json:"restaurant_name"`
+	Status           OrderStatus     `json:"status"`
+	Currency         string          `json:"currency"`
+	TipAmountInCents sql.NullInt32   `json:"tip_amount_in_cents"`
+	UpdatedAt        time.Time       `json:"updated_at"`
+	Waiters          json.RawMessage `json:"waiters"`
+	OrderItemID      uuid.NullUUID   `json:"order_item_id"`
+	ItemID           uuid.NullUUID   `json:"item_id"`
+	ItemName         sql.NullString  `json:"item_name"`
+	PriceInCents     sql.NullInt32   `json:"price_in_cents"`
 }
 
 func (q *Queries) GetOrderItems(ctx context.Context, id uuid.UUID) ([]GetOrderItemsRow, error) {
@@ -230,6 +248,7 @@ func (q *Queries) GetOrderItems(ctx context.Context, id uuid.UUID) ([]GetOrderIt
 			&i.Currency,
 			&i.TipAmountInCents,
 			&i.UpdatedAt,
+			&i.Waiters,
 			&i.OrderItemID,
 			&i.ItemID,
 			&i.ItemName,

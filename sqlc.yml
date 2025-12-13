@@ -30,6 +30,7 @@ sql:
   - schema: 
       - "services/orders/db/sql/migrations"
       - "services/management/db/sql/migrations"
+      - "services/auth/db/sql/migrations"
     queries: "services/orders/db/sql/queries"
     engine: "postgresql"
     gen:

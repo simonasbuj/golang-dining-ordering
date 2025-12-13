@@ -4,6 +4,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
 	db "golang-dining-ordering/services/orders/db/generated"
@@ -147,7 +148,13 @@ func (r *ordersRepo) GetOrderItems(ctx context.Context, orderID uuid.UUID) (*dto
 		TipAmountInCents:  int(firstRow.TipAmountInCents.Int32),
 		TotalPriceInCents: 0,
 		UpdatedAt:         firstRow.UpdatedAt,
+		Waiters:           make([]string, 0),
 		Items:             make([]*dto.OrderItemDto, 0, len(rows)),
+	}
+
+	err = json.Unmarshal(firstRow.Waiters, &respDto.Waiters)
+	if err != nil {
+		return nil, fmt.Errorf("unmarshaling waiters from query into array: %w", err)
 	}
 
 	if !firstRow.ItemID.Valid {

@@ -29,6 +29,7 @@ type OrderDto struct {
 	TipAmountInCents  int             `json:"tip_amount_in_cents"`
 	TotalPriceInCents int             `json:"total_price_in_cents"`
 	UpdatedAt         time.Time       `json:"updated_at"`
+	Waiters           []string        `json:"waiters"`
 	Items             []*OrderItemDto `json:"items"`
 }
 
