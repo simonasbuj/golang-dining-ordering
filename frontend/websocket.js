@@ -96,10 +96,6 @@ function websocketApp() {
       })
 
       this.socket.addEventListener("message", (event) => this.handleReceivedMsg(event));
-
-      this.socket.addEventListener("close", (event) => {
-          this.socket = null
-      });
     },
 
     handleReceivedMsg(event) {
@@ -120,7 +116,7 @@ function websocketApp() {
             "type": type, 
             "data": data
         }
-
+        
         if (this.socket && this.socket.readyState === WebSocket.OPEN) {
             this.socket.send(JSON.stringify(msg));
         }
