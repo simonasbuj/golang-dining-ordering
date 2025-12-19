@@ -26,8 +26,7 @@ type WebsocketHandler struct {
 	svc        services.OrdersService
 	upgrader   *websocket.Upgrader
 	logger     *slog.Logger
-	orderConns map[uuid.UUID]map[*websocket.Conn]bool
-	mu         sync.Mutex
+	orderConns sync.Map
 }
 
 // NewWebsocketHandler creates a new Handler for orders websockets.
@@ -53,8 +52,7 @@ func NewWebsocketHandler(
 		svc:        svc,
 		upgrader:   &upgrader,
 		logger:     logger,
-		orderConns: make(map[uuid.UUID]map[*websocket.Conn]bool),
-		mu:         sync.Mutex{},
+		orderConns: sync.Map{},
 	}
 }
 
@@ -167,6 +165,7 @@ func (h *WebsocketHandler) handleAddItem(
 	respDto, err := h.svc.AddItemToOrder(ctx, orderID, reqDto.ItemID)
 	if err != nil {
 		h.logger.Error("failed to add item to order", "error", err)
+
 		_ = h.sendMsg(conn, dto.MsgError, "failed to add item to order")
 
 		return err
@@ -239,27 +238,43 @@ func (h *WebsocketHandler) handleUpdateOrder(
 }
 
 func (h *WebsocketHandler) joinOrder(orderID uuid.UUID, conn *websocket.Conn) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
+	inner, _ := h.orderConns.LoadOrStore(orderID, &sync.Map{})
 
-	if h.orderConns[orderID] == nil {
-		h.orderConns[orderID] = make(map[*websocket.Conn]bool)
+	innerMap, ok := inner.(*sync.Map)
+	if !ok {
+		h.logger.Error("joinOrder: unexpected type stored in orderConns", "orderID", orderID)
+
+		return
 	}
 
-	h.orderConns[orderID][conn] = true
+	innerMap.Store(conn, struct{}{})
 }
 
 func (h *WebsocketHandler) leaveOrder(orderID uuid.UUID, conn *websocket.Conn) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
+	inner, ok := h.orderConns.Load(orderID)
+	if !ok {
+		return
+	}
 
-	clients, ok := h.orderConns[orderID]
-	if ok {
-		delete(clients, conn)
+	innerMap, ok := inner.(*sync.Map)
+	if !ok {
+		h.logger.Error("leaveOrder: unexpected type stored in orderConns", "orderID", orderID)
 
-		if len(clients) == 0 {
-			delete(h.orderConns, orderID)
-		}
+		return
+	}
+
+	innerMap.Delete(conn)
+
+	empty := true
+
+	innerMap.Range(func(_, _ any) bool {
+		empty = false
+
+		return false
+	})
+
+	if empty {
+		h.orderConns.Delete(orderID)
 	}
 }
 
@@ -268,20 +283,45 @@ func (h *WebsocketHandler) broadcastMessage(
 	msgType dto.WSMessageType,
 	data any,
 ) {
-	h.mu.Lock()
-	defer h.mu.Unlock()
+	inner, ok := h.orderConns.Load(orderID)
+	if !ok {
+		return
+	}
 
-	for client := range h.orderConns[orderID] {
+	clientsMap, ok := inner.(*sync.Map)
+	if !ok {
+		h.logger.Error("broadcastMessage: unexpected type stored in orderConns", "orderID", orderID)
+
+		return
+	}
+
+	clientsMap.Range(func(key, _ any) bool {
+		client, ok := key.(*websocket.Conn)
+		if !ok {
+			h.logger.Error(
+				"broadcastMessage: unexpected type stored in connection clients",
+				"orderID",
+				orderID,
+			)
+			clientsMap.Delete(client)
+
+			return true
+		}
+
 		err := h.sendMsg(client, msgType, data)
 		if err != nil {
 			h.logger.Error("failed to send message to client", "error", err)
 
 			closeErr := client.Close()
 			if closeErr != nil {
-				h.logger.Error("failed to close client", "error", err)
+				h.logger.Error("failed to close client", "error", closeErr)
 			}
+
+			clientsMap.Delete(client)
 		}
-	}
+
+		return true
+	})
 }
 
 func (h *WebsocketHandler) sendMsg(

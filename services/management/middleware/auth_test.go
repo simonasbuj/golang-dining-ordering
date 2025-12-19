@@ -321,9 +321,7 @@ func TestCallAuthService_RequestCreationError(t *testing.T) {
 
 var errNetwork = errors.New("network error")
 
-func TestCallAuthService_DoError(t *testing.T) {
-	t.Parallel()
-
+func TestCallAuthService_DoError(t *testing.T) { //nolint:paralleltest
 	oldClient := http.DefaultClient
 
 	defer func() { http.DefaultClient = oldClient }()

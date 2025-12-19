@@ -5,7 +5,7 @@ import (
 	"errors"
 	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
-	"golang-dining-ordering/services/orders/repository"
+	mock "golang-dining-ordering/test/mock/orders"
 	"net/http"
 	"testing"
 	"time"
@@ -34,10 +34,7 @@ var (
 	testProviderPaymentID         = "pi_123456"
 )
 
-var (
-	ErrRepoFailed            = errors.New("repository failed")
-	ErrPaymentProviderFailed = errors.New("payment provider failed")
-)
+var ErrPaymentProviderFailed = errors.New("payment provider failed")
 
 type paymentsServiceTestSuite struct {
 	suite.Suite
@@ -46,9 +43,9 @@ type paymentsServiceTestSuite struct {
 }
 
 func (suite *paymentsServiceTestSuite) SetupSuite() {
-	mockOrdersRepo := newMockOrdersRepo()
-	mockPaymentsRepo := newMockPaymentsRepo()
-	mockPaymentsProvider := newMockPaymentsProvider()
+	mockOrdersRepo := mock.NewMockOrdersRepo()
+	mockPaymentsRepo := mock.NewMockPaymentsRepo()
+	mockPaymentsProvider := mock.NewMockPaymentsProvider()
 	suite.svc = NewPaymentsService(mockOrdersRepo, mockPaymentsRepo, mockPaymentsProvider)
 }
 
@@ -137,7 +134,7 @@ func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_ErrorUpdateOrder
 		"Payment-Signature": []string{"signature"},
 	}
 
-	ctx := context.WithValue(context.Background(), ctxFailUpdateOrder, true)
+	ctx := context.WithValue(context.Background(), mock.CtxFailUpdateOrder, true)
 	got, err := suite.svc.HandleWebhookSuccess(ctx, payload, header)
 	suite.Require().Error(err)
 	suite.Nil(got)
@@ -207,277 +204,4 @@ func (suite *paymentsServiceTestSuite) TestCanPayForOrder_Amount() {
 			suite.Require().Equal(tc.wantCanPay, got)
 		})
 	}
-}
-
-type mockPaymentsProvider struct {
-	provider db.OrdersPaymentProvider
-}
-
-func newMockPaymentsProvider() *mockPaymentsProvider {
-	return &mockPaymentsProvider{
-		provider: testPaymentProvider,
-	}
-}
-
-func (p *mockPaymentsProvider) CreateCheckoutSession(
-	_ context.Context,
-	req *dto.CheckoutSessionRequestDto,
-) (*dto.CheckoutSessionResponseDto, error) {
-	if req.SuccessURL == "" {
-		return nil, ErrPaymentProviderFailed
-	}
-
-	return &dto.CheckoutSessionResponseDto{
-		URL:      testCheckoutURL,
-		Provider: p.provider,
-	}, nil
-}
-
-func (p *mockPaymentsProvider) VerifySuccessWebhookEvent(
-	payload []byte,
-	_ http.Header,
-) (*dto.PaymentDto, error) {
-	if len(payload) == 0 {
-		return nil, ErrPaymentProviderFailed
-	}
-
-	if len(payload) == 1 {
-		return &dto.PaymentDto{}, nil
-	}
-
-	return &dto.PaymentDto{
-		ID:                testPaymentID,
-		OrderID:           testOrderID,
-		AmountInCents:     10,
-		Provider:          p.provider,
-		ProviderPaymentID: testProviderPaymentID,
-		Currency:          testCurrency,
-	}, nil
-}
-
-type mockPaymentsRepo struct{}
-
-func newMockPaymentsRepo() *mockPaymentsRepo {
-	return &mockPaymentsRepo{}
-}
-
-func (r *mockPaymentsRepo) SavePayment(
-	_ context.Context,
-	reqDto *dto.PaymentDto,
-) (*dto.PaymentDto, error) {
-	if reqDto.OrderID == uuid.Nil {
-		return nil, ErrRepoFailed
-	}
-
-	return &dto.PaymentDto{
-		ID:                testPaymentID,
-		OrderID:           testOrderID,
-		AmountInCents:     10,
-		Provider:          db.OrdersPaymentProviderMock,
-		ProviderPaymentID: testProviderPaymentID,
-		Currency:          testCurrency,
-	}, nil
-}
-
-type ctxKey string
-
-const (
-	ctxFailUpdateOrder         ctxKey = "fail-UpdateOrder"
-	ctxFailGetTableCurrency    ctxKey = "fail-GetTableCurrency"
-	ctxFailCreateOrderForTable ctxKey = "fail-CreateOrderForTable"
-	ctxFailAddItemToOrder      ctxKey = "fail-AddItemToOrder"
-)
-
-type mockOrdersRepo struct {
-	orderDto *dto.OrderDto
-}
-
-func newMockOrdersRepo() *mockOrdersRepo {
-	return &mockOrdersRepo{
-		orderDto: &dto.OrderDto{
-			ID:                testOrderID,
-			RestaurantID:      testRestaurantID,
-			RestaurantName:    testRestaurantName,
-			Status:            db.OrderStatusOpen,
-			Currency:          testCurrency,
-			TipAmountInCents:  testAmount,
-			TotalPriceInCents: testAmount,
-			UpdatedAt:         testDateTime,
-			Items: []*dto.OrderItemDto{
-				{
-					ID:           testOrderItemID,
-					RestaurantID: testRestaurantID,
-					ItemID:       testItemID,
-					Name:         testItemName,
-					PriceInCents: testAmount,
-				},
-			},
-		},
-	}
-}
-
-func (r *mockOrdersRepo) GetCurrentOrderForTable(
-	_ context.Context,
-	tableID uuid.UUID,
-) (*dto.CurrentOrderDto, error) {
-	if tableID == uuid.Max {
-		return nil, ErrRepoFailed
-	}
-
-	if tableID != testTableID {
-		return nil, repository.ErrNoCurrentOrder
-	}
-
-	return &dto.CurrentOrderDto{
-		ID: testOrderID,
-	}, nil
-}
-
-func (r *mockOrdersRepo) CreateOrderForTable(
-	ctx context.Context,
-	_ uuid.UUID,
-	_ string,
-) (*dto.CurrentOrderDto, error) {
-	if v, ok := ctx.Value(ctxFailCreateOrderForTable).(bool); ok && v {
-		return nil, ErrRepoFailed
-	}
-
-	return &dto.CurrentOrderDto{
-		ID: testOrderID,
-	}, nil
-}
-
-func (r *mockOrdersRepo) GetTableCurrency(ctx context.Context, _ uuid.UUID) (string, error) {
-	if v, ok := ctx.Value(ctxFailGetTableCurrency).(bool); ok && v {
-		return "", ErrRepoFailed
-	}
-
-	return testCurrency, nil
-}
-
-func (r *mockOrdersRepo) AddItemToOrder(
-	ctx context.Context,
-	_ uuid.UUID,
-	_ *dto.OrderItemDto,
-) (*dto.OrderItemDto, error) {
-	if v, ok := ctx.Value(ctxFailAddItemToOrder).(bool); ok && v {
-		return nil, ErrRepoFailed
-	}
-
-	orderItemDto := &dto.OrderItemDto{
-		ID:           testOrderItemID,
-		RestaurantID: testRestaurantID,
-		ItemID:       testItemID,
-		Name:         testItemName,
-		PriceInCents: testAmount,
-	}
-
-	return orderItemDto, nil
-}
-
-func (r *mockOrdersRepo) GetOrderItems(
-	_ context.Context,
-	orderID uuid.UUID,
-) (*dto.OrderDto, error) {
-	if orderID == testCompletedOrderID {
-		completedOrder := *r.orderDto
-		completedOrder.Status = db.OrderStatusCompleted
-
-		return &completedOrder, nil
-	}
-
-	if orderID != testOrderID {
-		return nil, ErrRepoFailed
-	}
-
-	respDto := *r.orderDto
-
-	return &respDto, nil
-}
-
-func (r *mockOrdersRepo) GetMenuItem(
-	_ context.Context,
-	itemID uuid.UUID,
-) (*dto.OrderItemDto, error) {
-	if itemID == testDifferentRestaurantItemID {
-		item := *r.orderDto.Items[0]
-		item.RestaurantID = uuid.Max
-
-		return &item, nil
-	}
-
-	if itemID != testItemID {
-		return nil, ErrRepoFailed
-	}
-
-	return r.orderDto.Items[0], nil
-}
-
-func (r *mockOrdersRepo) DeleteOrderItem(
-	_ context.Context,
-	orderItemID, _ uuid.UUID,
-) (*dto.OrderItemDto, error) {
-	if orderItemID != testOrderItemID {
-		return nil, ErrRepoFailed
-	}
-
-	return &dto.OrderItemDto{
-		ID:           testOrderItemID,
-		RestaurantID: testRestaurantID,
-		ItemID:       testItemID,
-		Name:         testItemName,
-		PriceInCents: testAmount,
-	}, nil
-}
-
-func (r *mockOrdersRepo) UpdateOrder(
-	ctx context.Context,
-	req *dto.UpdateOrderReqDto,
-) (*dto.OrderDto, error) {
-	if v, ok := ctx.Value(ctxFailUpdateOrder).(bool); ok && v {
-		return nil, ErrRepoFailed
-	}
-
-	status := db.OrderStatusOpen
-	if req.Status != nil {
-		status = *req.Status
-	}
-
-	tip := testAmount
-	if req.TipAmountInCents != nil {
-		tip = int(*req.TipAmountInCents)
-	}
-
-	return &dto.OrderDto{
-		ID:               req.OrderID,
-		Status:           status,
-		TipAmountInCents: tip,
-	}, nil
-}
-
-func (r *mockOrdersRepo) IsUserRestaurantWaiter(
-	_ context.Context,
-	userID, _ uuid.UUID,
-) error {
-	if userID == testUserFromAnotherRestaurantID {
-		return ErrRepoFailed
-	}
-
-	return nil
-}
-
-func (r *mockOrdersRepo) AssignWaiter(_ context.Context, orderID, _ uuid.UUID) error {
-	if orderID != testOrderID {
-		return ErrRepoFailed
-	}
-
-	return nil
-}
-
-func (r *mockOrdersRepo) RemoveWaiter(_ context.Context, orderID, _, _ uuid.UUID) error {
-	if orderID != testOrderID {
-		return ErrRepoFailed
-	}
-
-	return nil
 }

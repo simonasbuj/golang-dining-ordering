@@ -38,6 +38,10 @@ lint-fix:
 test:
 	go test -v -coverprofile=cvr.txt ./... && grep -v -e "/generated/" -e "/repository/" -e "/mock/" -e "/cmd/" -e "/routes/" cvr.txt > coverage.txt
 
+.PHONY: test-race
+test-race:
+	go test -v -race -coverprofile=cvr.txt ./... && grep -v -e "/generated/" -e "/repository/" -e "/mock/" -e "/cmd/" -e "/routes/" cvr.txt > coverage.txt
+
 cov-html:
 	go tool cover -html=coverage.txt -o coverage.html
 

@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"errors"
 	"golang-dining-ordering/pkg/responses"
@@ -13,6 +12,8 @@ import (
 	"net/http/httptest"
 	"testing"
 	"time"
+
+	mock "golang-dining-ordering/test/mock/orders"
 
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -39,11 +40,6 @@ var (
 	testProviderPaymentID = "pi_123456"
 )
 
-var (
-	ErrService    = errors.New("service failed")
-	ErrRepoFailed = errors.New("repository failed")
-)
-
 type paymentsHandlerTestSuite struct {
 	suite.Suite
 
@@ -51,9 +47,9 @@ type paymentsHandlerTestSuite struct {
 }
 
 func (suite *paymentsHandlerTestSuite) SetupSuite() {
-	mockOrdersRepo := NewMockOrdersRepo()
-	mockPaymentsRepo := NewMockPaymentsRepo()
-	mockPaymentsProvider := NewMockPaymentsProvider()
+	mockOrdersRepo := mock.NewMockOrdersRepo()
+	mockPaymentsRepo := mock.NewMockPaymentsRepo()
+	mockPaymentsProvider := mock.NewMockPaymentsProvider()
 	svc := services.NewPaymentsService(mockOrdersRepo, mockPaymentsRepo, mockPaymentsProvider)
 
 	suite.handler = NewPaymentsHandler(svc)
@@ -226,207 +222,4 @@ func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_InvalidPayload()
 	err := suite.handler.HandleWebhookSuccess(c)
 	suite.Require().Error(err)
 	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-type mockPaymentsProvider struct {
-	provider db.OrdersPaymentProvider
-}
-
-func NewMockPaymentsProvider() *mockPaymentsProvider {
-	return &mockPaymentsProvider{
-		provider: testPaymentProvider,
-	}
-}
-
-func (p *mockPaymentsProvider) CreateCheckoutSession(
-	_ context.Context,
-	_ *dto.CheckoutSessionRequestDto,
-) (*dto.CheckoutSessionResponseDto, error) {
-	return &dto.CheckoutSessionResponseDto{
-		URL:      testCheckoutURL,
-		Provider: p.provider,
-	}, nil
-}
-
-func (p *mockPaymentsProvider) VerifySuccessWebhookEvent(
-	payload []byte,
-	_ http.Header,
-) (*dto.PaymentDto, error) {
-	if len(payload) == 0 {
-		return nil, ErrService
-	}
-
-	return &dto.PaymentDto{
-		ID:                testPaymentID,
-		OrderID:           testOrderID,
-		AmountInCents:     10,
-		Provider:          p.provider,
-		ProviderPaymentID: testProviderPaymentID,
-		Currency:          testCurrency,
-	}, nil
-}
-
-type mockPaymentsRepo struct{}
-
-func NewMockPaymentsRepo() *mockPaymentsRepo {
-	return &mockPaymentsRepo{}
-}
-
-func (r *mockPaymentsRepo) SavePayment(
-	_ context.Context,
-	_ *dto.PaymentDto,
-) (*dto.PaymentDto, error) {
-	return &dto.PaymentDto{
-		ID:                testPaymentID,
-		OrderID:           testOrderID,
-		AmountInCents:     10,
-		Provider:          db.OrdersPaymentProviderMock,
-		ProviderPaymentID: testProviderPaymentID,
-		Currency:          testCurrency,
-	}, nil
-}
-
-type mockOrdersRepo struct {
-	orderDto *dto.OrderDto
-}
-
-func NewMockOrdersRepo() *mockOrdersRepo {
-	return &mockOrdersRepo{
-		orderDto: &dto.OrderDto{
-			ID:                testOrderID,
-			RestaurantID:      testRestaurantID,
-			RestaurantName:    testRestaurantName,
-			Status:            db.OrderStatusOpen,
-			Currency:          testCurrency,
-			TipAmountInCents:  testAmount,
-			TotalPriceInCents: testAmount,
-			UpdatedAt:         testDateTime,
-			Items: []*dto.OrderItemDto{
-				{
-					ID:           testOrderItemID,
-					RestaurantID: testRestaurantID,
-					ItemID:       testItemID,
-					Name:         testItemName,
-					PriceInCents: testAmount,
-				},
-			},
-		},
-	}
-}
-
-func (r *mockOrdersRepo) GetCurrentOrderForTable(
-	_ context.Context,
-	tableID uuid.UUID,
-) (*dto.CurrentOrderDto, error) {
-	if tableID != testTableID {
-		return nil, ErrRepoFailed
-	}
-
-	return &dto.CurrentOrderDto{
-		ID: testOrderID,
-	}, nil
-}
-
-func (r *mockOrdersRepo) CreateOrderForTable(
-	_ context.Context,
-	_ uuid.UUID,
-	_ string,
-) (*dto.CurrentOrderDto, error) {
-	return &dto.CurrentOrderDto{
-		ID: testOrderID,
-	}, nil
-}
-
-func (r *mockOrdersRepo) GetTableCurrency(_ context.Context, _ uuid.UUID) (string, error) {
-	return testCurrency, nil
-}
-
-func (r *mockOrdersRepo) AddItemToOrder(
-	_ context.Context,
-	_ uuid.UUID,
-	_ *dto.OrderItemDto,
-) (*dto.OrderItemDto, error) {
-	return &dto.OrderItemDto{
-		ID:           testOrderItemID,
-		RestaurantID: testRestaurantID,
-		ItemID:       testItemID,
-		Name:         testItemName,
-		PriceInCents: testAmount,
-	}, nil
-}
-
-func (r *mockOrdersRepo) GetOrderItems(
-	_ context.Context,
-	orderID uuid.UUID,
-) (*dto.OrderDto, error) {
-	if orderID == testCompletedOrderID {
-		completedOrder := *r.orderDto
-		completedOrder.Status = db.OrderStatusCompleted
-
-		return &completedOrder, nil
-	}
-
-	if orderID != testOrderID {
-		return nil, ErrService
-	}
-
-	respDto := *r.orderDto
-
-	return &respDto, nil
-}
-
-func (r *mockOrdersRepo) GetMenuItem(
-	_ context.Context,
-	_ uuid.UUID,
-) (*dto.OrderItemDto, error) {
-	return r.orderDto.Items[0], nil
-}
-
-func (r *mockOrdersRepo) DeleteOrderItem(
-	_ context.Context,
-	_, _ uuid.UUID,
-) (*dto.OrderItemDto, error) {
-	return &dto.OrderItemDto{
-		ID:           testOrderItemID,
-		RestaurantID: testRestaurantID,
-		ItemID:       testItemID,
-		Name:         testItemName,
-		PriceInCents: testAmount,
-	}, nil
-}
-
-func (r *mockOrdersRepo) UpdateOrder(
-	_ context.Context,
-	req *dto.UpdateOrderReqDto,
-) (*dto.OrderDto, error) {
-	status := db.OrderStatusOpen
-	if req.Status != nil {
-		status = *req.Status
-	}
-
-	tip := testAmount
-	if req.TipAmountInCents != nil {
-		tip = int(*req.TipAmountInCents)
-	}
-
-	return &dto.OrderDto{
-		ID:               req.OrderID,
-		Status:           status,
-		TipAmountInCents: tip,
-	}, nil
-}
-
-func (r *mockOrdersRepo) IsUserRestaurantWaiter(
-	_ context.Context,
-	_, _ uuid.UUID,
-) error {
-	return nil
-}
-
-func (r *mockOrdersRepo) AssignWaiter(_ context.Context, _, _ uuid.UUID) error {
-	return nil
-}
-
-func (r *mockOrdersRepo) RemoveWaiter(_ context.Context, _, _, _ uuid.UUID) error {
-	return nil
 }
