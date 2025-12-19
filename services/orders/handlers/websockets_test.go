@@ -11,12 +11,15 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"sync"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/gorilla/websocket"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
+
+	mock "golang-dining-ordering/test/mock/orders"
 )
 
 type websocketsHandlerTestSuite struct {
@@ -26,7 +29,7 @@ type websocketsHandlerTestSuite struct {
 }
 
 func (suite *websocketsHandlerTestSuite) SetupSuite() {
-	mockOrdersRepo := NewMockOrdersRepo()
+	mockOrdersRepo := mock.NewMockOrdersRepo()
 	svc := services.NewOrdersService(mockOrdersRepo)
 
 	cfg := &config.WebsocketConfig{
@@ -47,6 +50,18 @@ func TestWebsocketsHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(websocketsHandlerTestSuite))
 }
 
+func countConnections(orderConns *sync.Map) int {
+	count := 0
+
+	orderConns.Range(func(_, _ any) bool {
+		count++
+
+		return true
+	})
+
+	return count
+}
+
 func (suite *websocketsHandlerTestSuite) TestJoinOrder() {
 	orderID := uuid.New()
 
@@ -54,13 +69,15 @@ func (suite *websocketsHandlerTestSuite) TestJoinOrder() {
 
 	suite.handler.joinOrder(orderID, conn1)
 
-	conns, ok := suite.handler.orderConns[orderID]
+	conns, ok := suite.handler.orderConns.Load(orderID)
 	suite.Require().True(ok)
-	suite.Require().True(conns[conn1])
+	suite.Equal(1, countConnections(conns.(*sync.Map)))
 
 	conn2 := &websocket.Conn{}
 	suite.handler.joinOrder(orderID, conn2)
-	suite.Len(suite.handler.orderConns[orderID], 2)
+	conns, ok = suite.handler.orderConns.Load(orderID)
+	suite.Require().True(ok)
+	suite.Equal(2, countConnections(conns.(*sync.Map)))
 }
 
 func (suite *websocketsHandlerTestSuite) TestLeaveOrder() {
@@ -71,16 +88,17 @@ func (suite *websocketsHandlerTestSuite) TestLeaveOrder() {
 
 	suite.handler.joinOrder(orderID, conn1)
 	suite.handler.joinOrder(orderID, conn2)
-	suite.Len(suite.handler.orderConns[orderID], 2)
+	conns, ok := suite.handler.orderConns.Load(orderID)
+	suite.Require().True(ok)
+	suite.Equal(2, countConnections(conns.(*sync.Map)))
 
 	suite.handler.leaveOrder(orderID, conn1)
-	conns, ok := suite.handler.orderConns[orderID]
-	suite.True(ok)
-	suite.Len(conns, 1)
-	suite.False(conns[conn1])
+	conns, ok = suite.handler.orderConns.Load(orderID)
+	suite.Require().True(ok)
+	suite.Equal(1, countConnections(conns.(*sync.Map)))
 
 	suite.handler.leaveOrder(orderID, conn2)
-	_, ok = suite.handler.orderConns[orderID]
+	_, ok = suite.handler.orderConns.Load(orderID)
 	suite.False(ok)
 
 	// removing non existing connection should not panic
@@ -143,7 +161,7 @@ func (suite *websocketsHandlerTestSuite) TestHandleDeleteItemdateOrder_Success()
 }
 
 func (suite *websocketsHandlerTestSuite) TestHandleAddItem_Success() {
-	data := json.RawMessage(fmt.Sprintf(`{"item_id":"%s"}`, testOrderItemID))
+	data := json.RawMessage(fmt.Sprintf(`{"item_id":"%s"}`, testItemID))
 
 	err := suite.handler.handleAddItem(
 		context.Background(),
@@ -168,7 +186,7 @@ func (suite *websocketsHandlerTestSuite) TesthandleMessage_Success() {
 		{"update order", `{"type": "update_order", "data": {"status": "locked"}}`},
 		{
 			"add item to order",
-			fmt.Sprintf(`{"type": "add_item", "data": {"item_id": "%s"}}`, testOrderItemID),
+			fmt.Sprintf(`{"type": "add_item", "data": {"item_id": "%s"}}`, testItemID),
 		},
 		{
 			"delete item from order",

@@ -5,6 +5,7 @@ import (
 	authDto "golang-dining-ordering/services/auth/dto"
 	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
+	mock "golang-dining-ordering/test/mock/orders"
 	"testing"
 
 	"github.com/google/uuid"
@@ -25,7 +26,7 @@ type ordersServiceTestSuite struct {
 }
 
 func (suite *ordersServiceTestSuite) SetupSuite() {
-	mockOrdersRepo := newMockOrdersRepo()
+	mockOrdersRepo := mock.NewMockOrdersRepo()
 	suite.svc = NewOrdersService(mockOrdersRepo)
 
 	suite.orderDto = &dto.OrderDto{
@@ -98,14 +99,14 @@ func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_RepoErr
 }
 
 func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedGettingTableCurrency() {
-	ctx := context.WithValue(context.Background(), ctxFailGetTableCurrency, true)
+	ctx := context.WithValue(context.Background(), mock.CtxFailGetTableCurrency, true)
 	got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, testOrderID)
 	suite.Require().Error(err)
 	suite.Nil(got)
 }
 
 func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedCreatingNewOrderForTable() {
-	ctx := context.WithValue(context.Background(), ctxFailCreateOrderForTable, true)
+	ctx := context.WithValue(context.Background(), mock.CtxFailCreateOrderForTable, true)
 	got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, testOrderID)
 	suite.Require().Error(err)
 	suite.Nil(got)
@@ -158,7 +159,7 @@ func (suite *ordersServiceTestSuite) TestAddItemToOrder_TryingToAddItemFromAnoth
 }
 
 func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedRepoAddingItemToOrder() {
-	ctx := context.WithValue(context.Background(), ctxFailAddItemToOrder, true)
+	ctx := context.WithValue(context.Background(), mock.CtxFailAddItemToOrder, true)
 	got, err := suite.svc.AddItemToOrder(ctx, testOrderID, testItemID)
 	suite.Require().Error(err)
 	suite.Nil(got)
@@ -263,7 +264,7 @@ func (suite *ordersServiceTestSuite) TestUpdateOrder_RepoFailedUpdateOrder() {
 		Status:           &status,
 	}
 
-	ctx := context.WithValue(context.Background(), ctxFailUpdateOrder, true)
+	ctx := context.WithValue(context.Background(), mock.CtxFailUpdateOrder, true)
 	got, err := suite.svc.UpdateOrder(ctx, reqDto, nil)
 	suite.Require().Error(err)
 	suite.Nil(got)

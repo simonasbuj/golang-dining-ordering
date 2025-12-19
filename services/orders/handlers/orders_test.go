@@ -13,6 +13,8 @@ import (
 	"net/http/httptest"
 	"testing"
 
+	mock "golang-dining-ordering/test/mock/orders"
+
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
@@ -26,7 +28,7 @@ type ordersHandlerTestSuite struct {
 }
 
 func (suite *ordersHandlerTestSuite) SetupSuite() {
-	mockOrdersRepo := NewMockOrdersRepo()
+	mockOrdersRepo := mock.NewMockOrdersRepo()
 	svc := services.NewOrdersService(mockOrdersRepo)
 
 	suite.handler = NewOrdersHandler(svc)
@@ -294,7 +296,7 @@ func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_Success() {
 	e := echo.New()
 
 	reqDto := &dto.OrderItemRequestDto{
-		ItemID: testItemID,
+		ItemID: testOrderItemID,
 	}
 
 	body, err := json.Marshal(reqDto)

@@ -85,7 +85,11 @@ linters:
     - path: services/orders/handlers/websockets_test
       linters:
         - exhaustruct
+        - forcetypeassert
     - path: services/orders/handlers/payments_test
+      linters:
+        - exhaustruct
+    - path: test/mock/
       linters:
         - exhaustruct
     generated: lax
