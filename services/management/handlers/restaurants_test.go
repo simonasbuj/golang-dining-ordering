@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"golang-dining-ordering/pkg/responses"
 	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/management/dto"
@@ -96,74 +97,58 @@ func (suite *restaurantsHandlerTestSuite) TestHandleCreateRestaurant_Success() {
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateRestaurant_InvalidDto() {
+func (suite *restaurantsHandlerTestSuite) TestHandleCreateRestaurant_Error() {
 	e := echo.New()
 
-	reqDto := &dto.CreateRestaurantDto{
-		Name:     "",
-		Address:  testRestaurantAddress,
-		Currency: testRestaurantCurrency,
+	tests := []struct {
+		name           string
+		restaurantName string
+		userContextKey string
+		statusCode     int
+	}{
+		{
+			name:           "invalid dto",
+			restaurantName: "",
+			userContextKey: middleware.ContextKeyAuthUser,
+			statusCode:     http.StatusBadRequest,
+		},
+		{
+			name:           "no user in context",
+			restaurantName: testRestaurantName,
+			userContextKey: "fakeKey",
+			statusCode:     http.StatusBadRequest,
+		},
+		{
+			name:           "service failed",
+			restaurantName: "fail-this-restaurant",
+			userContextKey: middleware.ContextKeyAuthUser,
+			statusCode:     http.StatusInternalServerError,
+		},
 	}
-	bodyBytes, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			reqDto := &dto.CreateRestaurantDto{
+				Name:     tt.restaurantName,
+				Address:  testRestaurantAddress,
+				Currency: testRestaurantCurrency,
+			}
+			bodyBytes, err := json.Marshal(reqDto)
+			suite.Require().NoError(err)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
+			req.Header.Set("Content-Type", "application/json")
 
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	err = suite.handler.HandleCreateRestaurant(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
+			c.Set(tt.userContextKey, suite.user)
 
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateRestaurant_NoUserInContext() {
-	e := echo.New()
-
-	reqDto := &dto.CreateRestaurantDto{
-		Name:     testRestaurantName,
-		Address:  testRestaurantAddress,
-		Currency: testRestaurantCurrency,
+			err = suite.handler.HandleCreateRestaurant(c)
+			suite.Require().Error(err)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
 	}
-	bodyBytes, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	err = suite.handler.HandleCreateRestaurant(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateRestaurant_ServiceFailed() {
-	e := echo.New()
-
-	reqDto := &dto.CreateRestaurantDto{
-		Name:     "fail-creation-of-this-restaurant",
-		Address:  testRestaurantAddress,
-		Currency: testRestaurantCurrency,
-	}
-	bodyBytes, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
-
-	err = suite.handler.HandleCreateRestaurant(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurants_Success() {
@@ -201,32 +186,35 @@ func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurants_Success() {
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurants_InvalidLimitInDto() {
+func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurants_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodGet, "/?page=1&limit=10000", nil)
-	req.Header.Set("Content-Type", "application/json")
+	tests := []struct {
+		name  string
+		page  string
+		limit string
+	}{
+		{"invalid limit", "1", "1000"},
+		{"service failed", "69", "10"},
+	}
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			req := httptest.NewRequest(
+				http.MethodGet,
+				fmt.Sprintf("/?page=%s&limit=%s", tt.page, tt.limit),
+				nil,
+			)
+			req.Header.Set("Content-Type", "application/json")
 
-	err := suite.handler.HandleGetRestaurants(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurants_ServiceFailed() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodGet, "/?page=69&limit=10", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	err := suite.handler.HandleGetRestaurants(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
+			err := suite.handler.HandleGetRestaurants(c)
+			suite.Require().Error(err)
+			suite.Equal(http.StatusBadRequest, rec.Code)
+		})
+	}
 }
 
 func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurantByID_Success() {
@@ -261,38 +249,33 @@ func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurantByID_Success() 
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurantByID_InvalidRestaurantIDInParams() {
+func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurantByID_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
+	tests := []struct {
+		name         string
+		restaurantID string
+	}{
+		{"invalid url params", "invalid-id"},
+		{"service failed", uuid.Nil.String()},
+	}
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set("Content-Type", "application/json")
 
-	c.SetParamNames("invalid-id")
-	c.SetParamValues(testRestaurantID.String())
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	err := suite.handler.HandleGetRestaurantByID(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
+			c.SetParamNames(restaurantIDParamName)
+			c.SetParamValues(tt.restaurantID)
 
-func (suite *restaurantsHandlerTestSuite) TestHandleGetRestaurantByID_ServiceFailed() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(uuid.Nil.String())
-
-	err := suite.handler.HandleGetRestaurantByID(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
+			err := suite.handler.HandleGetRestaurantByID(c)
+			suite.Require().Error(err)
+			suite.Equal(http.StatusBadRequest, rec.Code)
+		})
+	}
 }
 
 func (suite *restaurantsHandlerTestSuite) TestHandleUpdateRestaurant_Success() {
@@ -330,79 +313,58 @@ func (suite *restaurantsHandlerTestSuite) TestHandleUpdateRestaurant_Success() {
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *restaurantsHandlerTestSuite) TestHandleUpdateRestaurant_InvalidRestaurantIDInParams() {
+func (suite *restaurantsHandlerTestSuite) TestHandleUpdateRestaurant_Error() {
 	e := echo.New()
 
-	body := testCreateRestaurantBody
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
+	tests := []struct {
+		name           string
+		body           string
+		restaurantID   string
+		userContextKey string
+	}{
+		{
+			name:           "invalid id in params",
+			body:           testCreateRestaurantBody,
+			restaurantID:   "invalid-id",
+			userContextKey: middleware.ContextKeyAuthUser,
+		},
+		{
+			name:           "no user in context",
+			body:           testCreateRestaurantBody,
+			restaurantID:   testRestaurantID.String(),
+			userContextKey: "wrong-context-key",
+		},
+		{
+			name:           "invalid dto",
+			body:           `{"user_id": "", "name": "name"}`,
+			restaurantID:   testRestaurantID.String(),
+			userContextKey: middleware.ContextKeyAuthUser,
+		},
+		{
+			name:           "service failed",
+			body:           testCreateRestaurantBody,
+			restaurantID:   uuid.Max.String(),
+			userContextKey: middleware.ContextKeyAuthUser,
+		},
+	}
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(tt.body)))
+			req.Header.Set("Content-Type", "application/json")
 
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues("invalid-id")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	err := suite.handler.HandleUpdateRestaurant(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
+			c.Set(tt.userContextKey, suite.user)
+			c.SetParamNames(restaurantIDParamName)
+			c.SetParamValues(tt.restaurantID)
 
-func (suite *restaurantsHandlerTestSuite) TestHandleUpdateRestaurant_NoUserInContext() {
-	e := echo.New()
-
-	body := testCreateRestaurantBody
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(testRestaurantID.String())
-
-	err := suite.handler.HandleUpdateRestaurant(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *restaurantsHandlerTestSuite) TestHandleUpdateRestaurant_InvalidDto() {
-	e := echo.New()
-
-	body := `{"user_id": "", "name": "name"}`
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(testRestaurantID.String())
-
-	err := suite.handler.HandleUpdateRestaurant(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *restaurantsHandlerTestSuite) TestHandleUpdateRestaurant_ServiceFailed() {
-	e := echo.New()
-
-	body := testCreateRestaurantBody
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	err := suite.handler.HandleUpdateRestaurant(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
+			err := suite.handler.HandleUpdateRestaurant(c)
+			suite.Require().Error(err)
+			suite.Equal(http.StatusBadRequest, rec.Code)
+		})
+	}
 }
 
 func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_Success() {
@@ -438,102 +400,76 @@ func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_Success() {
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_InvalidRestaurantIDInParams() {
+func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_Error() { //nolint:funlen
 	e := echo.New()
 
-	body := testCreateTableBody
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
+	tests := []struct {
+		name           string
+		body           string
+		restaurantID   string
+		userContextKey string
+		user           *authDto.TokenClaimsDto
+		statusCode     int
+	}{
+		{
+			name:           "invalid id in params",
+			body:           testCreateTableBody,
+			restaurantID:   "invalid-id",
+			userContextKey: middleware.ContextKeyAuthUser,
+			user:           &authDto.TokenClaimsDto{UserID: testUserID},
+			statusCode:     http.StatusBadRequest,
+		},
+		{
+			name:           "no user in context",
+			body:           testCreateTableBody,
+			restaurantID:   testRestaurantID.String(),
+			userContextKey: "wrong-context-key",
+			user:           &authDto.TokenClaimsDto{UserID: testUserID},
+			statusCode:     http.StatusBadRequest,
+		},
+		{
+			name:           "invalid dto",
+			body:           `{"missing_field": "required fields are not in this json"}`,
+			restaurantID:   testRestaurantID.String(),
+			userContextKey: middleware.ContextKeyAuthUser,
+			user:           &authDto.TokenClaimsDto{UserID: testUserID},
+			statusCode:     http.StatusBadRequest,
+		},
+		{
+			name:           "user is not a manager",
+			body:           testCreateTableBody,
+			restaurantID:   uuid.Max.String(),
+			userContextKey: middleware.ContextKeyAuthUser,
+			user:           &authDto.TokenClaimsDto{UserID: uuid.Max},
+			statusCode:     http.StatusUnauthorized,
+		},
+		{
+			name:           "service failed",
+			body:           testCreateTableBody,
+			restaurantID:   uuid.Max.String(),
+			userContextKey: middleware.ContextKeyAuthUser,
+			user:           &authDto.TokenClaimsDto{UserID: testUserID},
+			statusCode:     http.StatusBadRequest,
+		},
+	}
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(tt.body)))
+			req.Header.Set("Content-Type", "application/json")
 
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues("invalid-id")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	err := suite.handler.HandleCreateTable(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
+			c.Set(tt.userContextKey, tt.user)
+			c.SetParamNames(restaurantIDParamName)
+			c.SetParamValues(tt.restaurantID)
 
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_InvalidDto() {
-	e := echo.New()
-
-	body := `{"missing_field": "required fields are not in this json"}`
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(testRestaurantID.String())
-
-	err := suite.handler.HandleCreateTable(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_MissingUser() {
-	e := echo.New()
-
-	body := testCreateTableBody
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(testRestaurantID.String())
-
-	err := suite.handler.HandleCreateTable(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_UserIsNotAManager() {
-	e := echo.New()
-
-	body := testCreateTableBody
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	wrongUser := *suite.user
-	wrongUser.UserID = uuid.Max
-
-	c.Set(middleware.ContextKeyAuthUser, &wrongUser)
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(testRestaurantID.String())
-
-	err := suite.handler.HandleCreateTable(c)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, services.ErrUserIsNotManager)
-	suite.Equal(http.StatusUnauthorized, rec.Code)
-}
-
-func (suite *restaurantsHandlerTestSuite) TestHandleCreateTable_ServiceFailed() {
-	e := echo.New()
-
-	body := testCreateTableBody
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.Set(middleware.ContextKeyAuthUser, suite.user)
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	err := suite.handler.HandleCreateTable(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
+			err := suite.handler.HandleCreateTable(c)
+			suite.Require().Error(err)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
+	}
 }
 
 func (suite *restaurantsHandlerTestSuite) TestHandleGetTables_Success() {
@@ -569,36 +505,31 @@ func (suite *restaurantsHandlerTestSuite) TestHandleGetTables_Success() {
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *restaurantsHandlerTestSuite) TestHandleGetTables_InvalidRestaurantIDInParams() {
+func (suite *restaurantsHandlerTestSuite) TestHandleGetTables_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
+	tests := []struct {
+		name         string
+		restaurantID string
+	}{
+		{"invalid restaurant id in params", "invalid-id"},
+		{"service failed", uuid.Max.String()},
+	}
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+	for _, tt := range tests {
+		suite.Run(tt.name, func() {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
+			req.Header.Set("Content-Type", "application/json")
 
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues("invalid-id")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	err := suite.handler.HandleGetTables(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
+			c.SetParamNames(restaurantIDParamName)
+			c.SetParamValues(tt.restaurantID)
 
-func (suite *restaurantsHandlerTestSuite) TestHandleGetTables_ServiceFailed() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(restaurantIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	err := suite.handler.HandleGetTables(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
+			err := suite.handler.HandleGetTables(c)
+			suite.Require().Error(err)
+			suite.Equal(http.StatusBadRequest, rec.Code)
+		})
+	}
 }
