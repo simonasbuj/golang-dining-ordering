@@ -8,6 +8,7 @@ import (
 	db "golang-dining-ordering/services/orders/db/generated"
 	"golang-dining-ordering/services/orders/dto"
 	"golang-dining-ordering/services/orders/services"
+	"io"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -96,74 +97,57 @@ func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_Success() {
 	suite.JSONEq(string(expectedJSON), rec.Body.String())
 }
 
-func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_InvalidDto() {
+func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_Error() {
 	e := echo.New()
 
-	reqDto := dto.CheckoutSessionRequestDto{
-		OrderDto:   nil,
-		SuccessURL: "",
-		CancelURL:  "",
+	tests := []struct {
+		desc       string
+		orderID    string
+		successURL string
+		cancelURL  string
+		statusCode int
+	}{
+		{"invalid dto", testOrderID.String(), "", "", http.StatusBadRequest},
+		{
+			"invalid url params",
+			"invalid-id",
+			"site.io?success=true",
+			"site.io?cancel=true",
+			http.StatusBadRequest,
+		},
+		{
+			"service error",
+			uuid.Max.String(),
+			"site.io?success=true",
+			"site.io?cancel=true",
+			http.StatusInternalServerError,
+		},
 	}
-	bodyBytes, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
+	for _, tt := range tests {
+		suite.T().Run(tt.desc, func(_ *testing.T) {
+			reqDto := dto.CheckoutSessionRequestDto{
+				OrderDto:   nil,
+				SuccessURL: tt.successURL,
+				CancelURL:  tt.cancelURL,
+			}
+			bodyBytes, err := json.Marshal(reqDto)
+			suite.Require().NoError(err)
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
+			req.Header.Set("Content-Type", "application/json")
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(testOrderID.String())
+			c.SetParamNames(orderIDParamName)
+			c.SetParamValues(tt.orderID)
 
-	err = suite.handler.HandleCreateCheckout(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_InvalidParam() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	err := suite.handler.HandleCreateCheckout(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_ServiceError() {
-	e := echo.New()
-
-	reqDto := dto.CheckoutSessionRequestDto{
-		OrderDto:   nil,
-		SuccessURL: "https://fake-website.io?success=true",
-		CancelURL:  "https://fake-website.io?cancel=true",
+			err = suite.handler.HandleCreateCheckout(c)
+			suite.Require().Error(err)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
 	}
-	bodyBytes, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(bodyBytes))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	err = suite.handler.HandleCreateCheckout(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
-
-// func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_Error() {
-// 	e := echo.New()
-
-// }
 
 func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_Success() {
 	e := echo.New()
@@ -195,19 +179,6 @@ func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_Success() {
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_EmptyPayload() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	err := suite.handler.HandleWebhookSuccess(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
 type errorReader struct{}
 
 var ErrRead = errors.New("read error")
@@ -216,15 +187,26 @@ func (e errorReader) Read(_ []byte) (int, error) {
 	return 0, ErrRead
 }
 
-func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_InvalidPayload() {
+func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodPost, "/", errorReader{})
+	tests := []struct {
+		desc   string
+		reader io.Reader
+	}{
+		{"empty payload", nil},
+		{"invalid payload", errorReader{}},
+	}
+	for _, tt := range tests {
+		suite.T().Run(tt.desc, func(_ *testing.T) {
+			req := httptest.NewRequest(http.MethodPost, "/", tt.reader)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	err := suite.handler.HandleWebhookSuccess(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
+			err := suite.handler.HandleWebhookSuccess(c)
+			suite.Require().Error(err)
+			suite.Equal(http.StatusBadRequest, rec.Code)
+		})
+	}
 }
