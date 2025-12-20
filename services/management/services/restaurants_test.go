@@ -61,7 +61,7 @@ func (suite *restaurantsServiceTestSuite) TestCreateRestaurant_Success() {
 	suite.Equal(reqDto, got)
 }
 
-func (suite *restaurantsServiceTestSuite) TestCreateRestaurant_RepoFailed() {
+func (suite *restaurantsServiceTestSuite) TestCreateRestaurant_Error() {
 	reqDto := &dto.CreateRestaurantDto{
 		ID:       testRestaurantID,
 		UserID:   testUserID,
@@ -101,7 +101,7 @@ func (suite *restaurantsServiceTestSuite) TestGetRestaurants_Success() {
 	suite.Equal(want, got)
 }
 
-func (suite *restaurantsServiceTestSuite) TestGetRestaurants_RepoFailed() {
+func (suite *restaurantsServiceTestSuite) TestGetRestaurants_Error() {
 	reqDto := &dto.GetRestaurantsReqDto{
 		Page:  69,
 		Limit: 0,
@@ -126,16 +126,22 @@ func (suite *restaurantsServiceTestSuite) TestGetRestaurantById_Success() {
 	suite.Equal(want, got)
 }
 
-func (suite *restaurantsServiceTestSuite) TestGetRestaurantById_InvalidId() {
-	got, err := suite.svc.GetRestaurantByID(context.Background(), uuid.Nil)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
+func (suite *restaurantsServiceTestSuite) TestGetRestaurantById_Error() {
+	tests := []struct {
+		name         string
+		restaurantID uuid.UUID
+	}{
+		{"invalid id", uuid.Nil},
+		{"repo failed", uuid.Max},
+	}
 
-func (suite *restaurantsServiceTestSuite) TestGetRestaurantById_RepoFailed() {
-	got, err := suite.svc.GetRestaurantByID(context.Background(), uuid.Max)
-	suite.Require().Error(err)
-	suite.Nil(got)
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			got, err := suite.svc.GetRestaurantByID(context.Background(), tt.restaurantID)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
+	}
 }
 
 func (suite *restaurantsServiceTestSuite) TestUpdateRestaurant_Success() {
@@ -164,35 +170,32 @@ func (suite *restaurantsServiceTestSuite) TestUpdateRestaurant_Success() {
 	suite.Equal(want, got)
 }
 
-func (suite *restaurantsServiceTestSuite) TestUpdateRestaurant_UserNotAManagerOfThisRestaurant() {
-	reqDto := &dto.UpdateRestaurantRequestDto{
-		ID:         uuid.Max,
-		UserID:     uuid.Max,
-		Name:       &testRestaurantName,
-		Address:    &testRestaurantAddress,
-		Currency:   &testRestaurantCurrency,
-		DeleteFlag: nil,
+func (suite *restaurantsServiceTestSuite) TestUpdateRestaurant_Error() {
+	tests := []struct {
+		name         string
+		restaurantID uuid.UUID
+		userID       uuid.UUID
+	}{
+		{"user not a manager", testRestaurantID, uuid.Max},
+		{"repo failed", uuid.Max, testUserID},
 	}
 
-	got, err := suite.svc.UpdateRestaurant(context.Background(), reqDto)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrUserIsNotManager)
-	suite.Nil(got)
-}
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			reqDto := &dto.UpdateRestaurantRequestDto{
+				ID:         tt.restaurantID,
+				UserID:     tt.userID,
+				Name:       &testRestaurantName,
+				Address:    &testRestaurantAddress,
+				Currency:   &testRestaurantCurrency,
+				DeleteFlag: nil,
+			}
 
-func (suite *restaurantsServiceTestSuite) TestUpdateRestaurant_RepoFailed() {
-	reqDto := &dto.UpdateRestaurantRequestDto{
-		ID:         uuid.Max,
-		UserID:     testUserID,
-		Name:       &testRestaurantName,
-		Address:    &testRestaurantAddress,
-		Currency:   &testRestaurantCurrency,
-		DeleteFlag: nil,
+			got, err := suite.svc.UpdateRestaurant(context.Background(), reqDto)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
-
-	got, err := suite.svc.UpdateRestaurant(context.Background(), reqDto)
-	suite.Require().Error(err)
-	suite.Nil(got)
 }
 
 func (suite *restaurantsServiceTestSuite) TestCreateTable_Success() {
@@ -209,33 +212,31 @@ func (suite *restaurantsServiceTestSuite) TestCreateTable_Success() {
 	suite.Equal(reqDto, got)
 }
 
-func (suite *restaurantsServiceTestSuite) TestCreateTable_UserNotAManagerOfThisRestaurant() {
-	reqDto := &dto.RestaurantTableDto{
-		ID:           testTableID,
-		RestaurantID: testRestaurantID,
-		UserID:       uuid.Max,
-		Name:         testTableName,
-		Capacity:     testTableCapacity,
+func (suite *restaurantsServiceTestSuite) TestCreateTable_Error() {
+	tests := []struct {
+		name         string
+		restaurantID uuid.UUID
+		userID       uuid.UUID
+	}{
+		{"user not a manager", testRestaurantID, uuid.Max},
+		{"repo failed", uuid.Nil, testUserID},
 	}
 
-	got, err := suite.svc.CreateTable(context.Background(), reqDto)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrUserIsNotManager)
-	suite.Nil(got)
-}
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			reqDto := &dto.RestaurantTableDto{
+				ID:           testTableID,
+				RestaurantID: tt.restaurantID,
+				UserID:       tt.userID,
+				Name:         testTableName,
+				Capacity:     testTableCapacity,
+			}
 
-func (suite *restaurantsServiceTestSuite) TestCreateTable_RepoFailed() {
-	reqDto := &dto.RestaurantTableDto{
-		ID:           testTableID,
-		RestaurantID: uuid.Nil,
-		UserID:       testUserID,
-		Name:         testTableName,
-		Capacity:     testTableCapacity,
+			got, err := suite.svc.CreateTable(context.Background(), reqDto)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
-
-	got, err := suite.svc.CreateTable(context.Background(), reqDto)
-	suite.Require().Error(err)
-	suite.Nil(got)
 }
 
 func (suite *restaurantsServiceTestSuite) TestGetTables_Success() {
@@ -254,7 +255,7 @@ func (suite *restaurantsServiceTestSuite) TestGetTables_Success() {
 	suite.Equal(want, got)
 }
 
-func (suite *restaurantsServiceTestSuite) TestGetTables_RepoFailed() {
+func (suite *restaurantsServiceTestSuite) TestGetTables_Error() {
 	got, err := suite.svc.GetTables(context.Background(), uuid.Nil)
 	suite.Require().Error(err)
 	suite.Nil(got)

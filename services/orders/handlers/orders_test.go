@@ -395,7 +395,6 @@ func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_Error() {
 
 			err := suite.handler.HandleUpdateOrder(c)
 			suite.Require().Error(err)
-			// suite.Require().ErrorIs(err, services.ErrOrderFinalized)
 			suite.Equal(tt.statusCode, rec.Code)
 		})
 	}

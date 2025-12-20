@@ -190,7 +190,7 @@ func (suite *menuServiceTestSuite) TestGetMenuItems_Success() {
 	suite.Equal(want, got)
 }
 
-func (suite *menuServiceTestSuite) TestGetMenuItems_RepoFailed() {
+func (suite *menuServiceTestSuite) TestGetMenuItems_Error() {
 	got, err := suite.svc.GetMenuItems(context.Background(), uuid.Nil)
 	suite.Require().Error(err)
 	suite.Nil(got)
