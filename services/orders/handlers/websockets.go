@@ -329,12 +329,12 @@ func (h *WebsocketHandler) sendMsg(
 	msgType dto.WSMessageType,
 	data any,
 ) error {
-	errDto := &dto.WSRespMessage{
+	respDto := &dto.WSRespMessage{
 		Type: msgType,
 		Data: data,
 	}
 
-	respJSON, err := json.Marshal(errDto)
+	respJSON, err := json.Marshal(respDto)
 	if err != nil {
 		return fmt.Errorf("marshaling response to json: %w", err)
 	}

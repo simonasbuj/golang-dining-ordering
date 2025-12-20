@@ -71,28 +71,31 @@ func (suite *paymentsServiceTestSuite) TestCreateCheckout_Success() {
 	suite.Equal(want, got)
 }
 
-func (suite *paymentsServiceTestSuite) TestCreateCheckout_InvalidOrderID() {
-	got, err := suite.svc.CreateCheckout(context.Background(), uuid.Max, nil)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
-
-func (suite *paymentsServiceTestSuite) TestCreateCheckout_InvalidReqDto() {
-	req := &dto.CheckoutSessionRequestDto{
-		OrderDto:   nil,
-		SuccessURL: "",
-		CancelURL:  "",
+func (suite *paymentsServiceTestSuite) TestCreateCheckout_Error() {
+	tests := []struct {
+		name       string
+		orderID    uuid.UUID
+		successURL string
+		cancelURL  string
+	}{
+		{"invalid order id", uuid.Max, "success.url", "cancel.url"},
+		{"invalid dto", testOrderID, "", ""},
+		{"order already paid", testCompletedOrderID, "success.url", "cancel.url"},
 	}
 
-	got, err := suite.svc.CreateCheckout(context.Background(), testOrderID, req)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			req := &dto.CheckoutSessionRequestDto{
+				OrderDto:   nil,
+				SuccessURL: tt.successURL,
+				CancelURL:  tt.cancelURL,
+			}
 
-func (suite *paymentsServiceTestSuite) TestCreateCheckout_OrderAlreadyPaid() {
-	got, err := suite.svc.CreateCheckout(context.Background(), testCompletedOrderID, nil)
-	suite.Require().Error(err)
-	suite.Nil(got)
+			got, err := suite.svc.CreateCheckout(context.Background(), tt.orderID, req)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
+	}
 }
 
 func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_Success() {
@@ -115,29 +118,33 @@ func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_Success() {
 	suite.Equal(want, got)
 }
 
-func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_EmptyPayload() {
-	got, err := suite.svc.HandleWebhookSuccess(context.Background(), nil, nil)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
-
-func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_ErrorSavePayment() {
-	payload := []byte("1")
-	got, err := suite.svc.HandleWebhookSuccess(context.Background(), payload, nil)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
-
-func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_ErrorUpdateOrder() {
-	payload := []byte(`{"payment_secret": "secret"}`)
-	header := http.Header{
-		"Payment-Signature": []string{"signature"},
+func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_Error() {
+	tests := []struct {
+		name       string
+		ctxFailKey mock.CtxKey
+		payload    []byte
+	}{
+		{"empty payload", "none", nil},
+		{"save payment failed", "none", []byte("1")},
+		{
+			"repo failed to update order",
+			mock.CtxFailUpdateOrder,
+			[]byte(`{"payment_secret": "secret"}`),
+		},
 	}
 
-	ctx := context.WithValue(context.Background(), mock.CtxFailUpdateOrder, true)
-	got, err := suite.svc.HandleWebhookSuccess(ctx, payload, header)
-	suite.Require().Error(err)
-	suite.Nil(got)
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			header := http.Header{
+				"Payment-Signature": []string{"signature"},
+			}
+
+			ctx := context.WithValue(context.Background(), tt.ctxFailKey, true)
+			got, err := suite.svc.HandleWebhookSuccess(ctx, tt.payload, header)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
+	}
 }
 
 func (suite *paymentsServiceTestSuite) TestCanPayForOrder_Status() {

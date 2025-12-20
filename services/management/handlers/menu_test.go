@@ -2,7 +2,6 @@ package handlers
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"fmt"
 	"golang-dining-ordering/pkg/responses"
@@ -19,6 +18,8 @@ import (
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 	"github.com/stretchr/testify/suite"
+
+	mock "golang-dining-ordering/test/mock/management"
 )
 
 //nolint:gochecknoglobals
@@ -30,7 +31,6 @@ var (
 	testItemName              = "Menkė"
 	testItemDescription       = "Pailga"
 	testItemPriceInCents      = 1500
-	testItemImagePath         = "uploads/uuid.jpg"
 	testDifferentRestaurantID = uuid.MustParse("66666666-6666-6666-6666-666666666666")
 )
 
@@ -43,9 +43,9 @@ type mneuHandlerTestSuite struct {
 }
 
 func (suite *mneuHandlerTestSuite) SetupSuite() {
-	mockMenuRepo := newMockMenuRepo()
-	mockRestaurantRepo := newMockRestaurantsRepo()
-	mockStorage := newMockStorage()
+	mockMenuRepo := mock.NewMockMenuRepo()
+	mockRestaurantRepo := mock.NewMockRestaurantsRepo()
+	mockStorage := mock.NewMockStorage()
 	svc := services.NewMenuService(mockMenuRepo, mockRestaurantRepo, mockStorage)
 
 	suite.handler = NewMenuHandler(svc)
@@ -104,49 +104,43 @@ func (suite *mneuHandlerTestSuite) TestHandleAddMenuCategory_Success() {
 	suite.JSONEq(string(wantJSON), rec.Body.String())
 }
 
-func (suite *mneuHandlerTestSuite) TestHandleAddMenuCategory_Error() { //nolint:funlen
+func (suite *mneuHandlerTestSuite) TestHandleAddMenuCategory_Error() {
 	e := echo.New()
 
 	tests := []struct {
 		name         string
 		restaurantID string
 		reqBody      string
-		statusCode   int
 		user         *authDto.TokenClaimsDto
 	}{
 		{
 			"invalid restaurant id in params",
 			"invalid-id",
 			`{"name": "Here", "description": "Here"}`,
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
 			"invalid request body",
 			testRestaurantID.String(),
 			`{"missing_fields": "are missing"}`,
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
 			"unauthorized user",
 			testDifferentRestaurantID.String(),
 			`{"name": "Here", "description": "Here"}`,
-			http.StatusUnauthorized,
 			suite.user,
 		},
 		{
 			"service failed",
 			uuid.Max.String(),
 			`{"name": "Here", "description": "Here"}`,
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
 			"user missing",
 			testRestaurantID.String(),
 			`{"name": "Here", "description": "Here"}`,
-			http.StatusBadRequest,
 			&authDto.TokenClaimsDto{UserID: uuid.Nil},
 		},
 	}
@@ -167,7 +161,7 @@ func (suite *mneuHandlerTestSuite) TestHandleAddMenuCategory_Error() { //nolint:
 
 			err := suite.handler.HandleAddMenuCategory(c)
 			suite.Require().Error(err)
-			suite.Equal(tt.statusCode, rec.Code)
+			suite.Equal(http.StatusBadRequest, rec.Code)
 		})
 	}
 }
@@ -223,42 +217,36 @@ func (suite *mneuHandlerTestSuite) TestHandleAddMenuItem_Error() { //nolint:funl
 		name         string
 		restaurantID string
 		categoryID   string
-		statusCode   int
 		user         *authDto.TokenClaimsDto
 	}{
 		{
 			"invalid restaurant id in params",
 			"invalid-id",
 			testCategoryID.String(),
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
 			"invalid request form",
 			testRestaurantID.String(),
 			"",
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
 			"unauthorized user",
 			testDifferentRestaurantID.String(),
 			testCategoryID.String(),
-			http.StatusUnauthorized,
 			suite.user,
 		},
 		{
 			"service failed",
 			uuid.Max.String(),
 			testCategoryID.String(),
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
 			"user missing",
 			testRestaurantID.String(),
 			testCategoryID.String(),
-			http.StatusBadRequest,
 			&authDto.TokenClaimsDto{UserID: uuid.Nil},
 		},
 	}
@@ -287,7 +275,7 @@ func (suite *mneuHandlerTestSuite) TestHandleAddMenuItem_Error() { //nolint:funl
 
 			err = suite.handler.HandleAddMenuItem(c)
 			suite.Require().Error(err)
-			suite.Equal(tt.statusCode, rec.Code)
+			suite.Equal(http.StatusBadRequest, rec.Code)
 		})
 	}
 }
@@ -344,7 +332,6 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 		restaurantID string
 		itemID       string
 		categoryID   string
-		statusCode   int
 		user         *authDto.TokenClaimsDto
 	}{
 		{
@@ -352,7 +339,6 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 			"invalid-id",
 			testItemID.String(),
 			testCategoryID.String(),
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
@@ -360,7 +346,6 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 			testRestaurantID.String(),
 			"invalid-item-id",
 			testCategoryID.String(),
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
@@ -368,7 +353,6 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 			testRestaurantID.String(),
 			testItemID.String(),
 			"",
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
@@ -376,7 +360,6 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 			testDifferentRestaurantID.String(),
 			testItemID.String(),
 			testCategoryID.String(),
-			http.StatusUnauthorized,
 			suite.user,
 		},
 		{
@@ -384,7 +367,6 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 			uuid.Max.String(),
 			testItemID.String(),
 			testCategoryID.String(),
-			http.StatusBadRequest,
 			suite.user,
 		},
 		{
@@ -392,7 +374,6 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 			testRestaurantID.String(),
 			testItemID.String(),
 			testCategoryID.String(),
-			http.StatusBadRequest,
 			&authDto.TokenClaimsDto{UserID: uuid.Nil},
 		},
 	}
@@ -421,7 +402,7 @@ func (suite *mneuHandlerTestSuite) TestHandleUpdateMenuItem_Error() { //nolint:f
 
 			err = suite.handler.HandleUpdateMenuItem(c)
 			suite.Require().Error(err)
-			suite.Equal(tt.statusCode, rec.Code)
+			suite.Equal(http.StatusBadRequest, rec.Code)
 		})
 	}
 }
@@ -504,135 +485,4 @@ func (suite *mneuHandlerTestSuite) TestHandleGetMenuItems_Error() {
 			suite.Equal(tt.statusCode, rec.Code)
 		})
 	}
-}
-
-type mockMenuRepo struct{}
-
-func newMockMenuRepo() *mockMenuRepo {
-	return &mockMenuRepo{}
-}
-
-func (*mockMenuRepo) AddMenuCategory(
-	_ context.Context,
-	req *dto.MenuCategoryDto,
-) (*dto.MenuCategoryDto, error) {
-	if req.RestaurantID == testDifferentRestaurantID {
-		return nil, services.ErrUserIsNotManager
-	}
-
-	if req.RestaurantID != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.MenuCategoryDto{
-		ID:           testCategoryID,
-		RestaurantID: testRestaurantID,
-		Name:         testCategoryName,
-		Description:  testCategoryDescription,
-		CreatedAt:    testDateTime,
-		UpdatedAt:    testDateTime,
-		DeletedAt:    nil,
-	}, nil
-}
-
-func (*mockMenuRepo) AddMenuItem(
-	_ context.Context,
-	req *dto.MenuItemDto,
-) (*dto.MenuItemDto, error) {
-	if req.RestaurantID == testDifferentRestaurantID {
-		return nil, services.ErrUserIsNotManager
-	}
-
-	if req.RestaurantID != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.MenuItemDto{
-		ID:           testItemID,
-		RestaurantID: testRestaurantID,
-		CategoryID:   testCategoryID,
-		Name:         testItemName,
-		Description:  testItemDescription,
-		PriceInCents: testItemPriceInCents,
-		IsAvailable:  true,
-	}, nil
-}
-
-func (*mockMenuRepo) UpdateMenuItem(
-	_ context.Context,
-	req *dto.MenuItemDto,
-) (*dto.MenuItemDto, error) {
-	if req.RestaurantID == testDifferentRestaurantID {
-		return nil, services.ErrUserIsNotManager
-	}
-
-	if req.RestaurantID != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.MenuItemDto{
-		ID:           testItemID,
-		RestaurantID: testRestaurantID,
-		CategoryID:   testCategoryID,
-		Name:         testItemName,
-		Description:  testItemDescription,
-		PriceInCents: testItemPriceInCents,
-		IsAvailable:  true,
-	}, nil
-}
-
-func (*mockMenuRepo) GetMenuItems(_ context.Context, id uuid.UUID) (*dto.ListMenuItemsDto, error) {
-	if id != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.ListMenuItemsDto{
-		Categories: []dto.CategoryDto{
-			{
-				ID:          testCategoryID,
-				Name:        testCategoryName,
-				Description: testCategoryDescription,
-				Items: []dto.MenuItemDto{
-					{
-						ID:           testItemID,
-						RestaurantID: testRestaurantID,
-						CategoryID:   testCategoryID,
-						Name:         testItemName,
-						Description:  testItemDescription,
-						PriceInCents: testItemPriceInCents,
-						IsAvailable:  true,
-					},
-				},
-			},
-		},
-	}, nil
-}
-
-func (*mockMenuRepo) GetMenuItemByID(_ context.Context, _ uuid.UUID) (*dto.MenuItemDto, error) {
-	return &dto.MenuItemDto{
-		ID:           testItemID,
-		RestaurantID: testRestaurantID,
-		CategoryID:   testCategoryID,
-		Name:         testItemName,
-		Description:  testItemDescription,
-		PriceInCents: testItemPriceInCents,
-		IsAvailable:  true,
-	}, nil
-}
-
-type mockStorage struct{}
-
-func newMockStorage() *mockStorage {
-	return &mockStorage{}
-}
-
-func (*mockStorage) StoreMenuItemImage(
-	_ context.Context,
-	_ *multipart.FileHeader,
-) (string, error) {
-	return testItemImagePath, nil
-}
-
-func (*mockStorage) DeleteMenuItemImage(_ context.Context, _ string) error {
-	return nil
 }

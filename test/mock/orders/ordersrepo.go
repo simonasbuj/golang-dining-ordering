@@ -49,17 +49,18 @@ var (
 	ErrPaymentProviderFailed = errors.New("payment provider failed")
 )
 
-type ctxKey string
+// CtxKey is used to simulate repo fails in tests.
+type CtxKey string
 
 const (
 	// CtxFailUpdateOrder is a context key to simulate UpdateOrder failure in tests.
-	CtxFailUpdateOrder ctxKey = "fail-UpdateOrder"
+	CtxFailUpdateOrder CtxKey = "fail-UpdateOrder"
 	// CtxFailGetTableCurrency is a context key to simulate GetTableCurrency failure in tests.
-	CtxFailGetTableCurrency ctxKey = "fail-GetTableCurrency"
+	CtxFailGetTableCurrency CtxKey = "fail-GetTableCurrency"
 	// CtxFailCreateOrderForTable is a context key to simulate CreateOrderForTable failure in tests.
-	CtxFailCreateOrderForTable ctxKey = "fail-CreateOrderForTable"
+	CtxFailCreateOrderForTable CtxKey = "fail-CreateOrderForTable"
 	// CtxFailAddItemToOrder is a context key to simulate AddItemToOrder failure in tests.
-	CtxFailAddItemToOrder ctxKey = "fail-AddItemToOrder"
+	CtxFailAddItemToOrder CtxKey = "fail-AddItemToOrder"
 )
 
 type mockOrdersRepo struct {

@@ -92,24 +92,25 @@ func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_Success
 	suite.Equal(want, got)
 }
 
-func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_RepoError() {
-	got, err := suite.svc.GetOrCreateCurrentOrderForTable(context.Background(), uuid.Max)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
+func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_Error() {
+	tests := []struct {
+		name       string
+		failCtxKey mock.CtxKey
+		orderID    uuid.UUID
+	}{
+		{"repo error", "none", uuid.Max},
+		{"repo failed getting table currency", mock.CtxFailGetTableCurrency, testOrderID},
+		{"repo failed creating new order", mock.CtxFailCreateOrderForTable, testOrderID},
+	}
 
-func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedGettingTableCurrency() {
-	ctx := context.WithValue(context.Background(), mock.CtxFailGetTableCurrency, true)
-	got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, testOrderID)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
-
-func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_FailedCreatingNewOrderForTable() {
-	ctx := context.WithValue(context.Background(), mock.CtxFailCreateOrderForTable, true)
-	got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, testOrderID)
-	suite.Require().Error(err)
-	suite.Nil(got)
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			ctx := context.WithValue(context.Background(), tt.failCtxKey, true)
+			got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, tt.orderID)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
+	}
 }
 
 func (suite *ordersServiceTestSuite) TestAddItemToOrder_Success() {
@@ -128,41 +129,28 @@ func (suite *ordersServiceTestSuite) TestAddItemToOrder_Success() {
 	suite.Equal(&want, got)
 }
 
-func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedGetMenuItems() {
-	got, err := suite.svc.AddItemToOrder(context.Background(), testOrderID, uuid.Max)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
+func (suite *ordersServiceTestSuite) TestAddItemToOrder_Error() {
+	tests := []struct {
+		name       string
+		failCtxKey mock.CtxKey
+		orderID    uuid.UUID
+		itemID     uuid.UUID
+	}{
+		{"repo failed get menu items", "none", testOrderID, uuid.Max},
+		{"repo failed get order items", "none", uuid.Max, testItemID},
+		{"cant add complete order", "none", testCompletedOrderID, testItemID},
+		{"adding from another restaurant", "none", testOrderID, testDifferentRestaurantItemID},
+		{"repo failed adding new order", mock.CtxFailAddItemToOrder, testOrderID, testItemID},
+	}
 
-func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedGetOrderItems() {
-	got, err := suite.svc.AddItemToOrder(context.Background(), uuid.Max, testItemID)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
-
-func (suite *ordersServiceTestSuite) TestAddItemToOrder_CantAddToCompletedOrder() {
-	got, err := suite.svc.AddItemToOrder(context.Background(), testCompletedOrderID, testItemID)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrOrderIsNotOpen)
-	suite.Nil(got)
-}
-
-func (suite *ordersServiceTestSuite) TestAddItemToOrder_TryingToAddItemFromAnotherRestaurant() {
-	got, err := suite.svc.AddItemToOrder(
-		context.Background(),
-		testOrderID,
-		testDifferentRestaurantItemID,
-	)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrItemDoesNotBelongToRestaurant)
-	suite.Nil(got)
-}
-
-func (suite *ordersServiceTestSuite) TestAddItemToOrder_FailedRepoAddingItemToOrder() {
-	ctx := context.WithValue(context.Background(), mock.CtxFailAddItemToOrder, true)
-	got, err := suite.svc.AddItemToOrder(ctx, testOrderID, testItemID)
-	suite.Require().Error(err)
-	suite.Nil(got)
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			ctx := context.WithValue(context.Background(), tt.failCtxKey, true)
+			got, err := suite.svc.AddItemToOrder(ctx, tt.orderID, tt.itemID)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
+	}
 }
 
 func (suite *ordersServiceTestSuite) TestDeleteOrderItem_Success() {
@@ -174,27 +162,24 @@ func (suite *ordersServiceTestSuite) TestDeleteOrderItem_Success() {
 	suite.Equal(&want, got)
 }
 
-func (suite *ordersServiceTestSuite) TestDeleteOrderItem_FailedGetOrderItems() {
-	got, err := suite.svc.DeleteOrderItem(context.Background(), testOrderItemID, uuid.Max)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
+func (suite *ordersServiceTestSuite) TestDeleteOrderItem_Error() {
+	tests := []struct {
+		name        string
+		orderItemID uuid.UUID
+		orderID     uuid.UUID
+	}{
+		{"repo failed get order items", testOrderItemID, uuid.Max},
+		{"cant delete from locked order", testOrderItemID, testCompletedOrderID},
+		{"repo failed delete order item", uuid.Max, testOrderID},
+	}
 
-func (suite *ordersServiceTestSuite) TestDeleteOrderItem_CantDeleteFromLockedOrder() {
-	got, err := suite.svc.DeleteOrderItem(
-		context.Background(),
-		testOrderItemID,
-		testCompletedOrderID,
-	)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrOrderIsNotOpen)
-	suite.Nil(got)
-}
-
-func (suite *ordersServiceTestSuite) TestDeleteOrderItem_FailedRepoDeleteOrderItem() {
-	got, err := suite.svc.DeleteOrderItem(context.Background(), uuid.Max, testOrderID)
-	suite.Require().Error(err)
-	suite.Nil(got)
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			got, err := suite.svc.DeleteOrderItem(context.Background(), tt.orderItemID, tt.orderID)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
+	}
 }
 
 func (suite *ordersServiceTestSuite) TestUpdateOrder_Success() {
@@ -213,61 +198,36 @@ func (suite *ordersServiceTestSuite) TestUpdateOrder_Success() {
 	suite.Equal(&want, got)
 }
 
-func (suite *ordersServiceTestSuite) TestUpdateOrder_EmptyPayload() {
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testOrderID,
-		TipAmountInCents: nil,
-		Status:           nil,
-	}
-
-	got, err := suite.svc.UpdateOrder(context.Background(), reqDto, nil)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrPayloadEmpty)
-	suite.Nil(got)
-}
-
-func (suite *ordersServiceTestSuite) TestUpdateOrder_RepoFailedGetOrderItems() {
-	status := db.OrderStatusLocked
+func (suite *ordersServiceTestSuite) TestUpdateOrder_Error() {
+	statusLocked := db.OrderStatusLocked
 	tip := int32(testAmount) //nolint:gosec
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          uuid.Max,
-		TipAmountInCents: &tip,
-		Status:           &status,
+	tests := []struct {
+		name             string
+		ctxFailKey       mock.CtxKey
+		orderID          uuid.UUID
+		tipAmountInCents *int32
+		status           *db.OrderStatus
+	}{
+		{"empty payload", "none", testOrderID, nil, nil},
+		{"repo failed get order items", "none", uuid.Max, &tip, &statusLocked},
+		{"cant edit locked order", "none", testCompletedOrderID, &tip, &statusLocked},
+		{"repo failed update order", mock.CtxFailUpdateOrder, testOrderID, &tip, &statusLocked},
 	}
 
-	got, err := suite.svc.UpdateOrder(context.Background(), reqDto, nil)
-	suite.Require().Error(err)
-	suite.Nil(got)
-}
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			reqDto := &dto.UpdateOrderReqDto{
+				OrderID:          tt.orderID,
+				TipAmountInCents: tt.tipAmountInCents,
+				Status:           tt.status,
+			}
 
-func (suite *ordersServiceTestSuite) TestUpdateOrder_CantEditCompletedOrder() {
-	status := db.OrderStatusLocked
-	tip := int32(testAmount) //nolint:gosec
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testCompletedOrderID,
-		TipAmountInCents: &tip,
-		Status:           &status,
+			ctx := context.WithValue(context.Background(), tt.ctxFailKey, true)
+			got, err := suite.svc.UpdateOrder(ctx, reqDto, nil)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
-
-	got, err := suite.svc.UpdateOrder(context.Background(), reqDto, nil)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrOrderFinalized)
-	suite.Nil(got)
-}
-
-func (suite *ordersServiceTestSuite) TestUpdateOrder_RepoFailedUpdateOrder() {
-	status := db.OrderStatusLocked
-	tip := int32(testAmount) //nolint:gosec
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testOrderID,
-		TipAmountInCents: &tip,
-		Status:           &status,
-	}
-
-	ctx := context.WithValue(context.Background(), mock.CtxFailUpdateOrder, true)
-	got, err := suite.svc.UpdateOrder(ctx, reqDto, nil)
-	suite.Require().Error(err)
-	suite.Nil(got)
 }
 
 func (suite *ordersServiceTestSuite) TestCanUserEditOrder_Success() {
@@ -287,70 +247,48 @@ func (suite *ordersServiceTestSuite) TestCanUserEditOrder_Success() {
 	suite.True(got)
 }
 
-func (suite *ordersServiceTestSuite) TestCanUserEditOrder_UserCannotEditLockedOrder() {
-	orderDto := &dto.OrderDto{
-		Status: db.OrderStatusLocked,
+func (suite *ordersServiceTestSuite) TestCanUserEditOrder_Error() {
+	statusLocked := db.OrderStatusLocked
+	statusCanceled := db.OrderStatusCancelled
+
+	tests := []struct {
+		name      string
+		status    *db.OrderStatus
+		userID    uuid.UUID
+		wantError error
+	}{
+		{"customer cant edit locked order", &statusLocked, uuid.Nil, ErrUserCannotEditLockedOrder},
+		{"customer cant set order to canceled", &statusCanceled, uuid.Nil, ErrUserCannotEditStatus},
+		{
+			"waiter from another restaurant cant edit order",
+			&statusCanceled,
+			testUserFromAnotherRestaurantID,
+			ErrUserCannotEditLockedOrder,
+		},
 	}
 
-	status := db.OrderStatusLocked
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testOrderID,
-		TipAmountInCents: nil,
-		Status:           &status,
+	for _, tt := range tests {
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			orderDto := &dto.OrderDto{
+				Status: db.OrderStatusLocked,
+			}
+
+			reqDto := &dto.UpdateOrderReqDto{
+				OrderID:          testOrderID,
+				TipAmountInCents: nil,
+				Status:           tt.status,
+			}
+
+			claims := &authDto.TokenClaimsDto{
+				UserID: tt.userID,
+			}
+
+			got, err := suite.svc.canUserEditOrder(context.Background(), orderDto, claims, reqDto)
+			suite.Require().Error(err)
+			suite.Require().ErrorIs(err, tt.wantError)
+			suite.False(got)
+		})
 	}
-
-	claims := &authDto.TokenClaimsDto{
-		UserID: uuid.Nil,
-	}
-
-	got, err := suite.svc.canUserEditOrder(context.Background(), orderDto, claims, reqDto)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrUserCannotEditLockedOrder)
-	suite.False(got)
-}
-
-func (suite *ordersServiceTestSuite) TestCanUserEditOrder_UserCannotEditStatus() {
-	orderDto := &dto.OrderDto{
-		Status: db.OrderStatusLocked,
-	}
-
-	status := db.OrderStatusCancelled
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testOrderID,
-		TipAmountInCents: nil,
-		Status:           &status,
-	}
-
-	claims := &authDto.TokenClaimsDto{
-		UserID: uuid.Nil,
-	}
-
-	got, err := suite.svc.canUserEditOrder(context.Background(), orderDto, claims, reqDto)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrUserCannotEditStatus)
-	suite.False(got)
-}
-
-func (suite *ordersServiceTestSuite) TestCanUserEditOrder_WaiterCantEditOrder() {
-	orderDto := &dto.OrderDto{
-		Status: db.OrderStatusLocked,
-	}
-
-	status := db.OrderStatusCancelled
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testOrderID,
-		TipAmountInCents: nil,
-		Status:           &status,
-	}
-
-	claims := &authDto.TokenClaimsDto{
-		UserID: testUserFromAnotherRestaurantID,
-	}
-
-	got, err := suite.svc.canUserEditOrder(context.Background(), orderDto, claims, reqDto)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, ErrUserCannotEditLockedOrder)
-	suite.False(got)
 }
 
 func (suite *ordersServiceTestSuite) TestAssignWaiter_Success() {
@@ -370,8 +308,10 @@ func (suite *ordersServiceTestSuite) TestAssignWaiter_Error() {
 	}
 
 	for _, tt := range tests {
-		err := suite.svc.AssignWaiter(context.Background(), tt.orderID, tt.userID)
-		suite.Require().Error(err)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			err := suite.svc.AssignWaiter(context.Background(), tt.orderID, tt.userID)
+			suite.Require().Error(err)
+		})
 	}
 }
 
@@ -392,7 +332,9 @@ func (suite *ordersServiceTestSuite) TestRemoveWaiter_Error() {
 	}
 
 	for _, tt := range tests {
-		err := suite.svc.RemoveWaiter(context.Background(), tt.orderID, tt.userID, uuid.New())
-		suite.Require().Error(err)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			err := suite.svc.RemoveWaiter(context.Background(), tt.orderID, tt.userID, uuid.New())
+			suite.Require().Error(err)
+		})
 	}
 }
