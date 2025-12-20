@@ -2,28 +2,26 @@ package services
 
 import (
 	"context"
-	"errors"
 	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/management/dto"
 	"mime/multipart"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/suite"
+
+	mock "golang-dining-ordering/test/mock/management"
 )
 
 //nolint:gochecknoglobals
 var (
-	testCategoryID            = uuid.MustParse("44444444-4444-4444-4444-444444444444")
-	testCategoryName          = "Žuvis"
-	testCategoryDescription   = "Žuviška"
-	testItemID                = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
-	testItemName              = "Menkė"
-	testItemDescription       = "Pailga"
-	testItemPriceInCents      = 1500
-	testItemImagePath         = "uploads/uuid.jpg"
-	testDifferentRestaurantID = uuid.MustParse("66666666-6666-6666-6666-666666666666")
+	testCategoryID          = uuid.MustParse("44444444-4444-4444-4444-444444444444")
+	testCategoryName        = "Žuvis"
+	testCategoryDescription = "Žuviška"
+	testItemID              = uuid.MustParse("bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb")
+	testItemName            = "Menkė"
+	testItemDescription     = "Pailga"
+	testItemPriceInCents    = 1500
 )
 
 type menuServiceTestSuite struct {
@@ -34,9 +32,9 @@ type menuServiceTestSuite struct {
 }
 
 func (suite *menuServiceTestSuite) SetupSuite() {
-	mockRestaurantsRepo := newMockRestaurantsRepo()
-	mockMenuRepo := newMockMenuRepo()
-	mockStorage := newMockStorage()
+	mockRestaurantsRepo := mock.NewMockRestaurantsRepo()
+	mockMenuRepo := mock.NewMockMenuRepo()
+	mockStorage := mock.NewMockStorage()
 	suite.svc = NewMenuService(mockMenuRepo, mockRestaurantsRepo, mockStorage)
 
 	suite.user = &authDto.TokenClaimsDto{
@@ -270,149 +268,4 @@ func (suite *menuServiceTestSuite) TestUpdateMenuItem_Error() {
 		suite.Require().Error(err)
 		suite.Nil(got)
 	}
-}
-
-type mockMenuRepo struct{}
-
-func newMockMenuRepo() *mockMenuRepo {
-	return &mockMenuRepo{}
-}
-
-func (*mockMenuRepo) AddMenuCategory(
-	_ context.Context,
-	req *dto.MenuCategoryDto,
-) (*dto.MenuCategoryDto, error) {
-	if req.RestaurantID == testDifferentRestaurantID {
-		return nil, ErrUserIsNotManager
-	}
-
-	if req.RestaurantID != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.MenuCategoryDto{
-		ID:           testCategoryID,
-		RestaurantID: testRestaurantID,
-		Name:         testCategoryName,
-		Description:  testCategoryDescription,
-		CreatedAt:    testDateTime,
-		UpdatedAt:    testDateTime,
-		DeletedAt:    nil,
-	}, nil
-}
-
-func (*mockMenuRepo) AddMenuItem(
-	_ context.Context,
-	req *dto.MenuItemDto,
-) (*dto.MenuItemDto, error) {
-	if req.RestaurantID == testDifferentRestaurantID {
-		return nil, ErrUserIsNotManager
-	}
-
-	if req.RestaurantID != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.MenuItemDto{
-		ID:           testItemID,
-		RestaurantID: testRestaurantID,
-		CategoryID:   testCategoryID,
-		Name:         testItemName,
-		Description:  testItemDescription,
-		PriceInCents: testItemPriceInCents,
-		IsAvailable:  true,
-	}, nil
-}
-
-func (*mockMenuRepo) UpdateMenuItem(
-	_ context.Context,
-	req *dto.MenuItemDto,
-) (*dto.MenuItemDto, error) {
-	if req.RestaurantID == testDifferentRestaurantID {
-		return nil, ErrUserIsNotManager
-	}
-
-	if req.RestaurantID != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.MenuItemDto{
-		ID:           testItemID,
-		RestaurantID: testRestaurantID,
-		CategoryID:   testCategoryID,
-		Name:         testItemName,
-		Description:  testItemDescription,
-		PriceInCents: testItemPriceInCents,
-		IsAvailable:  true,
-	}, nil
-}
-
-func (*mockMenuRepo) GetMenuItems(_ context.Context, id uuid.UUID) (*dto.ListMenuItemsDto, error) {
-	if id != testRestaurantID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.ListMenuItemsDto{
-		Categories: []dto.CategoryDto{
-			{
-				ID:          testCategoryID,
-				Name:        testCategoryName,
-				Description: testCategoryDescription,
-				Items: []dto.MenuItemDto{
-					{
-						ID:           testItemID,
-						RestaurantID: testRestaurantID,
-						CategoryID:   testCategoryID,
-						Name:         testItemName,
-						Description:  testItemDescription,
-						PriceInCents: testItemPriceInCents,
-						IsAvailable:  true,
-					},
-				},
-			},
-		},
-	}, nil
-}
-
-func (*mockMenuRepo) GetMenuItemByID(_ context.Context, id uuid.UUID) (*dto.MenuItemDto, error) {
-	if id != testItemID {
-		return nil, errRepoFailed
-	}
-
-	return &dto.MenuItemDto{
-		ID:           testItemID,
-		RestaurantID: testRestaurantID,
-		CategoryID:   testCategoryID,
-		Name:         testItemName,
-		Description:  testItemDescription,
-		PriceInCents: testItemPriceInCents,
-		IsAvailable:  true,
-	}, nil
-}
-
-var errStorageFailed = errors.New("storage failed")
-
-type mockStorage struct{}
-
-func newMockStorage() *mockStorage {
-	return &mockStorage{}
-}
-
-func (*mockStorage) StoreMenuItemImage(
-	_ context.Context,
-	fh *multipart.FileHeader,
-) (string, error) {
-	name := strings.ToLower(fh.Filename)
-
-	if !strings.HasSuffix(name, ".jpg") &&
-		!strings.HasSuffix(name, ".jpeg") &&
-		!strings.HasSuffix(name, ".png") {
-		return "", errStorageFailed
-	}
-
-	return testItemImagePath, nil
-}
-
-func (*mockStorage) DeleteMenuItemImage(_ context.Context, _ string) error {
-	return nil
 }
