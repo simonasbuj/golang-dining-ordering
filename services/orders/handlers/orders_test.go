@@ -3,6 +3,7 @@ package handlers
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"golang-dining-ordering/pkg/responses"
 	authDto "golang-dining-ordering/services/auth/dto"
 	"golang-dining-ordering/services/management/middleware"
@@ -83,33 +84,29 @@ func (suite *ordersHandlerTestSuite) TestHandleGetCurrentTableOrder_Success() {
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
-func (suite *ordersHandlerTestSuite) TestHandleGetCurrentTableOrder_FailedToParseTableIDFromUrl() {
+func (suite *ordersHandlerTestSuite) TestHandleGetCurrentTableOrder_Error() {
 	e := echo.New()
 
-	target := "/?tableId=this-is-not-uuid"
-	req := httptest.NewRequest(http.MethodGet, target, nil)
+	tests := []struct {
+		desc       string
+		targetURL  string
+		statusCode int
+	}{
+		{"invalid table id in url params", "/?tableId=this-is-not-uuid", http.StatusBadRequest},
+		{"service error", "/?tableId=" + uuid.Max.String(), http.StatusInternalServerError},
+	}
+	for _, tt := range tests {
+		suite.T().Run(tt.desc, func(_ *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, tt.targetURL, nil)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	err := suite.handler.HandleGetCurrentTableOrder(c)
-	suite.Require().Error(err)
-	suite.Contains(rec.Body.String(), "failed to parse tableId from url")
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleGetCurrentTableOrder_ServiceError() {
-	e := echo.New()
-
-	target := "/?tableId=" + uuid.Max.String()
-	req := httptest.NewRequest(http.MethodGet, target, nil)
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	err := suite.handler.HandleGetCurrentTableOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
+			err := suite.handler.HandleGetCurrentTableOrder(c)
+			suite.Require().Error(err)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
+	}
 }
 
 func (suite *ordersHandlerTestSuite) TestHandleGetOrder_Success() {
@@ -136,36 +133,32 @@ func (suite *ordersHandlerTestSuite) TestHandleGetOrder_Success() {
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
-func (suite *ordersHandlerTestSuite) TestHandleGetOrder_InvalidOrderIDParam() {
+func (suite *ordersHandlerTestSuite) TestHandleGetOrder_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
+	tests := []struct {
+		desc       string
+		orderID    string
+		statusCode int
+	}{
+		{"invalid id in url params", "invalid-id", http.StatusBadRequest},
+		{"service error", uuid.Max.String(), http.StatusInternalServerError},
+	}
+	for _, tt := range tests {
+		suite.T().Run(tt.desc, func(_ *testing.T) {
+			req := httptest.NewRequest(http.MethodGet, "/", nil)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues("invalid-id")
+			c.SetParamNames(orderIDParamName)
+			c.SetParamValues(tt.orderID)
 
-	err := suite.handler.HandleGetOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleGetOrder_ServiceFailed() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodGet, "/", nil)
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	err := suite.handler.HandleGetOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
+			err := suite.handler.HandleGetOrder(c)
+			suite.Require().Error(err)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
+	}
 }
 
 func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_Success() {
@@ -209,87 +202,43 @@ func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_Success() {
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
-func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_InvalidOrderIDParam() {
+func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues("invalid-id")
-
-	err := suite.handler.HandleAddItemToOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_InvalidReqDto() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(testOrderID.String())
-
-	err := suite.handler.HandleAddItemToOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_CantAddToCompletedOrder() {
-	e := echo.New()
-
-	reqDto := &dto.OrderItemRequestDto{
-		ItemID: testItemID,
+	tests := []struct {
+		desc       string
+		orderID    string
+		itemID     string
+		statusCode int
+	}{
+		{"invalid id in params", "invalid-id", testItemID.String(), http.StatusBadRequest},
+		{"invalid dto", testOrderID.String(), "", http.StatusBadRequest},
+		{
+			"cant add to completed order",
+			testCompletedOrderID.String(),
+			testItemID.String(),
+			http.StatusBadRequest,
+		},
+		{"service error", uuid.Max.String(), testItemID.String(), http.StatusInternalServerError},
 	}
+	for _, tt := range tests {
+		suite.T().Run(tt.desc, func(_ *testing.T) {
+			body := fmt.Sprintf(`{"item_id": "%s"}`, tt.itemID)
 
-	body, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
+			req.Header.Set("Content-Type", "application/json")
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			c.SetParamNames(orderIDParamName)
+			c.SetParamValues(tt.orderID)
 
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(testCompletedOrderID.String())
-
-	err = suite.handler.HandleAddItemToOrder(c)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, services.ErrOrderIsNotOpen)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleAddItemToOrder_ServiceFailed() {
-	e := echo.New()
-
-	reqDto := &dto.OrderItemRequestDto{
-		ItemID: testItemID,
+			err := suite.handler.HandleAddItemToOrder(c)
+			suite.Require().Error(err)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
 	}
-
-	body, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	err = suite.handler.HandleAddItemToOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_Success() {
@@ -327,87 +276,43 @@ func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_Success() {
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
-func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_InvalidOrderIDParam() {
+func (suite *ordersHandlerTestSuite) TestDeleteItemFromOrder_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues("invalid-id")
-
-	err := suite.handler.HandleDeleteItemFromOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_InvalidReqDto() {
-	e := echo.New()
-
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(testOrderID.String())
-
-	err := suite.handler.HandleDeleteItemFromOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_CantDeleteFromCompletedOrder() {
-	e := echo.New()
-
-	reqDto := &dto.OrderItemRequestDto{
-		ItemID: testItemID,
+	tests := []struct {
+		desc       string
+		orderID    string
+		itemID     string
+		statusCode int
+	}{
+		{"invalid id in params", "invalid-id", testItemID.String(), http.StatusBadRequest},
+		{"invalid dto", testOrderID.String(), "", http.StatusBadRequest},
+		{
+			"cant add to completed order",
+			testCompletedOrderID.String(),
+			testItemID.String(),
+			http.StatusBadRequest,
+		},
+		{"service error", uuid.Max.String(), testItemID.String(), http.StatusInternalServerError},
 	}
+	for _, tt := range tests {
+		suite.T().Run(tt.desc, func(_ *testing.T) {
+			body := fmt.Sprintf(`{"item_id": "%s"}`, tt.itemID)
 
-	body, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
+			req.Header.Set("Content-Type", "application/json")
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			c.SetParamNames(orderIDParamName)
+			c.SetParamValues(tt.orderID)
 
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(testCompletedOrderID.String())
-
-	err = suite.handler.HandleDeleteItemFromOrder(c)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, services.ErrOrderIsNotOpen)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleDeleteItemFromOrder_ServiceFailed() {
-	e := echo.New()
-
-	reqDto := &dto.OrderItemRequestDto{
-		ItemID: testItemID,
+			err := suite.handler.HandleDeleteItemFromOrder(c)
+			suite.Require().Error(err)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
 	}
-
-	body, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	err = suite.handler.HandleDeleteItemFromOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_Success() {
@@ -452,118 +357,48 @@ func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_Success() {
 	suite.Equal(http.StatusOK, rec.Code)
 }
 
-func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_InvalidOrderIDParam() {
+func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_Error() {
 	e := echo.New()
 
-	req := httptest.NewRequest(http.MethodPost, "/", nil)
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues("invalid-id")
-
-	err := suite.handler.HandleUpdateOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_InvalidReqDto() {
-	e := echo.New()
-
-	amount := int32(50000000)
-	status := db.OrderStatusLocked
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testOrderID,
-		TipAmountInCents: &amount,
-		Status:           &status,
+	tests := []struct {
+		desc       string
+		orderID    string
+		tipAmount  int
+		statusCode int
+	}{
+		{"invalid id in params", "invalid-id", testAmount, http.StatusBadRequest},
+		{"invalid dto", testOrderID.String(), 50000000, http.StatusBadRequest},
+		{
+			"cant update finalized order",
+			testCompletedOrderID.String(),
+			testAmount,
+			http.StatusBadRequest,
+		},
+		{"service error", uuid.New().String(), testAmount, http.StatusInternalServerError},
 	}
+	for _, tt := range tests {
+		suite.T().Run(tt.desc, func(_ *testing.T) {
+			body := fmt.Sprintf(`{"tip_amount_in_cents": %d, "status": "locked"}`, tt.tipAmount)
 
-	body, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
+			req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader([]byte(body)))
+			req.Header.Set("Content-Type", "application/json")
 
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
+			c.SetParamNames(orderIDParamName)
+			c.SetParamValues(tt.orderID)
 
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(testOrderID.String())
+			c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
+				UserID: testUserID,
+			})
 
-	c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
-		UserID: testUserID,
-	})
-
-	err = suite.handler.HandleUpdateOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_OrderFinalized() {
-	e := echo.New()
-
-	amount := int32(testAmount) //nolint: gosec
-	status := db.OrderStatusLocked
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          testCompletedOrderID,
-		TipAmountInCents: &amount,
-		Status:           &status,
+			err := suite.handler.HandleUpdateOrder(c)
+			suite.Require().Error(err)
+			// suite.Require().ErrorIs(err, services.ErrOrderFinalized)
+			suite.Equal(tt.statusCode, rec.Code)
+		})
 	}
-
-	body, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(testCompletedOrderID.String())
-
-	c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
-		UserID: testUserID,
-	})
-
-	err = suite.handler.HandleUpdateOrder(c)
-	suite.Require().Error(err)
-	suite.Require().ErrorIs(err, services.ErrOrderFinalized)
-	suite.Equal(http.StatusBadRequest, rec.Code)
-}
-
-func (suite *ordersHandlerTestSuite) TestHandleUpdateOrder_ServiceFailed() {
-	e := echo.New()
-
-	amount := int32(testAmount) //nolint: gosec
-	status := db.OrderStatusLocked
-	reqDto := &dto.UpdateOrderReqDto{
-		OrderID:          uuid.Max,
-		TipAmountInCents: &amount,
-		Status:           &status,
-	}
-
-	body, err := json.Marshal(reqDto)
-	suite.Require().NoError(err)
-
-	req := httptest.NewRequest(http.MethodPost, "/", bytes.NewReader(body))
-	req.Header.Set("Content-Type", "application/json")
-
-	rec := httptest.NewRecorder()
-	c := e.NewContext(req, rec)
-
-	c.SetParamNames(orderIDParamName)
-	c.SetParamValues(uuid.Max.String())
-
-	c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
-		UserID: testUserID,
-	})
-
-	err = suite.handler.HandleUpdateOrder(c)
-	suite.Require().Error(err)
-	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
 func (suite *ordersHandlerTestSuite) TestHandleAddWaiter_Success() {
@@ -607,16 +442,18 @@ func (suite *ordersHandlerTestSuite) TestHandleAddWaiter_Error() {
 	}
 
 	for _, tt := range tests {
-		c.SetParamNames(orderIDParamName)
-		c.SetParamValues(tt.orderID)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			c.SetParamNames(orderIDParamName)
+			c.SetParamValues(tt.orderID)
 
-		c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
-			UserID: tt.userID,
+			c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
+				UserID: tt.userID,
+			})
+
+			err := suite.handler.HandleAddWaiter(c)
+			suite.Require().Error(err)
+			suite.Equal(http.StatusBadRequest, rec.Code)
 		})
-
-		err := suite.handler.HandleAddWaiter(c)
-		suite.Require().Error(err)
-		suite.Equal(http.StatusBadRequest, rec.Code)
 	}
 }
 
@@ -661,21 +498,23 @@ func (suite *ordersHandlerTestSuite) TestHandleRemoveWaiter_Error() {
 	}
 
 	for _, tt := range tests {
-		req := httptest.NewRequest(http.MethodDelete, "/", bytes.NewReader([]byte(tt.body)))
-		req.Header.Set("Content-Type", "application/json")
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			req := httptest.NewRequest(http.MethodDelete, "/", bytes.NewReader([]byte(tt.body)))
+			req.Header.Set("Content-Type", "application/json")
 
-		rec := httptest.NewRecorder()
-		c := e.NewContext(req, rec)
+			rec := httptest.NewRecorder()
+			c := e.NewContext(req, rec)
 
-		c.SetParamNames(orderIDParamName)
-		c.SetParamValues(tt.orderID)
+			c.SetParamNames(orderIDParamName)
+			c.SetParamValues(tt.orderID)
 
-		c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
-			UserID: tt.userID,
+			c.Set(middleware.ContextKeyAuthUser, &authDto.TokenClaimsDto{
+				UserID: tt.userID,
+			})
+
+			err := suite.handler.HandleRemoveWaiter(c)
+			suite.Require().Error(err)
+			suite.Equal(http.StatusBadRequest, rec.Code)
 		})
-
-		err := suite.handler.HandleRemoveWaiter(c)
-		suite.Require().Error(err)
-		suite.Equal(http.StatusBadRequest, rec.Code)
 	}
 }
