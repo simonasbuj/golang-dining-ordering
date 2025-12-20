@@ -84,15 +84,17 @@ func (suite *paymentsServiceTestSuite) TestCreateCheckout_Error() {
 	}
 
 	for _, tt := range tests {
-		req := &dto.CheckoutSessionRequestDto{
-			OrderDto:   nil,
-			SuccessURL: tt.successURL,
-			CancelURL:  tt.cancelURL,
-		}
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			req := &dto.CheckoutSessionRequestDto{
+				OrderDto:   nil,
+				SuccessURL: tt.successURL,
+				CancelURL:  tt.cancelURL,
+			}
 
-		got, err := suite.svc.CreateCheckout(context.Background(), tt.orderID, req)
-		suite.Require().Error(err)
-		suite.Nil(got)
+			got, err := suite.svc.CreateCheckout(context.Background(), tt.orderID, req)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 
@@ -132,14 +134,16 @@ func (suite *paymentsServiceTestSuite) TestHandleWebhookSuccess_Error() {
 	}
 
 	for _, tt := range tests {
-		header := http.Header{
-			"Payment-Signature": []string{"signature"},
-		}
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			header := http.Header{
+				"Payment-Signature": []string{"signature"},
+			}
 
-		ctx := context.WithValue(context.Background(), tt.ctxFailKey, true)
-		got, err := suite.svc.HandleWebhookSuccess(ctx, tt.payload, header)
-		suite.Require().Error(err)
-		suite.Nil(got)
+			ctx := context.WithValue(context.Background(), tt.ctxFailKey, true)
+			got, err := suite.svc.HandleWebhookSuccess(ctx, tt.payload, header)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 

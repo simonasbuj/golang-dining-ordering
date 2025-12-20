@@ -104,10 +104,12 @@ func (suite *ordersServiceTestSuite) TestGetOrCreateCurrentOrderForTable_Error()
 	}
 
 	for _, tt := range tests {
-		ctx := context.WithValue(context.Background(), tt.failCtxKey, true)
-		got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, tt.orderID)
-		suite.Require().Error(err)
-		suite.Nil(got)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			ctx := context.WithValue(context.Background(), tt.failCtxKey, true)
+			got, err := suite.svc.GetOrCreateCurrentOrderForTable(ctx, tt.orderID)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 
@@ -142,10 +144,12 @@ func (suite *ordersServiceTestSuite) TestAddItemToOrder_Error() {
 	}
 
 	for _, tt := range tests {
-		ctx := context.WithValue(context.Background(), tt.failCtxKey, true)
-		got, err := suite.svc.AddItemToOrder(ctx, tt.orderID, tt.itemID)
-		suite.Require().Error(err)
-		suite.Nil(got)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			ctx := context.WithValue(context.Background(), tt.failCtxKey, true)
+			got, err := suite.svc.AddItemToOrder(ctx, tt.orderID, tt.itemID)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 
@@ -170,9 +174,11 @@ func (suite *ordersServiceTestSuite) TestDeleteOrderItem_Error() {
 	}
 
 	for _, tt := range tests {
-		got, err := suite.svc.DeleteOrderItem(context.Background(), tt.orderItemID, tt.orderID)
-		suite.Require().Error(err)
-		suite.Nil(got)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			got, err := suite.svc.DeleteOrderItem(context.Background(), tt.orderItemID, tt.orderID)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 
@@ -209,16 +215,18 @@ func (suite *ordersServiceTestSuite) TestUpdateOrder_Error() {
 	}
 
 	for _, tt := range tests {
-		reqDto := &dto.UpdateOrderReqDto{
-			OrderID:          tt.orderID,
-			TipAmountInCents: tt.tipAmountInCents,
-			Status:           tt.status,
-		}
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			reqDto := &dto.UpdateOrderReqDto{
+				OrderID:          tt.orderID,
+				TipAmountInCents: tt.tipAmountInCents,
+				Status:           tt.status,
+			}
 
-		ctx := context.WithValue(context.Background(), tt.ctxFailKey, true)
-		got, err := suite.svc.UpdateOrder(ctx, reqDto, nil)
-		suite.Require().Error(err)
-		suite.Nil(got)
+			ctx := context.WithValue(context.Background(), tt.ctxFailKey, true)
+			got, err := suite.svc.UpdateOrder(ctx, reqDto, nil)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 
@@ -260,24 +268,26 @@ func (suite *ordersServiceTestSuite) TestCanUserEditOrder_Error() {
 	}
 
 	for _, tt := range tests {
-		orderDto := &dto.OrderDto{
-			Status: db.OrderStatusLocked,
-		}
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			orderDto := &dto.OrderDto{
+				Status: db.OrderStatusLocked,
+			}
 
-		reqDto := &dto.UpdateOrderReqDto{
-			OrderID:          testOrderID,
-			TipAmountInCents: nil,
-			Status:           tt.status,
-		}
+			reqDto := &dto.UpdateOrderReqDto{
+				OrderID:          testOrderID,
+				TipAmountInCents: nil,
+				Status:           tt.status,
+			}
 
-		claims := &authDto.TokenClaimsDto{
-			UserID: tt.userID,
-		}
+			claims := &authDto.TokenClaimsDto{
+				UserID: tt.userID,
+			}
 
-		got, err := suite.svc.canUserEditOrder(context.Background(), orderDto, claims, reqDto)
-		suite.Require().Error(err)
-		suite.Require().ErrorIs(err, tt.wantError)
-		suite.False(got)
+			got, err := suite.svc.canUserEditOrder(context.Background(), orderDto, claims, reqDto)
+			suite.Require().Error(err)
+			suite.Require().ErrorIs(err, tt.wantError)
+			suite.False(got)
+		})
 	}
 }
 
@@ -298,8 +308,10 @@ func (suite *ordersServiceTestSuite) TestAssignWaiter_Error() {
 	}
 
 	for _, tt := range tests {
-		err := suite.svc.AssignWaiter(context.Background(), tt.orderID, tt.userID)
-		suite.Require().Error(err)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			err := suite.svc.AssignWaiter(context.Background(), tt.orderID, tt.userID)
+			suite.Require().Error(err)
+		})
 	}
 }
 
@@ -320,7 +332,9 @@ func (suite *ordersServiceTestSuite) TestRemoveWaiter_Error() {
 	}
 
 	for _, tt := range tests {
-		err := suite.svc.RemoveWaiter(context.Background(), tt.orderID, tt.userID, uuid.New())
-		suite.Require().Error(err)
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			err := suite.svc.RemoveWaiter(context.Background(), tt.orderID, tt.userID, uuid.New())
+			suite.Require().Error(err)
+		})
 	}
 }

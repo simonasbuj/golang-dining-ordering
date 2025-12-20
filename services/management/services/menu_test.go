@@ -80,15 +80,17 @@ func (suite *menuServiceTestSuite) TestAddMenuCategory_Error() {
 	}
 
 	for _, tt := range tests {
-		reqDto := &dto.MenuCategoryDto{
-			RestaurantID: tt.restaurantID,
-			Name:         testCategoryName,
-			Description:  testCategoryDescription,
-		}
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			reqDto := &dto.MenuCategoryDto{
+				RestaurantID: tt.restaurantID,
+				Name:         testCategoryName,
+				Description:  testCategoryDescription,
+			}
 
-		got, err := suite.svc.AddMenuCategory(context.Background(), reqDto, tt.user)
-		suite.Require().Error(err)
-		suite.Nil(got)
+			got, err := suite.svc.AddMenuCategory(context.Background(), reqDto, tt.user)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 
@@ -140,22 +142,24 @@ func (suite *menuServiceTestSuite) TestAddMenuItem_Error() {
 	}
 
 	for _, tt := range tests {
-		fh := &multipart.FileHeader{
-			Filename: tt.fileName,
-			Size:     123,
-		}
-		reqDto := &dto.MenuItemDto{
-			RestaurantID: tt.restaurantID,
-			CategoryID:   testCategoryID,
-			Name:         testItemName,
-			Description:  testItemDescription,
-			PriceInCents: testItemPriceInCents,
-			FileHeader:   fh,
-		}
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			fh := &multipart.FileHeader{
+				Filename: tt.fileName,
+				Size:     123,
+			}
+			reqDto := &dto.MenuItemDto{
+				RestaurantID: tt.restaurantID,
+				CategoryID:   testCategoryID,
+				Name:         testItemName,
+				Description:  testItemDescription,
+				PriceInCents: testItemPriceInCents,
+				FileHeader:   fh,
+			}
 
-		got, err := suite.svc.AddMenuItem(context.Background(), reqDto, tt.user)
-		suite.Require().Error(err)
-		suite.Nil(got)
+			got, err := suite.svc.AddMenuItem(context.Background(), reqDto, tt.user)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }
 
@@ -250,22 +254,24 @@ func (suite *menuServiceTestSuite) TestUpdateMenuItem_Error() {
 	}
 
 	for _, tt := range tests {
-		fh := &multipart.FileHeader{
-			Filename: tt.fileName,
-			Size:     123,
-		}
-		reqDto := &dto.MenuItemDto{
-			ID:           tt.itemID,
-			RestaurantID: tt.restaurantID,
-			CategoryID:   testCategoryID,
-			Name:         testItemName,
-			Description:  testItemDescription,
-			PriceInCents: testItemPriceInCents,
-			FileHeader:   fh,
-		}
+		suite.T().Run(tt.name, func(_ *testing.T) {
+			fh := &multipart.FileHeader{
+				Filename: tt.fileName,
+				Size:     123,
+			}
+			reqDto := &dto.MenuItemDto{
+				ID:           tt.itemID,
+				RestaurantID: tt.restaurantID,
+				CategoryID:   testCategoryID,
+				Name:         testItemName,
+				Description:  testItemDescription,
+				PriceInCents: testItemPriceInCents,
+				FileHeader:   fh,
+			}
 
-		got, err := suite.svc.UpdateMenuItem(context.Background(), reqDto, tt.user)
-		suite.Require().Error(err)
-		suite.Nil(got)
+			got, err := suite.svc.UpdateMenuItem(context.Background(), reqDto, tt.user)
+			suite.Require().Error(err)
+			suite.Nil(got)
+		})
 	}
 }

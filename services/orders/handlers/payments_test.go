@@ -160,6 +160,11 @@ func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_ServiceError() {
 	suite.Equal(http.StatusInternalServerError, rec.Code)
 }
 
+// func (suite *paymentsHandlerTestSuite) TestHandleCreateCheckout_Error() {
+// 	e := echo.New()
+
+// }
+
 func (suite *paymentsHandlerTestSuite) TestHandleWebhookSuccess_Success() {
 	e := echo.New()
 
